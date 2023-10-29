@@ -144,7 +144,7 @@ namespace InteractionGame
                     for (int i = 0; i < match.Groups[1].Length;++i)
                     {
                         int v = match.Groups[1].Value[i] - 48; 
-                        if (v >= 0 && v <= 6 && (id == v || id == -1))
+                        if (v >= 0 && v <= 5 && (id == v || id == -1))
                         {
                             ++c;
                             id = v;
@@ -163,8 +163,9 @@ namespace InteractionGame
             {
                 switch(msgOrigin.msg.GiftName)
                 {
-                    case "小花花": return (7, msgOrigin.msg.GiftCount);
-                    case "牛哇牛哇": return (8, msgOrigin.msg.GiftCount);
+                    case "小花花": return (6, msgOrigin.msg.GiftCount);
+                    case "打call": return (7, msgOrigin.msg.GiftCount);
+                    case "干杯": return (8, msgOrigin.msg.GiftCount);
                 }
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like)

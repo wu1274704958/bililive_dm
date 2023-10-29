@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Windows.Threading;
 using BilibiliDM_PluginFramework;
+using InteractionGame;
 
 namespace BililiveDebugPlugin
 {
-    public class DebugPlugin : DMPlugin
+    public class DebugPlugin : DMPlugin ,IContext
     {
-        private MainPage mp;
+        private MessageDispatcher<InteractionGame.PlayerBirthdayParser<DebugPlugin>,
+            InteractionGame.MsgGiftParser<DebugPlugin>,
+            Interaction.DefAoe4Bridge, DebugPlugin> messageDispatcher;
 
         public DebugPlugin()
         {
@@ -21,24 +24,18 @@ namespace BililiveDebugPlugin
 
         private void OnReceivedDanmaku(object sender, ReceivedDanmakuArgs e)
         {
-            mp?.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
-            {
-                mp.context.DataList.Add(new DMItem
-                {
-                    ItemName = DateTime.Now.ToString("HH:mm:ss") + " " + e.Danmaku.RawDataJToken["cmd"],
-                    Model = e.Danmaku
-                });
-            }));
+            if (messageDispatcher.Demand(e.Danmaku, e.Danmaku.MsgType))
+                messageDispatcher.Dispatch(e.Danmaku, e.Danmaku.MsgType);
         }
 
 
         public override void Admin()
         {
             base.Admin();
-            mp = new MainPage();
-            mp.context.Plugin = this;
-            mp.Closed += (sender, args) => mp = null;
-            mp.Show();
+            messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>, MsgGiftParser<DebugPlugin>, Interaction.DefAoe4Bridge, DebugPlugin>();
+            messageDispatcher.Init(this);
+            messageDispatcher.Start();
+            Log("Start ...");
         }
 
         public override void Start()
@@ -49,6 +46,8 @@ namespace BililiveDebugPlugin
         public override void Stop()
         {
             base.Stop();
+            messageDispatcher.Stop();
+            messageDispatcher = null;
         }
     }
 }

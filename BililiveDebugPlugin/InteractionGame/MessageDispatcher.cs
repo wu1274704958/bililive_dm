@@ -125,14 +125,17 @@ namespace InteractionGame
         {
             while (IsRunning == 1)
             {
-                if (queue.Count == 0 || IsEmit == 0)
-                    continue;
+                if (IsEmit == 0) continue;
                 if (queue.TryDequeue(out var msg))
                 {
                     bridge.SendMsg(msg);
                     Thread.Sleep(5);
                 }
-                InitCtx.OnTick();
+                else
+                {
+                    InitCtx.OnTick();
+                    Thread.Sleep(20);
+                }
             }
             InitCtx.Log("取消注册全局快捷键");
             HotKeyManager.UnregisterHotKey(MY_HOTKEY_ID_E);

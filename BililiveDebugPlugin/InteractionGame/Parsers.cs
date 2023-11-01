@@ -126,7 +126,7 @@ namespace InteractionGame
     public class MsgGiftParser<IT> : IDyMsgParser<IT>
         where IT : IContext
     {                                                                             //0, 1, 2,3 ,4, 5,6
-        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 16,15,9,12,5,10,3 };
+        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 10,9, 7,9, 5, 8,3 };
         public override bool Demand(Msg msg, MsgType barType)
         {
             return StaticMsgDemand.Demand(msg, barType);
@@ -145,12 +145,12 @@ namespace InteractionGame
                     for (int i = 0; i < match.Groups[1].Length;++i)
                     {
                         int v = match.Groups[1].Value[i] - 48; 
-                        if (v >= 0 && v <= 5 && (id == v || id == -1))
+                        if (v >= 0 && v <= 6 && (id == v || id == -1))
                         {
                             ++c;
                             if(id == -1) id = v;
                         }
-                        if (c >= QuickSuccessionTable[id]) break;
+                        if (id >= 0 && id < QuickSuccessionTable.Count && c >= QuickSuccessionTable[id]) break;
                     }
                     //if(Appsetting.Current.PrintBarrage)
                     {
@@ -164,9 +164,9 @@ namespace InteractionGame
             {
                 switch(msgOrigin.msg.GiftName)
                 {
-                    case "小花花": return (6, msgOrigin.msg.GiftCount);
-                    case "打call": return (7, msgOrigin.msg.GiftCount);
-                    case "干杯": return (8, msgOrigin.msg.GiftCount);
+                    case "小花花": return (7, msgOrigin.msg.GiftCount);
+                    case "牛哇牛哇": return (8, msgOrigin.msg.GiftCount);
+                    //case "干杯": return (8, msgOrigin.msg.GiftCount);
                 }
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like)

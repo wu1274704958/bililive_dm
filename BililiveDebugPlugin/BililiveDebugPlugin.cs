@@ -14,6 +14,7 @@ namespace BililiveDebugPlugin
 
         private Action<DyMsg> m_AppendMsgAction;
         private DateTime m_AutoAppendMsgTime;
+        private Random m_Rand;
         public static readonly bool AutoAppendMsgOnIdle = true;
         public DebugPlugin()
         {
@@ -58,6 +59,7 @@ namespace BililiveDebugPlugin
         {
             m_AppendMsgAction = appendMsgAction;
             m_AutoAppendMsgTime = DateTime.Now;
+            m_Rand = new Random((int)DateTime.Now.Ticks);
         }
 
         public void OnStop()
@@ -67,11 +69,13 @@ namespace BililiveDebugPlugin
 
         public void OnTick()
         {
+            //Log($"OnTick");
             if (AutoAppendMsgOnIdle)
             {
                 var span = DateTime.Now - m_AutoAppendMsgTime;
-                if (span.TotalSeconds >= 20)
+                if (span.TotalSeconds >= 60)
                 {
+                    //Log($"AppendRandomMsg {m_AppendMsgAction != null}");
                     AppendRandomMsg(0, 0, 7, 1, 20);
                     AppendRandomMsg(1, 0, 7, 1, 20);
                     m_AutoAppendMsgTime = DateTime.Now;
@@ -81,10 +85,13 @@ namespace BililiveDebugPlugin
 
         private void AppendRandomMsg(int p, int sid_s, int sid_e, int num_s, int num_e)
         {
-            var num = new Random((int)DateTime.Now.Ticks).Next(num_s, num_e);
-            for(int i = 0;i < num;i++)
+            var num = m_Rand.Next(num_s, num_e);
+            //Log($"AppendRandomMsg num = {num}");
+            for (int i = 0;i < num;i++)
             {
-                m_AppendMsgAction?.Invoke(new DyMsg(){ Player = p, Msg = new Random((int)DateTime.Now.Ticks).Next(sid_s,sid_e + 1) });
+                var Msg = m_Rand.Next(sid_s, sid_e + 1);
+                //Log($"AppendRandomMsg Msg = {Msg}");
+                m_AppendMsgAction?.Invoke(new DyMsg(){ Player = p,  Msg = Msg});
             }
         }
 

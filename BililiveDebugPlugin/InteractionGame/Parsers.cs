@@ -125,7 +125,8 @@ namespace InteractionGame
 
     public class MsgGiftParser<IT> : IDyMsgParser<IT>
         where IT : IContext
-    {
+    {                                                                             //0, 1, 2,3 ,4, 5,6
+        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 16,15,9,12,5,10,3 };
         public override bool Demand(Msg msg, MsgType barType)
         {
             return StaticMsgDemand.Demand(msg, barType);
@@ -147,13 +148,13 @@ namespace InteractionGame
                         if (v >= 0 && v <= 5 && (id == v || id == -1))
                         {
                             ++c;
-                            id = v;
+                            if(id == -1) id = v;
                         }
-                        if (v >= 7) break;
+                        if (c >= QuickSuccessionTable[id]) break;
                     }
                     //if(Appsetting.Current.PrintBarrage)
                     {
-                        InitCtx.Log($"{msgOrigin.msg.UserName}选择出{match.Groups[1].Value}");
+                        InitCtx.Log($"{msgOrigin.msg.UserName}选择出{c}个{id}");
                     }
                     return (id, c);
                 }

@@ -32,6 +32,10 @@ namespace InteractionGame
     public interface IContext
     {
         void Log(string text);
+        void OnInit(Action<DyMsg> appendMsgAction);
+        void OnStop();
+        void OnTick();
+        void OnAppendMsg(DyMsg msg);
     }
 
     public interface ILocalMsgDispatcher<IT>
@@ -114,6 +118,7 @@ namespace InteractionGame
         {
             Interlocked.Exchange(ref IsRunning, 0);
             thread.Join();
+            InitCtx.OnStop();
         }
        
         private void ThreadBody()
@@ -127,6 +132,7 @@ namespace InteractionGame
                     bridge.SendMsg(msg);
                     Thread.Sleep(5);
                 }
+                InitCtx.OnTick();
             }
             InitCtx.Log("取消注册全局快捷键");
             HotKeyManager.UnregisterHotKey(MY_HOTKEY_ID_E);
@@ -160,6 +166,7 @@ namespace InteractionGame
                         Msg = m
                     };
                     AppendMsg(dyMsg);
+                    InitCtx.OnAppendMsg(dyMsg);
                 }
             }
         }
@@ -169,6 +176,7 @@ namespace InteractionGame
             InitCtx = it;
             pp.Init(it);
             mp.Init(it);
+            InitCtx.OnInit(AppendMsg);
         }
     }
 }

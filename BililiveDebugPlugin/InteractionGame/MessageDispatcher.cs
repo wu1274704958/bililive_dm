@@ -64,6 +64,9 @@ namespace InteractionGame
         MP mp = new MP();
         B bridge = new B();
         IT InitCtx;
+
+        public PP PlayerParser => pp;
+        public MP MsgParser => mp;
         public MessageDispatcher()
         {
             queue = new ConcurrentQueue<DyMsg>();

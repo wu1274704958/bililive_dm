@@ -105,6 +105,9 @@ namespace BililiveDebugPlugin
             if (LastState != 2 && d.r == 2)
             {
                 Log($"{GetColorById(d.g)}方获胜！！！");
+                var data = messageDispatcher.MsgParser.GetSortedUserData();
+                messageDispatcher.MsgParser.ClearUserData();
+                //todo show settlement
                 Thread.Sleep(EndDelay);
             }
             LastState = d.r;

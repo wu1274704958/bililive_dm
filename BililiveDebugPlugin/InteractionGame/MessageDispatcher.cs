@@ -134,7 +134,7 @@ namespace InteractionGame
                 else
                 {
                     InitCtx.OnTick();
-                    Thread.Sleep(20);
+                    Thread.Sleep(100);
                 }
             }
             InitCtx.Log("取消注册全局快捷键");

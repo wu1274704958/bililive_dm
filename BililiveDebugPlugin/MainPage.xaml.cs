@@ -9,22 +9,11 @@ namespace BililiveDebugPlugin
     /// </summary>
     public sealed partial class MainPage : Window
     {
-        public PluginDataContext context = new PluginDataContext();
 
         public MainPage()
         {
             InitializeComponent();
-            DataContext = context;
         }
-
-        private void ListView_OnSelected(object sender, RoutedEventArgs e)
-        {
-            context.Selected = (ListView.SelectedItem as DMItem)?.Model;
-        }
-
-        private void ClearClicked(object sender, RoutedEventArgs e)
-        {
-            context.DataList.Clear();
-        }
+        
     }
 }

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using BilibiliDM_PluginFramework;
 using System.Windows.Interop;
+using BililiveDebugPlugin;
 
 namespace InteractionGame 
 {
@@ -28,13 +29,7 @@ namespace InteractionGame
         }
         protected virtual Dictionary<string,int> GetPlayerGroupMap()
         {
-            return new Dictionary<string, int>
-            {
-                { "蓝",0 },
-                { "红",1 },
-                { "绿",2 },
-                { "黄",3 },
-            };
+            return DebugPlugin.ColorMapIndex;
         }
         protected virtual Regex SelectGrouRegex => new Regex("(.+)");
         protected virtual void ParseChooseGroup(Msg msg)

@@ -51,7 +51,9 @@
     <Compile Include="BililiveDebugPlugin.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
+    <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
+    <Compile Include="InteractionGame\IGameStateObserver.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />

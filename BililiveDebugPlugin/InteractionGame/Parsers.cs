@@ -75,6 +75,7 @@ namespace InteractionGame
     public abstract class IDyMsgParser<IT>
         where IT : IContext
     {
+        protected Dictionary<long,UserData> UserDataDict = new Dictionary<long,UserData>();
         protected IT InitCtx;
         public void Init(IT it)
         {
@@ -82,6 +83,35 @@ namespace InteractionGame
         }
         public abstract (int, int) Parse(DyMsgOrigin msgOrigin);
         public abstract bool Demand(Msg msg, MsgType barType);
+
+        public virtual void ClearUserData()
+        {
+            UserDataDict.Clear();
+        }
+        public List<UserData> GetSortedUserData()
+        {
+            var ls = UserDataDict.Values.ToList();
+            ls.Sort((a,b) => b.score.CompareTo(a.score));
+            return ls;
+        }
+        protected void UpdateUserData(long id,int score,int soldier_num,string name,string icon)
+        {
+            if (UserDataDict.ContainsKey(id))
+            {
+                UserDataDict[id].score += score;
+                UserDataDict[id].soldier_num += soldier_num;
+            }
+            else
+            {
+                UserDataDict.Add(id,new UserData()
+                {
+                    name = name,
+                    icon = icon,
+                    score = score,
+                    soldier_num = soldier_num
+                });
+            }
+        }
     }
     public class StaticMsgDemand
     {
@@ -90,6 +120,13 @@ namespace InteractionGame
             return (barType == MsgType.Interact || barType == MsgType.GiftSend ||
                 barType == MsgType.Comment);
         }
+    }
+    public class UserData
+    {
+        public string name;
+        public string icon;
+        public long score;
+        public int soldier_num;
     }
     public class PlayerBirthdayParser<IT> : IDyPlayerParser<IT>
          where IT : IContext
@@ -150,6 +187,7 @@ namespace InteractionGame
                     //if(Appsetting.Current.PrintBarrage)
                     {
                         InitCtx.Log($"{msgOrigin.msg.UserName}选择出{c}个{id}");
+                        UpdateUserData(msgOrigin.msg.UserID_long, c * (id + 1), c, msgOrigin.msg.UserName, "");
                     }
                     return (id, c);
                 }
@@ -157,12 +195,15 @@ namespace InteractionGame
             }
             if(msgOrigin.barType == MsgType.GiftSend)
             {
+                int id = 0;
                 switch(msgOrigin.msg.GiftName)
                 {
-                    case "小花花": return (7, msgOrigin.msg.GiftCount);
-                    case "牛哇牛哇": return (8, msgOrigin.msg.GiftCount);
+                    case "小花花":id = 7;break;  
+                    case "牛哇牛哇": id = 8;break;  
                     //case "干杯": return (8, msgOrigin.msg.GiftCount);
                 }
+                UpdateUserData(msgOrigin.msg.UserID_long, msgOrigin.msg.GiftCount * (id + 1), msgOrigin.msg.GiftCount, msgOrigin.msg.UserName, "");
+                return (id, msgOrigin.msg.GiftCount);
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like)
             {

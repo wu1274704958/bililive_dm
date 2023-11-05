@@ -61,7 +61,7 @@ namespace InteractionGame
                 {
                     //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
                     TargetDict[uid] = v;
-                    InitCtx.PrintGameMsg($"{uName}选择了{match.Groups[1].Value}作为进攻目标");
+                    InitCtx.PrintGameMsg($"{uName}选择{match.Groups[1].Value}方作为进攻目标");
                     return true;
                 }
             }
@@ -186,10 +186,10 @@ namespace InteractionGame
             {
                 v = new Random((int)DateTime.Now.Ticks).Next(0,2);
                 SetGroup(msgOrigin.msg.UserID_long, v);
-                if (msgOrigin.barType == MsgType.Welcome)
-                {
-                    InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，随机加入{DebugPlugin.GetColorById(v)}");
-                }
+            }
+            if (msgOrigin.barType == MsgType.Welcome)
+            {
+                InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，阵营{DebugPlugin.GetColorById(v)}方");
             }
             return v;
         }

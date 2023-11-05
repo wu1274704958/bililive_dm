@@ -87,6 +87,21 @@ namespace Interaction
             Interlocked.Exchange(ref ExpectNextIdx, 0);
             _context = it;
             m_MsgDispatcher = dispatcher;
+
+            DelAllLuaFiles();
+        }
+
+        private void DelAllLuaFiles()
+        {
+            var fs = LuaDir.GetFiles();
+            foreach (var f in fs)
+            {
+                var ss = f.Name.Split('.');
+                if(int.TryParse(ss[0], out var idx) && idx <= MAX_ExecutedIdx && idx >= 0)
+                {
+                    f.Delete();
+                }
+            }
         }
 
         public void OnTick()
@@ -135,7 +150,7 @@ namespace Interaction
         {
             lock (m_ExecCode)
             {
-                return m_ExecCode.Length > 0;
+                return m_ExecCode.Length > 0 && SubLooped(CurrentWriteIdx,GameNextIdx,20) < 10;
             };
         }
 
@@ -150,7 +165,6 @@ namespace Interaction
                 try
                 {
                     fi = new FileInfo($"{LuaDir.FullName}\\{GameNextIdx}.lua");
-                    if(fi.Exists) fi.Delete();
                     stream = fi.CreateText();
                     stream.Write(m_ExecCode);
                     Interlocked.Exchange(ref ExpectNextIdx, GetNextIdx(GameNextIdx));

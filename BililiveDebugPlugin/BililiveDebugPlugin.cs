@@ -15,13 +15,13 @@ namespace BililiveDebugPlugin
         private MessageDispatcher<
             PlayerBirthdayParser<DebugPlugin>,
             MsgGiftParser<DebugPlugin>,
-            Interaction.DefAoe4Bridge, DebugPlugin> messageDispatcher;
+            DefAoe4Bridge<DebugPlugin>, DebugPlugin> messageDispatcher;
         private MainPage mp;
         private Action<DyMsg> m_AppendMsgAction;
         private DateTime m_AutoAppendMsgTime;
         private Random m_Rand;
         private int LastState = 0;
-        public static readonly bool AutoAppendMsgOnIdle = true;
+        public static readonly bool AutoAppendMsgOnIdle = false;
         public static readonly int EndDelay = 7000;
         public static readonly Dictionary<string, int> ColorMapIndex = new Dictionary<string, int>
         {
@@ -30,7 +30,12 @@ namespace BililiveDebugPlugin
             { "绿",2 },
             { "黄",3 },
         };
-        private Aoe4GameState m_GameState = new Aoe4GameState();
+        public static readonly List<string> SquadNameMap = new List<string>
+        {
+            "长矛兵","长弓兵","中国武士","弩手","骑士","长剑武士","箭塔象","蜂窝炮","乌尔班巨炮"
+        };
+        private IGameStateObserver<EAoe4State, Aoe4StateData> m_GameState = new Aoe4GameState();
+        private List<(Action, DateTime)> TaskList = new List<(Action, DateTime)>();
         public DebugPlugin()
         {
             ReceivedDanmaku += OnReceivedDanmaku;
@@ -39,6 +44,18 @@ namespace BililiveDebugPlugin
             PluginCont = "copyliu@gmail.com";
             PluginVer = "v0.0.2";
             PluginDesc = "它看着很像F12";
+        }
+        public static string GetSquadName(int id)
+        {
+            var ls = SquadNameMap;
+            string name = "";
+            if (id >= 0 && id < ls.Count)
+                name = ls[id];
+            return name;
+        }
+        public Aoe4StateData CheckState(EAoe4State state)
+        {
+            return m_GameState.CheckState(state);
         }
 
 
@@ -52,7 +69,7 @@ namespace BililiveDebugPlugin
         public override void Admin()
         {
             base.Admin();
-            messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>, MsgGiftParser<DebugPlugin>, Interaction.DefAoe4Bridge, DebugPlugin>();
+            messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>, MsgGiftParser<DebugPlugin>,DefAoe4Bridge<DebugPlugin>, DebugPlugin>();
             messageDispatcher.Init(this);
             messageDispatcher.Start();
             m_GameState.Init();
@@ -92,9 +109,8 @@ namespace BililiveDebugPlugin
             if (AutoAppendMsgOnIdle)
             {
                 var span = DateTime.Now - m_AutoAppendMsgTime;
-                if (span.TotalSeconds >= 60)
+                if (span.TotalSeconds >= 90)
                 {
-                    //Log($"AppendRandomMsg {m_AppendMsgAction != null}");
                     AppendRandomMsg(0, 0, 7, 1, 20);
                     AppendRandomMsg(1, 0, 7, 1, 20);
                     m_AutoAppendMsgTime = DateTime.Now;
@@ -104,13 +120,21 @@ namespace BililiveDebugPlugin
             var d = m_GameState.CheckState(EAoe4State.Default);
             if (LastState != 2 && d.r == 2)
             {
-                Log($"{GetColorById(d.g)}方获胜！！！");
+                PrintGameMsg($"{GetColorById(d.g)}方获胜！！！积分展示制作中，敬请期待");
                 var data = messageDispatcher.MsgParser.GetSortedUserData();
                 messageDispatcher.MsgParser.ClearUserData();
                 //todo show settlement
                 Thread.Sleep(EndDelay);
             }
             LastState = d.r;
+            for(int i = TaskList.Count - 1;i >= 0;i--)
+            {
+                if (TaskList[i].Item2 >= DateTime.Now)
+                {
+                    TaskList[i].Item1.Invoke();
+                    TaskList.RemoveAt(i);
+                }
+            }
         }
 
         public static string GetColorById(int id)
@@ -132,13 +156,30 @@ namespace BililiveDebugPlugin
             {
                 var Msg = m_Rand.Next(sid_s, sid_e + 1);
                 //Log($"AppendRandomMsg Msg = {Msg}");
-                m_AppendMsgAction?.Invoke(new DyMsg(){ Player = p,  Msg = Msg});
+                AppendMsg(new DyMsg(){ Player = p,  Msg = Msg});
             }
+        }
+        
+        public void AppendMsg(DyMsg msg)
+        {
+            m_AppendMsgAction?.Invoke(msg);
+        }
+        public void AppendMsg(DyMsg msg, float delay)
+        {
+            TaskList.Add((() =>
+            {
+                m_AppendMsgAction?.Invoke(msg);
+            }, DateTime.Now + TimeSpan.FromSeconds(delay)));
         }
 
         public void OnAppendMsg(DyMsg msg)
         {
             m_AutoAppendMsgTime = DateTime.Now;
+        }
+
+        public void PrintGameMsg(string text)
+        {
+            messageDispatcher.Aoe4Bridge.ExecPrintMsg(text);
         }
     }
 }

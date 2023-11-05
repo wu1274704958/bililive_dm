@@ -2,12 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.IO;
 using BilibiliDM_PluginFramework;
-using System.Windows.Interop;
 using BililiveDebugPlugin;
 
 namespace InteractionGame 
@@ -15,15 +11,19 @@ namespace InteractionGame
     using Msg = DanmakuModel;
     using MsgType = MsgTypeEnum;
     public abstract class IDyPlayerParser<IT>
-        where IT : IContext
+        where IT : class,IContext
     {
         private Dictionary<string, int> PlayerGroupMap;
         private ConcurrentDictionary<long, int> GroupDict = new ConcurrentDictionary<long, int>();
+        private ConcurrentDictionary<long, int> TargetDict = new ConcurrentDictionary<long, int>();
         private Regex mSelectGrouRegex;
         protected IT InitCtx;
-        public void Init(IT it)
+        protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
+
+        public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
         {
             InitCtx = it;
+            m_MsgDispatcher = dispatcher;
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
         }
@@ -32,24 +32,42 @@ namespace InteractionGame
             return DebugPlugin.ColorMapIndex;
         }
         protected virtual Regex SelectGrouRegex => new Regex("(.+)");
-        protected virtual void ParseChooseGroup(Msg msg)
+        protected virtual void ParseChooseGroup(long uid,string con,string uName)
         {
-            if (msg.CommentText == null) return;
-            var con = msg.CommentText.Trim();
             var match = mSelectGrouRegex.Match(con);
             if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value,out var v))
             {
-                if(!GroupDict.TryAdd(msg.UserID_long, v))
+                if(!GroupDict.TryAdd(uid, v))
                 {
-                    GroupDict[msg.UserID_long] = v;
+                    GroupDict[uid] = v;
                 }
                 //if(Appsetting.Current.PrintBarrage)
                 {
-                    InitCtx.Log($"{msg.UserName}选择了{match.Groups[1].Value}");
+                    InitCtx.PrintGameMsg($"{uName}选择加入{match.Groups[1].Value}方");
                 }
             }
+            else
+            {
+                TryParseChangTarget(uid,con,uName);
+            }
         }
-        protected virtual int GetGroupById(long id)
+        protected bool TryParseChangTarget(long uid, string con, string uName)
+        {
+            var match = new Regex("攻(.+)").Match(con);
+            if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value, out var v))
+            {
+                var self = GetGroupById(uid);
+                if (self != v)
+                {
+                    //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
+                    TargetDict[uid] = v;
+                    InitCtx.PrintGameMsg($"{uName}选择了{match.Groups[1].Value}作为进攻目标");
+                    return true;
+                }
+            }
+            return false;
+        }
+        public virtual int GetGroupById(long id)
         {
             if(GroupDict.TryGetValue(id,out var r))
             {
@@ -68,18 +86,42 @@ namespace InteractionGame
         {
             return GroupDict.ContainsKey(id);
         }
+        public int GetTarget(long id)
+        {
+            if(TargetDict.TryGetValue(id, out var r))
+            {  
+                return r; 
+            }
+            return -1;
+        }
+
+        public virtual void Stop()
+        {
+            InitCtx = null;
+            m_MsgDispatcher = null;
+            GroupDict.Clear();
+        }
         public abstract int Parse(DyMsgOrigin msgOrigin);
         public abstract bool Demand(Msg msg, MsgType barType);
         
     }
     public abstract class IDyMsgParser<IT>
-        where IT : IContext
+        where IT : class,IContext
     {
         protected Dictionary<long,UserData> UserDataDict = new Dictionary<long,UserData>();
         protected IT InitCtx;
-        public void Init(IT it)
+        protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
+
+        public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
         {
             InitCtx = it;
+            m_MsgDispatcher = dispatcher;
+        }
+        public virtual void Stop()
+        {
+            InitCtx = null;
+            m_MsgDispatcher = null;
+            UserDataDict.Clear();
         }
         public abstract (int, int) Parse(DyMsgOrigin msgOrigin);
         public abstract bool Demand(Msg msg, MsgType barType);
@@ -129,7 +171,7 @@ namespace InteractionGame
         public int soldier_num;
     }
     public class PlayerBirthdayParser<IT> : IDyPlayerParser<IT>
-         where IT : IContext
+         where IT : class,IContext
     {
         public override bool Demand(Msg msg, MsgType barType)
         {
@@ -138,12 +180,16 @@ namespace InteractionGame
 
         public override int Parse(DyMsgOrigin msgOrigin)
         {
-            ParseChooseGroup(msgOrigin.msg);
+            ParseChooseGroup(msgOrigin.msg.UserID_long,msgOrigin.msg.CommentText.Trim(),msgOrigin.msg.UserName);
             var v = GetGroupById(msgOrigin.msg.UserID_long);
             if(v == -1)
             {
                 v = new Random((int)DateTime.Now.Ticks).Next(0,2);
                 SetGroup(msgOrigin.msg.UserID_long, v);
+                if (msgOrigin.barType == MsgType.Welcome)
+                {
+                    InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，随机加入{DebugPlugin.GetColorById(v)}");
+                }
             }
             return v;
         }
@@ -156,7 +202,7 @@ namespace InteractionGame
     }
 
     public class MsgGiftParser<IT> : IDyMsgParser<IT>
-        where IT : IContext
+        where IT : class,IContext
     {                                                                             //0, 1, 2,3 ,4, 5,6
         protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 10,9, 7,9, 5, 8,3 };
         public override bool Demand(Msg msg, MsgType barType)
@@ -186,12 +232,22 @@ namespace InteractionGame
                     }
                     //if(Appsetting.Current.PrintBarrage)
                     {
-                        InitCtx.Log($"{msgOrigin.msg.UserName}选择出{c}个{id}");
+                        
+                        InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}选择出{c}个{BililiveDebugPlugin.DebugPlugin.GetSquadName(id)}");
                         UpdateUserData(msgOrigin.msg.UserID_long, c * (id + 1), c, msgOrigin.msg.UserName, "");
+                        var target = m_MsgDispatcher.GetPlayerParser().GetTarget(msgOrigin.msg.UserID_long);
+                        var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(msgOrigin.msg.UserID_long);
+                        if (target < 0)
+                        {
+                            m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, id,c);
+                        }
+                        else
+                        {
+                            m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, id,target + 1, c);
+                        }
                     }
-                    return (id, c);
                 }
-                return (0, 0);
+                return (0,0);
             }
             if(msgOrigin.barType == MsgType.GiftSend)
             {
@@ -202,6 +258,7 @@ namespace InteractionGame
                     case "牛哇牛哇": id = 8;break;  
                     //case "干杯": return (8, msgOrigin.msg.GiftCount);
                 }
+                InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}选择出{msgOrigin.msg.GiftCount}个{BililiveDebugPlugin.DebugPlugin.GetSquadName(id)}");
                 UpdateUserData(msgOrigin.msg.UserID_long, msgOrigin.msg.GiftCount * (id + 1), msgOrigin.msg.GiftCount, msgOrigin.msg.UserName, "");
                 return (id, msgOrigin.msg.GiftCount);
             }

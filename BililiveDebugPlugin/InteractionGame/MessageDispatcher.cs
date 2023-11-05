@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BilibiliDM_PluginFramework;
+using BililiveDebugPlugin.InteractionGame;
 
 namespace InteractionGame
 {
@@ -36,22 +37,30 @@ namespace InteractionGame
         void OnStop();
         void OnTick();
         void OnAppendMsg(DyMsg msg);
+        Aoe4StateData CheckState(EAoe4State state);
+        void AppendMsg(DyMsg msg);
+        void AppendMsg(DyMsg msg,float delay);
+        void PrintGameMsg(string text);
     }
 
     public interface ILocalMsgDispatcher<IT>
+        where IT:class,IContext
     {
         void Start();
         bool Demand(Msg msg, MsgType barType);
         void Dispatch(Msg msg, MsgType barType);
         void Stop();
         void Init(IT it);
+        IAoe4Bridge<IT> GetBridge();
+        IDyMsgParser<IT> GetMsgParser();
+        IDyPlayerParser<IT> GetPlayerParser();
     }
 
     public class MessageDispatcher<PP,MP,B,IT> : ILocalMsgDispatcher<IT>
         where PP : IDyPlayerParser<IT>,new()
         where MP : IDyMsgParser<IT>,new()
-        where B : IAoe4Bridge, new()
-        where IT:IContext
+        where B : IAoe4Bridge<IT>,new()
+        where IT:class,IContext
     {
         private Int32 IsRunning = 0;
         private Int32 IsEmit = 0;
@@ -67,6 +76,7 @@ namespace InteractionGame
 
         public PP PlayerParser => pp;
         public MP MsgParser => mp;
+        public B Aoe4Bridge => bridge;
         public MessageDispatcher()
         {
             queue = new ConcurrentQueue<DyMsg>();
@@ -121,6 +131,9 @@ namespace InteractionGame
         {
             Interlocked.Exchange(ref IsRunning, 0);
             thread.Join();
+            bridge.Stop();
+            pp.Stop();
+            mp.Stop();
             InitCtx.OnStop();
         }
        
@@ -136,9 +149,10 @@ namespace InteractionGame
                 }
                 else
                 {
-                    InitCtx.OnTick();
                     Thread.Sleep(100);
                 }
+                InitCtx.OnTick();
+                bridge.OnTick();
             }
             InitCtx.Log("取消注册全局快捷键");
             HotKeyManager.UnregisterHotKey(MY_HOTKEY_ID_E);
@@ -180,9 +194,25 @@ namespace InteractionGame
         public void Init(IT it)
         {
             InitCtx = it;
-            pp.Init(it);
-            mp.Init(it);
+            pp.Init(it,this);
+            mp.Init(it,this);
+            bridge.Init(it,this);
             InitCtx.OnInit(AppendMsg);
+        }
+
+        public IAoe4Bridge<IT> GetBridge()
+        {
+            return bridge;
+        }
+
+        public IDyMsgParser<IT> GetMsgParser()
+        {
+            return mp;
+        }
+
+        public IDyPlayerParser<IT> GetPlayerParser()
+        {
+           return pp;
         }
     }
 }

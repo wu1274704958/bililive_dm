@@ -10,7 +10,7 @@ namespace BililiveDebugPlugin.InteractionGame
 {
     public enum EAoe4State : int { 
         Default = 0,
-        Winner
+        ExecExtern = 1,
     }
 
     public struct Aoe4StateData

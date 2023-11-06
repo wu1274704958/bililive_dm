@@ -58,6 +58,7 @@ namespace Interaction
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
         private ILocalMsgDispatcher<IT> m_MsgDispatcher;
+        private static readonly int NextAdded = 1;
 
         public void SendMsg(DyMsg msg)
         {
@@ -110,7 +111,7 @@ namespace Interaction
             if (_context != null && _windowInfo != null)
             {
                 var state = _context.CheckState(EAoe4State.ExecExtern);
-                if(state.r != ExpectNextIdx)
+                if(!(Math.Abs(state.r - ExpectNextIdx) < NextAdded))
                 {
                     _context.Log($"Game Exec Id {state.r} != ExpectNextIdx {ExpectNextIdx}");
                 }
@@ -190,7 +191,7 @@ namespace Interaction
 
         private int GetNextIdx(int i)
         {
-            var r = i + 1;
+            var r = i + NextAdded;
             if (r > MAX_ExecutedIdx)
                 r = 0;
             return r;

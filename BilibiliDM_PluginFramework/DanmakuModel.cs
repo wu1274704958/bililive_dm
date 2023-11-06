@@ -153,7 +153,13 @@ namespace BilibiliDM_PluginFramework
 
                     RawDataJToken = obj;
                     var cmd = obj["cmd"].ToString();
-                    switch (cmd)
+
+                        if(obj.TryGetValue("data", out var data))
+                        {
+                            if(((JObject)data).TryGetValue("uface",out var uface))
+                                UserFace = uface.ToString();
+                        }
+                        switch (cmd)
                     {
                         case "LIVE":
                             MsgType = MsgTypeEnum.LiveStart;
@@ -700,6 +706,34 @@ namespace BilibiliDM_PluginFramework
         ///     </para>
         /// </summary>
         public string UserName { get; set; }
+
+        /// <summary>
+        ///     消息触发者头像
+        ///     <para>
+        ///         此项有值的消息类型：
+        ///         <list type="bullet">
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.Comment" />
+        ///             </item>
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.GiftSend" />
+        ///             </item>
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.Welcome" />
+        ///             </item>
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.WelcomeGuard" />
+        ///             </item>
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.GuardBuy" />
+        ///             </item>
+        ///             <item>
+        ///                 <see cref="MsgTypeEnum.Interact" />
+        ///             </item>
+        ///         </list>
+        ///     </para>
+        /// </summary>
+        public string UserFace { get; set; }
 
         /// <summary>
         ///     消息触发者用户ID, 弃用

@@ -237,8 +237,8 @@ namespace BilibiliDM_PluginFramework
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
             {
-                dynamic mw = Application.Current.MainWindow;
-                mw.logging(PluginName + " " + text);
+                dynamic mw = Application.Current?.MainWindow;
+                mw?.logging(PluginName + " " + text);
             }));
         }
 

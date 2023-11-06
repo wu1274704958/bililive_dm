@@ -204,7 +204,7 @@ namespace InteractionGame
     public class MsgGiftParser<IT> : IDyMsgParser<IT>
         where IT : class,IContext
     {                                                                             //0, 1, 2,3 ,4, 5,6
-        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 10,9, 7,9, 5, 8,3 };
+        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 10,9, 7,9, 5, 8,3,2,1,1,1 };
         public override bool Demand(Msg msg, MsgType barType)
         {
             return StaticMsgDemand.Demand(msg, barType);
@@ -223,7 +223,7 @@ namespace InteractionGame
                     for (int i = 0; i < match.Groups[1].Length;++i)
                     {
                         int v = match.Groups[1].Value[i] - 48; 
-                        if (v >= 0 && v <= 6 && (id == v || id == -1))
+                        if (v >= 0 && v <= 8 && (id == v || id == -1))
                         {
                             ++c;
                             if(id == -1) id = v;

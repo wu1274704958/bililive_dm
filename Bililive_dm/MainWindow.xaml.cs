@@ -257,6 +257,25 @@ namespace Bililive_dm
                         }
                     }
 
+                    //foreach (var dmPlugin in App.Plugins)
+                    //{
+                    //    try
+                    //    {
+                    //        var r = new Random((int)DateTime.Now.Ticks);
+                    //        var e = new DanmakuModel();
+                    //        e.UserID_long = r.Next(1, 100);
+                    //        e.UserName = string.Format("name_{0}", e.UserID_long);
+                    //        e.MsgType = MsgTypeEnum.Comment;
+                    //        e.CommentText = "0";
+                    //        var m = new ReceivedDanmakuArgs(){ Danmaku = e };
+                    //        dmPlugin.MainReceivedDanMaku(m);
+                    //    }
+                    //    catch (Exception ex)
+                    //    {
+                    //        MessageBox.Show(string.Format(ex.ToString()));
+                    //    }
+                    //}
+
                     Thread.Sleep(30);
                 }
             })
@@ -434,7 +453,7 @@ namespace Bililive_dm
                         {
                             _static.DanmakuCountRaw += bbb;
                         }
-
+                        
                         Thread.Sleep(1000);
                     }
                 }

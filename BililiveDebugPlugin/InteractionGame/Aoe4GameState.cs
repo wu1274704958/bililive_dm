@@ -47,6 +47,22 @@ namespace BililiveDebugPlugin.InteractionGame
                 b = (int)(pixel & 0x00FF0000) >> 16 };
         }
 
+        public Aoe4StateData CheckState(EAoe4State state,IntPtr hwnd)
+        {
+            int x = ((int)state * 20) + 10;
+            int y = 10;
+            Point p = new Point(x, y);//取置顶点坐标 
+            IntPtr hdc = GetDC(hwnd);
+            uint pixel = GetPixel(hdc, x, y);
+            ReleaseDC(IntPtr.Zero, hdc);
+            return new Aoe4StateData()
+            {
+                r = (int)(pixel & 0x000000FF),
+                g = (int)(pixel & 0x0000FF00) >> 8,
+                b = (int)(pixel & 0x00FF0000) >> 16
+            };
+        }
+
         public void Init()
         {
 

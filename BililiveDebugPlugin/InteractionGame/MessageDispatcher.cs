@@ -38,6 +38,7 @@ namespace InteractionGame
         void OnTick();
         void OnAppendMsg(DyMsg msg);
         Aoe4StateData CheckState(EAoe4State state);
+        Aoe4StateData CheckState(EAoe4State state, IntPtr hwnd);
         void AppendMsg(DyMsg msg);
         void AppendMsg(DyMsg msg,float delay);
         void PrintGameMsg(string text);

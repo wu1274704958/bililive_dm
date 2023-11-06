@@ -89,6 +89,7 @@ namespace Interaction
             m_MsgDispatcher = dispatcher;
 
             DelAllLuaFiles();
+            _windowInfo = FindWindow();
         }
 
         private void DelAllLuaFiles()
@@ -106,7 +107,7 @@ namespace Interaction
 
         public void OnTick()
         {
-            if (_context != null)
+            if (_context != null && _windowInfo != null)
             {
                 var state = _context.CheckState(EAoe4State.ExecExtern);
                 if(state.r != ExpectNextIdx)
@@ -150,7 +151,7 @@ namespace Interaction
         {
             lock (m_ExecCode)
             {
-                return m_ExecCode.Length > 0 && SubLooped(CurrentWriteIdx,GameNextIdx,20) < 10;
+                return m_ExecCode.Length > 0 && IsLargeLooped(GameNextIdx, CurrentWriteIdx, 20);
             };
         }
 
@@ -166,9 +167,9 @@ namespace Interaction
                 {
                     fi = new FileInfo($"{LuaDir.FullName}\\{GameNextIdx}.lua");
                     stream = fi.CreateText();
-                    stream.Write(m_ExecCode);
                     Interlocked.Exchange(ref ExpectNextIdx, GetNextIdx(GameNextIdx));
                     stream.WriteLine($"_mod.ExecIdx = {ExpectNextIdx};");
+                    stream.Write(m_ExecCode);
                     stream.Flush();
                     m_ExecCode.Clear();
                     Interlocked.Exchange(ref CurrentWriteIdx, GameNextIdx);

@@ -10,6 +10,7 @@ namespace BililiveDebugPlugin.InteractionGame
     {
         void Init();
         T CheckState(E state);
+        T CheckState(EAoe4State state, IntPtr hwnd);
         void Stop();
     }
 }

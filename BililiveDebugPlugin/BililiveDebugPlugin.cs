@@ -12,6 +12,7 @@ namespace BililiveDebugPlugin
 {
     public class DebugPlugin : DMPlugin ,IContext
     {
+        private bool IsStart = false;
         private MessageDispatcher<
             PlayerBirthdayParser<DebugPlugin>,
             MsgGiftParser<DebugPlugin>,
@@ -57,11 +58,14 @@ namespace BililiveDebugPlugin
         {
             return m_GameState.CheckState(state);
         }
-
+        public Aoe4StateData CheckState(EAoe4State state, IntPtr hwnd)
+        {
+            return m_GameState.CheckState(state, hwnd);
+        }
 
         private void OnReceivedDanmaku(object sender, ReceivedDanmakuArgs e)
         {
-            if (messageDispatcher.Demand(e.Danmaku, e.Danmaku.MsgType))
+            if (messageDispatcher?.Demand(e.Danmaku, e.Danmaku.MsgType) ?? false)
                 messageDispatcher.Dispatch(e.Danmaku, e.Danmaku.MsgType);
         }
 
@@ -69,11 +73,6 @@ namespace BililiveDebugPlugin
         public override void Admin()
         {
             base.Admin();
-            messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>, MsgGiftParser<DebugPlugin>,DefAoe4Bridge<DebugPlugin>, DebugPlugin>();
-            messageDispatcher.Init(this);
-            messageDispatcher.Start();
-            m_GameState.Init();
-            Log("Start ...");
             //mp = new MainPage();
             //mp.Show();
         }
@@ -81,14 +80,34 @@ namespace BililiveDebugPlugin
         public override void Start()
         {
             base.Start();
+            IsStart = true;
+
+            messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>, MsgGiftParser<DebugPlugin>, DefAoe4Bridge<DebugPlugin>, DebugPlugin>();
+            messageDispatcher.Init(this);
+            messageDispatcher.Start();
+            m_GameState.Init();
+            Log("Start ...");
         }
 
         public override void Stop()
         {
             base.Stop();
+            RealStop();
+            IsStart = false;
+        }
+
+        private void RealStop()
+        {
+            if (!IsStart) return;
             messageDispatcher.Stop();
             m_GameState.Stop();
             messageDispatcher = null;
+        }
+
+        public override void DeInit()
+        {
+            base.DeInit();
+            RealStop();
         }
 
         public void OnInit(Action<DyMsg> appendMsgAction)

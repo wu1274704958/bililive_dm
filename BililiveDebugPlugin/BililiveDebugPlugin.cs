@@ -140,9 +140,11 @@ namespace BililiveDebugPlugin
             if (LastState != 2 && d.r == 2)
             {
                 PrintGameMsg($"{GetColorById(d.g)}方获胜！！！积分展示制作中，敬请期待");
+                messageDispatcher.MsgParser.AddWinScore(d.g,300);
                 var data = messageDispatcher.MsgParser.GetSortedUserData();
                 messageDispatcher.MsgParser.ClearUserData();
                 //todo show settlement
+
                 Thread.Sleep(EndDelay);
             }
             LastState = d.r;

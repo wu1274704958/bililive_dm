@@ -188,21 +188,24 @@ namespace InteractionGame
     {
         public override bool Demand(Msg msg, MsgType barType)
         {
-            return StaticMsgDemand.Demand(msg, barType);
+            return StaticMsgDemand.Demand(msg, barType) || barType == MsgType.Welcome;
         }
 
         public override int Parse(DyMsgOrigin msgOrigin)
         {
+            if(msgOrigin == null || msgOrigin.msg.CommentText == null) return 0;
             ParseChooseGroup(msgOrigin.msg.UserID_long,msgOrigin.msg.CommentText.Trim(),msgOrigin.msg.UserName);
             var v = GetGroupById(msgOrigin.msg.UserID_long);
+            var str = "";
             if(v == -1)
             {
                 v = new Random((int)DateTime.Now.Ticks).Next(0,2);
+                str = "随机加入";
                 SetGroup(msgOrigin.msg.UserID_long, v);
             }
             if (msgOrigin.barType == MsgType.Welcome)
             {
-                InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，阵营{DebugPlugin.GetColorById(v)}方");
+                InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，{str}阵营{DebugPlugin.GetColorById(v)}方");
             }
             return v;
         }

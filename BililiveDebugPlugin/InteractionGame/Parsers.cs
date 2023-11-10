@@ -133,25 +133,37 @@ namespace InteractionGame
         public List<UserData> GetSortedUserData()
         {
             var ls = UserDataDict.Values.ToList();
-            ls.Sort((a,b) => b.score.CompareTo(a.score));
+            ls.Sort((a,b) => b.Score.CompareTo(a.Score));
             return ls;
         }
         protected void UpdateUserData(long id,int score,int soldier_num,string name,string icon)
         {
             if (UserDataDict.ContainsKey(id))
             {
-                UserDataDict[id].score += score;
-                UserDataDict[id].soldier_num += soldier_num;
+                UserDataDict[id].Score += score;
+                UserDataDict[id].Soldier_num += soldier_num;
             }
             else
             {
                 UserDataDict.Add(id,new UserData()
                 {
-                    name = name,
-                    icon = icon,
-                    score = score,
-                    soldier_num = soldier_num
+                    Name = name,
+                    Icon = icon,
+                    Score = score,
+                    Soldier_num = soldier_num
                 });
+            }
+        }
+
+        public void AddWinScore(int g, int score)
+        {
+            foreach (var key in UserDataDict)
+            {
+                key.Value.Group = m_MsgDispatcher.GetPlayerParser().GetGroupById(key.Key);
+                if(g == key.Value.Group + 1)
+                {
+                    key.Value.Score += score;
+                }
             }
         }
     }
@@ -165,10 +177,11 @@ namespace InteractionGame
     }
     public class UserData
     {
-        public string name;
-        public string icon;
-        public long score;
-        public int soldier_num;
+        public string Name;
+        public string Icon;
+        public long Score;
+        public int Soldier_num;
+        public int Group;
     }
     public class PlayerBirthdayParser<IT> : IDyPlayerParser<IT>
          where IT : class,IContext

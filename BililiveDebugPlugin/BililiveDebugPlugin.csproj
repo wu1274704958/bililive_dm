@@ -56,6 +56,7 @@
     <Compile Include="InteractionGame\IGameStateObserver.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
+    <Compile Include="InteractionGame\SM_SendMsg.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

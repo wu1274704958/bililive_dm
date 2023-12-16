@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace BililiveDebugPlugin.InteractionGame
 {
-    interface IGameStateObserver<E,T>
+    public interface IGameStateObserver<E,T>
     {
         void Init();
         T CheckState(E state);
         T CheckState(EAoe4State state, IntPtr hwnd);
+        T GetData(int x,int y, IntPtr hwnd);
         void Stop();
     }
 }

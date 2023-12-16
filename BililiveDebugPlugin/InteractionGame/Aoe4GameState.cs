@@ -11,6 +11,7 @@ namespace BililiveDebugPlugin.InteractionGame
     public enum EAoe4State : int { 
         Default = 0,
         ExecExtern = 1,
+        VillagerState = 2,
     }
 
     public struct Aoe4StateData
@@ -35,7 +36,7 @@ namespace BililiveDebugPlugin.InteractionGame
         static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
         public Aoe4StateData CheckState(EAoe4State state)
         {
-            int x = ((int)state * 20) + 10;
+            int x = ((int)state * 30) + 10;
             int y = 10;
             Point p = new Point(x,y);//取置顶点坐标 
             IntPtr hdc = GetDC(IntPtr.Zero);
@@ -54,7 +55,7 @@ namespace BililiveDebugPlugin.InteractionGame
             Point p = new Point(x, y);//取置顶点坐标 
             IntPtr hdc = GetDC(hwnd);
             uint pixel = GetPixel(hdc, x, y);
-            ReleaseDC(IntPtr.Zero, hdc);
+            ReleaseDC(hwnd, hdc);
             return new Aoe4StateData()
             {
                 r = (int)(pixel & 0x000000FF),
@@ -71,6 +72,20 @@ namespace BililiveDebugPlugin.InteractionGame
         public void Stop()
         {
 
+        }
+
+        public Aoe4StateData GetData(int x, int y, IntPtr hwnd)
+        {
+            Point p = new Point(x, y);//取置顶点坐标 
+            IntPtr hdc = GetDC(hwnd);
+            uint pixel = GetPixel(hdc, x, y);
+            ReleaseDC(hwnd, hdc);
+            return new Aoe4StateData()
+            {
+                r = (int)(pixel & 0x000000FF),
+                g = (int)(pixel & 0x0000FF00) >> 8,
+                b = (int)(pixel & 0x00FF0000) >> 16
+            };
         }
     }
 }

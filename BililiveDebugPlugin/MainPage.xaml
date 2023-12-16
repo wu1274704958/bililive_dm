@@ -3,45 +3,33 @@
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             WindowStyle="None" ResizeMode="CanMinimize"
             Title="walterlv demo" Height="450" Width="800">
-        <WindowChrome.WindowChrome>
-            <WindowChrome GlassFrameThickness="-1" />
-        </WindowChrome.WindowChrome>
-        <Window.Template>
-            <ControlTemplate TargetType="Window">
-                <Border Padding="64" Background="Transparent">
-                    <Border CornerRadius="16" Background="White">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="64" />
-                        </Border.Effect>
-                        <ContentPresenter ClipToBounds="True" />
-                    </Border>
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="-1" />
+    </WindowChrome.WindowChrome>
+    <Window.Template>
+        <ControlTemplate TargetType="Window">
+            <Border Padding="64" Background="Transparent">
+                <Border CornerRadius="16" Background="White">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="64" />
+                    </Border.Effect>
+                    <ContentPresenter ClipToBounds="True" />
                 </Border>
-            </ControlTemplate>
-        </Window.Template>
-        <Grid>
-          <Rectangle x:Name="BackgroundRectangle" Margin="0 16" Fill="#d0d1d6">
-              <Rectangle.RenderTransform>
-                  <TranslateTransform />
-              </Rectangle.RenderTransform>
-              <Rectangle.Triggers>
-                  <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                      <BeginStoryboard>
-                          <BeginStoryboard.Storyboard>
-                              <Storyboard RepeatBehavior="Forever">
-                                  <DoubleAnimation Storyboard.TargetName="BackgroundRectangle"
-                                                   Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                   From="800" To="-800" />
-                              </Storyboard>
-                          </BeginStoryboard.Storyboard>
-                      </BeginStoryboard>
-                  </EventTrigger>
-              </Rectangle.Triggers>
-          </Rectangle>
-            <TextBlock FontSize="20" Foreground="#0083d0"
-                   TextAlignment="Center" VerticalAlignment="Center">
-                <Run Text="欢迎访问吕毅的博客" />
-                <LineBreak />
-                <Run Text="blog.walterlv.com" FontSize="64" FontWeight="Light" />
-            </TextBlock>
-        </Grid>
-    </Window>
+            </Border>
+        </ControlTemplate>
+    </Window.Template>
+    <Grid>
+        <Rectangle x:Name="BackgroundRectangle" Margin="0 16" Fill="#d0d1d6">
+            <Rectangle.RenderTransform>
+                <TranslateTransform />
+            </Rectangle.RenderTransform>
+
+        </Rectangle>
+        <TextBox FontSize="20" Foreground="#0083d0" TextAlignment="Center" VerticalAlignment="Center" Name="TestIn">
+        </TextBox>
+        <Button Width="60" Height="45" VerticalAlignment="Top" Margin="602,180,10,0" Click="Test_Click"></Button>
+        <Button Name="ColorBtn" Width="60" Height="45" VerticalAlignment="Top" Margin="537,180,75,0" Click="TestGetColor"></Button>
+        <Button Width="30" Height="30" VerticalAlignment="Top" HorizontalAlignment="Right" Click="CloseClick" Margin="0,16,0,0" ></Button>
+        <Label Name="Text" Content="asdasd" FontSize="20" Margin="0,20,30,200" ></Label>
+    </Grid>
+</Window>

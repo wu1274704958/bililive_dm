@@ -5,17 +5,30 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin;
+using BililiveDebugPlugin.InteractionGame.Data;
+using System.Security.Cryptography;
 
 namespace InteractionGame 
 {
     using Msg = DanmakuModel;
     using MsgType = MsgTypeEnum;
+
+
+    public interface IPlayerParserObserver
+    {
+        void OnAddGroup(UserData userData,int g);
+        void OnChangeGroup(UserData userData,int old,int n);
+        void OnClear();
+    }
+
     public abstract class IDyPlayerParser<IT>
         where IT : class,IContext
     {
         private Dictionary<string, int> PlayerGroupMap;
         private ConcurrentDictionary<long, int> GroupDict = new ConcurrentDictionary<long, int>();
         private ConcurrentDictionary<long, int> TargetDict = new ConcurrentDictionary<long, int>();
+        private ConcurrentDictionary<int, int> GroupCount = new ConcurrentDictionary<int, int>();
+        private ConcurrentDictionary<Int64,IPlayerParserObserver> Observers = new ConcurrentDictionary<long, IPlayerParserObserver>();
         private Regex mSelectGrouRegex;
         protected IT InitCtx;
         protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
@@ -26,6 +39,27 @@ namespace InteractionGame
             m_MsgDispatcher = dispatcher;
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
+            SetupGroupCount();
+        }
+
+        private void SetupGroupCount()
+        {
+            for(int i = 0;i < GetGroupCount(); i++)
+            {
+                GroupCount.TryAdd(i, 0);
+            }
+        }
+
+        public virtual void OnClear()
+        {
+            GroupDict.Clear();
+            TargetDict.Clear();
+            GroupCount.Clear();
+            SetupGroupCount();
+            foreach (var it in Observers)
+            {
+                it.Value.OnClear();
+            }
         }
         protected virtual Dictionary<string,int> GetPlayerGroupMap()
         {
@@ -35,15 +69,19 @@ namespace InteractionGame
         protected virtual void ParseChooseGroup(long uid,string con,string uName)
         {
             var match = mSelectGrouRegex.Match(con);
+            var oldGroup = GetGroupById(uid);
             if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value,out var v))
             {
-                if(!GroupDict.TryAdd(uid, v))
-                {
-                    GroupDict[uid] = v;
-                }
+                SetGroup(uid, v);
                 //if(Appsetting.Current.PrintBarrage)
                 {
                     InitCtx.PrintGameMsg($"{uName}选择加入{match.Groups[1].Value}方");
+                    if (oldGroup != -1 && oldGroup != v)
+                        m_MsgDispatcher.GetResourceMgr().RemoveAllVillagers(uid);
+                    if (GetTarget(uid) == v)
+                    {
+                        TargetDict[uid] = -1;
+                    }
                 }
             }
             else
@@ -51,19 +89,60 @@ namespace InteractionGame
                 TryParseChangTarget(uid,con,uName);
             }
         }
-        protected bool TryParseChangTarget(long uid, string con, string uName)
+        protected virtual int ParseJoinGroup(long uid,string con,string uName)
+        {
+            if (con.StartsWith("加"))
+            {
+                var g = GetLeastGroup();
+                SetGroup(uid,g);
+                if(g == GetTarget(uid))
+                {
+                    SetTarget(uid,-1);
+                }
+                return g;
+            }
+            return -1;
+        }
+
+        private int GetLeastGroup()
+        {
+            int v = Int32.MaxValue; 
+            int g = 0;
+            foreach (var it in GroupCount)
+            {
+                if (it.Value < v)
+                {
+                    g = it.Key;
+                    v = it.Value;
+                }
+            }
+            return g;
+        }
+
+        public abstract int GetGroupCount();
+        public abstract int GetGroupExclude(int g);
+        protected bool TryParseChangTarget(long uid, string con, string uName,bool autoChangeGroup = true)
         {
             var match = new Regex("攻(.+)").Match(con);
             if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value, out var v))
             {
                 var self = GetGroupById(uid);
-                if (self != v)
+                if (autoChangeGroup && (self == v || self < 0))
                 {
-                    //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
-                    TargetDict[uid] = v;
-                    InitCtx.PrintGameMsg($"{uName}选择{match.Groups[1].Value}方作为进攻目标");
-                    return true;
+                    SetGroup(uid,GetGroupExclude(v));
                 }
+
+                if (!autoChangeGroup && (self == v || self < 0))
+                {
+                    if(self == v) InitCtx.PrintGameMsg($"{uName}不能以自己为目标");
+                    if(self < 0) InitCtx.PrintGameMsg($"{uName}未加入游戏无法选择目标");
+                    return false;
+                }
+                //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
+                SetTarget(uid, v);
+                InitCtx.PrintGameMsg($"{uName}选择{match.Groups[1].Value}方作为进攻目标");
+                m_MsgDispatcher.GetMsgParser().SendAllSquadAttack(v, uid);
+                return true;
             }
             return false;
         }
@@ -75,11 +154,20 @@ namespace InteractionGame
             }
             return -1;
         }
-        protected virtual void SetGroup(long id,int g)
+        public virtual void SetGroup(long id,int g)
         {
             if (!GroupDict.TryAdd(id, g))
             {
+                if(GroupDict[id] == g) return;
+                if(GroupDict[id] >= 0 && GroupCount.ContainsKey(g))
+                {
+                    GroupCount[g] -= 1;
+                }
                 GroupDict[id] = g;
+            }
+            if (!GroupCount.TryAdd(g, 1))
+            {
+                GroupCount[g] += 1;
             }
         }
         public bool HasGroup(long id)
@@ -94,41 +182,107 @@ namespace InteractionGame
             }
             return -1;
         }
+        public int SetTarget(long id,int t)
+        {
+            if(t < 0)
+            {
+                TargetDict.TryRemove(id, out _);
+                return -1;
+            }
+            TargetDict[id] = t;
+            return t;
+        }
 
         public virtual void Stop()
         {
             InitCtx = null;
             m_MsgDispatcher = null;
-            GroupDict.Clear();
+            OnClear();
         }
         public abstract int Parse(DyMsgOrigin msgOrigin);
         public abstract bool Demand(Msg msg, MsgType barType);
-        
+        public void AddObserver(IPlayerParserObserver observer)
+        {
+            Observers.TryAdd(observer.GetHashCode(), observer);
+        }
+        public void RmObserver(IPlayerParserObserver observer)
+        {
+            Observers.TryRemove(observer.GetHashCode(), out _);
+        }
+       
+        public void OnAddGroup(UserData userdata, int g)
+        {
+            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon);
+            foreach(var it in Observers)
+            {
+                it.Value.OnAddGroup(userdata, g);
+            }
+        }
+        public void OnChangeGroup(UserData userdata,int old, int g)
+        {
+            foreach (var it in Observers)
+            {
+                it.Value.OnChangeGroup(userdata, old, g);
+            }
+        }
+
+    }
+    public interface ISubMsgParser<P,IT>
+        where IT : class, IContext
+        where P : IDyMsgParser<IT>
+    {
+        void Init(P owner);
+        void Stop();
+        bool Parse(DyMsgOrigin msg);
+        void OnTick(float delat);
+        void OnClear();
     }
     public abstract class IDyMsgParser<IT>
         where IT : class,IContext
     {
         protected Dictionary<long,UserData> UserDataDict = new Dictionary<long,UserData>();
-        protected IT InitCtx;
-        protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
-
-        public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
+        public IT InitCtx { get;protected set; }
+        public ILocalMsgDispatcher<IT> m_MsgDispatcher { get; protected set; }
+        protected List<ISubMsgParser<IDyMsgParser<IT>, IT>> subMsgParsers = new List<ISubMsgParser<IDyMsgParser<IT>, IT>>();
+        
+        public virtual void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
         {
             InitCtx = it;
             m_MsgDispatcher = dispatcher;
+            foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.Init(this);
         }
         public virtual void Stop()
         {
+            foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.Stop();
             InitCtx = null;
             m_MsgDispatcher = null;
             UserDataDict.Clear();
         }
-        public abstract (int, int) Parse(DyMsgOrigin msgOrigin);
+        public virtual (int, int) Parse(DyMsgOrigin msgOrigin)
+        {
+            int n = 0;
+            lock (subMsgParsers)
+            {
+                foreach (var subMsgParser in subMsgParsers)
+                {
+                    if (subMsgParser.Parse(msgOrigin))
+                        ++n;
+                }
+            }
+            return (n,0);
+        }
         public abstract bool Demand(Msg msg, MsgType barType);
 
         public virtual void ClearUserData()
         {
             UserDataDict.Clear();
+            lock (subMsgParsers)
+            {
+                foreach (var subMsgParser in subMsgParsers)
+                    subMsgParser.OnClear();
+            }
         }
         public List<UserData> GetSortedUserData()
         {
@@ -136,7 +290,13 @@ namespace InteractionGame
             ls.Sort((a,b) => b.Score.CompareTo(a.Score));
             return ls;
         }
-        protected void UpdateUserData(long id,int score,int soldier_num,string name,string icon)
+        public UserData GetUserData(long id)
+        {
+            if(UserDataDict.TryGetValue(id, out var data))
+                return data;
+            return null;
+        }
+        public void UpdateUserData(long id,int score,int soldier_num,string name,string icon)
         {
             if (UserDataDict.ContainsKey(id))
             {
@@ -147,6 +307,7 @@ namespace InteractionGame
             {
                 UserDataDict.Add(id,new UserData()
                 {
+                    Id = id,
                     Name = name,
                     Icon = icon,
                     Score = score,
@@ -166,6 +327,43 @@ namespace InteractionGame
                 }
             }
         }
+        public abstract void SendAllSquadAttack(int target, long uid, bool isMove = false);
+        public virtual void OnTick(float delat) {
+            lock (subMsgParsers)
+            {
+                foreach (var subMsgParser in subMsgParsers)
+                    subMsgParser.OnTick(delat);
+            }
+        }
+        public void AddSubMsgParse(ISubMsgParser<IDyMsgParser<IT>, IT> msgParser)
+        {
+            lock (subMsgParsers)
+            {
+                subMsgParsers.Add(msgParser);
+            }
+        }
+        public void RmSubMsgParse(ISubMsgParser<IDyMsgParser<IT>, IT> msgParser)
+        {
+            lock (subMsgParsers)
+            {
+                subMsgParsers.Remove(msgParser);
+            }
+        }
+        public T GetSubMsgParse<T>()
+            where T : class
+        {
+            lock (subMsgParsers)
+            {
+                foreach (var subMsgParser in subMsgParsers)
+                {
+                    if(subMsgParser is T)
+                    {
+                        return (T)subMsgParser;
+                    }
+                }
+            }
+            return null;
+        }
     }
     public class StaticMsgDemand
     {
@@ -177,112 +375,24 @@ namespace InteractionGame
     }
     public class UserData
     {
+        public long Id;
         public string Name;
         public string Icon;
         public long Score;
         public int Soldier_num;
         public int Group;
-    }
-    public class PlayerBirthdayParser<IT> : IDyPlayerParser<IT>
-         where IT : class,IContext
-    {
-        public override bool Demand(Msg msg, MsgType barType)
+
+        public UserData()
         {
-            return StaticMsgDemand.Demand(msg, barType) || barType == MsgType.Welcome;
         }
 
-        public override int Parse(DyMsgOrigin msgOrigin)
+        public UserData(long id, string name, string icon, int group)
         {
-            if(msgOrigin == null || msgOrigin.msg.CommentText == null) return 0;
-            ParseChooseGroup(msgOrigin.msg.UserID_long,msgOrigin.msg.CommentText.Trim(),msgOrigin.msg.UserName);
-            var v = GetGroupById(msgOrigin.msg.UserID_long);
-            var str = "";
-            if(v == -1)
-            {
-                v = new Random((int)DateTime.Now.Ticks).Next(0,2);
-                str = "随机加入";
-                SetGroup(msgOrigin.msg.UserID_long, v);
-            }
-            if (msgOrigin.barType == MsgType.Welcome)
-            {
-                InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，{str}阵营{DebugPlugin.GetColorById(v)}方");
-            }
-            return v;
-        }
-        public static DateTime GetDateTimeFromSeconds(long sec)
-        {
-            DateTime startTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime();
-            TimeSpan time = TimeSpan.FromSeconds(sec);
-            return startTime.Add(time);
+            Id = id;
+            Name = name;
+            Icon = icon;
+            Group = group;
         }
     }
-
-    public class MsgGiftParser<IT> : IDyMsgParser<IT>
-        where IT : class,IContext
-    {                                                                             //0, 1, 2,3 ,4, 5,6
-        protected static readonly List<int> QuickSuccessionTable = new List<int>(){ 10,9, 7,9, 5, 8,3,2,1,1,1 };
-        public override bool Demand(Msg msg, MsgType barType)
-        {
-            return StaticMsgDemand.Demand(msg, barType);
-        }
-
-        public override (int,int) Parse(DyMsgOrigin msgOrigin)
-        {
-            if(msgOrigin.barType == MsgType.Comment)
-            {
-                var con = msgOrigin.msg.CommentText.Trim();
-                var match = new Regex("([0-9]+)").Match(con);
-                if (match.Groups.Count == 2)
-                {
-                    int id = -1;
-                    int c = 0;
-                    for (int i = 0; i < match.Groups[1].Length;++i)
-                    {
-                        int v = match.Groups[1].Value[i] - 48; 
-                        if (v >= 0 && v <= 8 && (id == v || id == -1))
-                        {
-                            ++c;
-                            if(id == -1) id = v;
-                        }
-                        if (id >= 0 && id < QuickSuccessionTable.Count && c >= QuickSuccessionTable[id]) break;
-                    }
-                    //if(Appsetting.Current.PrintBarrage)
-                    {
-                        
-                        InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}选择出{c}个{BililiveDebugPlugin.DebugPlugin.GetSquadName(id)}");
-                        UpdateUserData(msgOrigin.msg.UserID_long, c * (id + 1), c, msgOrigin.msg.UserName, "");
-                        var target = m_MsgDispatcher.GetPlayerParser().GetTarget(msgOrigin.msg.UserID_long);
-                        var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(msgOrigin.msg.UserID_long);
-                        if (target < 0)
-                        {
-                            m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, id,c);
-                        }
-                        else
-                        {
-                            m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, id,target + 1, c);
-                        }
-                    }
-                }
-                return (0,0);
-            }
-            if(msgOrigin.barType == MsgType.GiftSend)
-            {
-                int id = 0;
-                switch(msgOrigin.msg.GiftName)
-                {
-                    case "小花花":id = 7;break;  
-                    case "牛哇牛哇": id = 8;break;  
-                    //case "干杯": return (8, msgOrigin.msg.GiftCount);
-                }
-                InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}选择出{msgOrigin.msg.GiftCount}个{BililiveDebugPlugin.DebugPlugin.GetSquadName(id)}");
-                UpdateUserData(msgOrigin.msg.UserID_long, msgOrigin.msg.GiftCount * (id + 1), msgOrigin.msg.GiftCount, msgOrigin.msg.UserName, "");
-                return (id, msgOrigin.msg.GiftCount);
-            }
-            if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like)
-            {
-                return (0, 6);
-            }
-            return (0, 0);
-        }
-    }
+    
 }

@@ -96,7 +96,8 @@ namespace BilibiliDM_PluginFramework
                     {
                         outfile.WriteLine("請有空發給聯繫方式 " + PluginCont + " 謝謝");
                         outfile.WriteLine(PluginName + " " + PluginVer);
-                        outfile.Write(ex.ToString());
+                        outfile.Write(ex.Message);
+                        outfile.Write(ex.StackTrace);
                     }
                 }
                 catch (Exception)

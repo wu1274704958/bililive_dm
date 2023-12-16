@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Interop;
 
 namespace BililiveDebugPlugin.InteractionGame
 {
@@ -45,6 +49,8 @@ namespace BililiveDebugPlugin.InteractionGame
         //}
         [DllImport("kernel32.dll")]
         public static extern Int32 ReleaseMutex(IntPtr hMutex);
+        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
+        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
 
 
         private static readonly int INVALID_HANDLE_VALUE = -1;
@@ -55,15 +61,11 @@ namespace BililiveDebugPlugin.InteractionGame
         private static readonly int FILE_MAP_WRITE = 0x0002;
         private static readonly IntPtr NULL = IntPtr.Zero;
 
-        public static int SendMessage(string msg)
-        {
-            IntPtr hMutex = IntPtr.Zero;
-            IntPtr hFileMapping = IntPtr.Zero;
-            IntPtr lpShareMemory = IntPtr.Zero;
-            IntPtr hServerWriteOver = IntPtr.Zero;
-            IntPtr hClientReadOver = IntPtr.Zero;
+        private IntPtr hFileMapping = IntPtr.Zero;
+        private ConcurrentQueue<KeyValuePair<short,string>> MsgQueue = new ConcurrentQueue<KeyValuePair<short, string>>();
 
-            int ret = 0;
+        public bool Init()
+        {
             hFileMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
                 NULL,
                 PAGE_READWRITE,
@@ -72,11 +74,18 @@ namespace BililiveDebugPlugin.InteractionGame
                 FILE_MAP_NAME);
             if (NULL == hFileMapping)
             {
-                ret = GetLastError();
-                goto END;
+                return false;
             }
+            ResetMem();
+            return true;
+        }
 
-            lpShareMemory = MapViewOfFile(hFileMapping,
+        private int ResetMem()
+        {
+            if (hFileMapping == IntPtr.Zero)
+                return -1;
+            int ret = 0;
+            var lpShareMemory = MapViewOfFile(hFileMapping,
                 FILE_MAP_ALL_ACCESS,
                 0,
                 0,      //memory start address  
@@ -86,21 +95,88 @@ namespace BililiveDebugPlugin.InteractionGame
                 ret = GetLastError();
                 goto END;
             }
-            hMutex = CreateMutex(NULL, 0, MUTEX_NAME);
-            if (NULL == hMutex || ERROR_ALREADY_EXISTS == GetLastError())
+            byte[] mem = new byte[MAX_MSG_SIZE];
+            for(int i = 0; i < mem.Length; i++)
+                mem[i] = 0;
+            Marshal.Copy(mem,0,lpShareMemory,(int)MAX_MSG_SIZE);
+            END:
+            if (NULL != lpShareMemory) UnmapViewOfFile(lpShareMemory);
+            return ret;
+        }
+
+        public void Dispose()
+        {
+            if (NULL != hFileMapping) CloseHandle(hFileMapping);
+        }
+
+        public int SendMessage(short id,string msg,bool pushQueue = true)
+        {
+            if(hFileMapping == IntPtr.Zero)
+                return -1;
+            int ret = 0;
+            var lpShareMemory = MapViewOfFile(hFileMapping,
+                FILE_MAP_ALL_ACCESS,
+                0,
+                0,      //memory start address  
+                MAX_MSG_SIZE);     //all memory space  
+            if (NULL == lpShareMemory)
             {
                 ret = GetLastError();
                 goto END;
-            }//多个线程互斥访问  
-
-
-        END:
-            if (NULL != hServerWriteOver) CloseHandle(hServerWriteOver);
-            if (NULL != hClientReadOver) CloseHandle(hClientReadOver);
+            }
+            switch(Marshal.ReadByte(lpShareMemory))
+            {
+                case 0:
+                    Marshal.WriteByte(lpShareMemory, 1);
+                    Marshal.WriteInt16(lpShareMemory + 1, id);
+                    IntPtr init = Marshal.StringToHGlobalAnsi(msg);
+                    uint len = (uint)strlen(init) + 1;
+                    CopyMemory(lpShareMemory + 3, init, len);
+                    Marshal.FreeHGlobal(init);
+                    break;
+                default:
+                    ret = -2;
+                    if(pushQueue)MsgQueue.Enqueue(new KeyValuePair<short, string>(id, msg));
+                    goto END;
+                    break;
+            }
+            END:
             if (NULL != lpShareMemory) UnmapViewOfFile(lpShareMemory);
-            if (NULL != hFileMapping) CloseHandle(hFileMapping);
-            if (NULL != hMutex) ReleaseMutex(hMutex);
+           
             return ret;
+        }
+
+        public void flush()
+        {
+            if (MsgQueue.Count == 0) return;
+            if(MsgQueue.TryPeek(out var it))
+            {
+                var ret = SendMessage(it.Key, it.Value,false);
+                if(ret == 0)
+                    MsgQueue.TryDequeue(out _);
+            }
+        }
+
+        public void SendMsg(short id, object msg)
+        {
+            try
+            {
+                var str = JsonConvert.SerializeObject(msg);
+                SendMessage(id, str);
+            }catch (Exception ex) { 
+                
+            }
+        }
+
+        private static int strlen(IntPtr init)
+        {
+            int len = 0;
+            while (Marshal.ReadByte(init) != 0)
+            {
+                len += 1;
+                init += 1;
+            }
+            return len;
         }
 
     }

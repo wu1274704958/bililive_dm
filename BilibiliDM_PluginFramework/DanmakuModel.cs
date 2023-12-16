@@ -129,482 +129,47 @@ namespace BilibiliDM_PluginFramework
             switch (version)
             {
                 case 1:
-                {
-                    var obj = JArray.Parse(JSON);
+                    {
+                        var obj = JArray.Parse(JSON);
 
-                    CommentText = obj[1].ToString();
-                    UserName = obj[2][1].ToString();
-                    MsgType = MsgTypeEnum.Comment;
-                    RawDataJToken = obj;
-                    break;
-                }
+                        CommentText = obj[1].ToString();
+                        UserName = obj[2][1].ToString();
+                        MsgType = MsgTypeEnum.Comment;
+                        RawDataJToken = obj;
+                        break;
+                    }
                 case 2:
-                {
-                    JObject obj;
-                    try
                     {
-                        obj = JObject.Parse(JSON);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
-
-                    RawDataJToken = obj;
-                    var cmd = obj["cmd"].ToString();
-
-                        if(obj.TryGetValue("data", out var data))
+                        JObject obj;
+                        try
                         {
-                            if(((JObject)data).TryGetValue("uface",out var uface))
+                            obj = JObject.Parse(JSON);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                            throw;
+                        }
+
+                        RawDataJToken = obj;
+                        var cmd = obj["cmd"].ToString();
+
+                        if (obj.TryGetValue("data", out var data))
+                        {
+                            if (((JObject)data).TryGetValue("uface", out var uface))
                                 UserFace = uface.ToString();
                         }
                         switch (cmd)
-                    {
-                        case "LIVE":
-                            MsgType = MsgTypeEnum.LiveStart;
-                            roomID = obj["roomid"].ToString();
-                            break;
-                        case "PREPARING":
-                            MsgType = MsgTypeEnum.LiveEnd;
-                            roomID = obj["roomid"].ToString();
-                            break;
-                        case "DANMU_MSG":
-                            MsgType = MsgTypeEnum.Comment;
-                            CommentText = obj["info"][1].ToString();
-                            UserID_str = obj["info"][2][0].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName = obj["info"][2][1].ToString();
-                            isAdmin = obj["info"][2][2].ToString() == "1";
-                            isVIP = obj["info"][2][3].ToString() == "1";
-                            UserGuardLevel = obj["info"][7].ToObject<int>();
-                            break;
-                        case "SEND_GIFT":
-                            MsgType = MsgTypeEnum.GiftSend;
-                            GiftName = obj["data"]["giftName"].ToString();
-                            UserName = obj["data"]["uname"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            // Giftrcost = obj["data"]["rcost"].ToString();
-                            GiftCount = obj["data"]["num"].ToObject<int>();
-                            break;
-                        case "COMBO_SEND":
                         {
-                            MsgType = MsgTypeEnum.Unknown;
-                            break;
-                            // MsgType = MsgTypeEnum.GiftSend;
-                            // GiftName = obj["data"]["gift_name"].ToString();
-                            // UserName = obj["data"]["uname"].ToString();
-                            // UserID = obj["data"]["uid"].ToObject<int>();
-                            // // Giftrcost = obj["data"]["rcost"].ToString();
-                            // GiftCount = obj["data"]["total_num"].ToObject<int>();
-                            // break;
-                        }
-                        case "GIFT_TOP":
-                        {
-                            MsgType = MsgTypeEnum.GiftTop;
-                            var alltop = obj["data"].ToList();
-                            GiftRanking = new List<GiftRank>();
-                            foreach (var v in alltop)
-                            {
-                                var item = new GiftRank();
-                                item.uid_str = v["uid"].ToString();
-                                item.UserName = v.Value<string>("uname");
-                                item.coin = v.Value<decimal>("coin");
-                                try
-                                {
-                                    item.uid = Convert.ToInt32(item.uid_str);
-                                }
-                                catch (Exception)
-                                {
-                                    item.uid = -1;
-                                }
-
-                                try
-                                {
-                                    item.uid_long = Convert.ToInt32(item.uid_str);
-                                }
-                                catch (Exception)
-                                {
-                                    item.uid_long = -1;
-                                }
-
-                                GiftRanking.Add(item);
-                            }
-
-                            break;
-                        }
-                        case "WELCOME":
-                        {
-                            MsgType = MsgTypeEnum.Welcome;
-                            UserName = obj["data"]["uname"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            isVIP = true;
-                            isAdmin = obj["data"]["isadmin"]?.ToString() == "1";
-                            break;
-                        }
-                        case "WELCOME_GUARD":
-                        {
-                            MsgType = MsgTypeEnum.WelcomeGuard;
-                            UserName = obj["data"]["username"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
-                            break;
-                        }
-                        case "ENTRY_EFFECT":
-                        {
-                            var msg = obj["data"]["copy_writing"] + "";
-                            var match = EntryEffRegex.Match(msg);
-                            if (match.Success)
-                            {
-                                MsgType = MsgTypeEnum.WelcomeGuard;
-                                UserName = match.Groups[1].Value;
-                                UserID_str = obj["data"]["uid"].ToString();
-                                try
-                                {
-                                    UserID = Convert.ToInt32(UserID_str);
-                                }
-                                catch (Exception)
-                                {
-                                    UserID = -1;
-                                }
-
-                                try
-                                {
-                                    UserID_long = Convert.ToInt64(UserID_str);
-                                }
-                                catch (Exception)
-                                {
-                                    UserID_long = -1;
-                                }
-
-                                UserGuardLevel = obj["data"]["privilege_type"].ToObject<int>();
-                            }
-                            else
-                            {
-                                MsgType = MsgTypeEnum.Unknown;
-                            }
-
-                            break;
-                        }
-                        case "GUARD_BUY":
-                        {
-                            MsgType = MsgTypeEnum.GuardBuy;
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName = obj["data"]["username"].ToString();
-                            UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
-                            GiftName = UserGuardLevel == 3 ? "舰长" :
-                                UserGuardLevel == 2 ? "提督" :
-                                UserGuardLevel == 1 ? "总督" : "";
-                            GiftCount = obj["data"]["num"].ToObject<int>();
-                            break;
-                        }
-                        case "SUPER_CHAT_MESSAGE":
-                        case "SUPER_CHAT_MESSAGE_JP":
-                        {
-                            MsgType = MsgTypeEnum.SuperChat;
-                            CommentText = obj["data"]["message"]?.ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName = obj["data"]["user_info"]["uname"].ToString();
-                            Price = obj["data"]["price"].ToObject<decimal>();
-                            SCKeepTime = obj["data"]["time"].ToObject<int>();
-                            break;
-                        }
-                        case "INTERACT_WORD":
-                        {
-                            MsgType = MsgTypeEnum.Interact;
-                            UserName = obj["data"]["uname"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            InteractType = (InteractTypeEnum)obj["data"]["msg_type"].ToObject<int>();
-                            break;
-                        }
-                        case "WARNING":
-                        {
-                            MsgType = MsgTypeEnum.Warning;
-                            CommentText = obj["msg"]?.ToString();
-
-                            break;
-                        }
-                        case "CUT_OFF":
-                        {
-                            MsgType = MsgTypeEnum.LiveEnd;
-                            CommentText = obj["msg"]?.ToString();
-                            break;
-                        }
-                        case "WATCHED_CHANGE":
-                        {
-                            MsgType = MsgTypeEnum.WatchedChange;
-                            WatchedCount = obj["data"]["num"].ToObject<int>();
-                            break;
-                        }
-                        
-                        #region B站開放平台
-                        
-                        case "LIVE_OPEN_PLATFORM_DM":
-                            MsgType = MsgTypeEnum.Comment;
-                            CommentText = obj["data"]["msg"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName =  obj["data"]["uname"].ToString();
-                            isAdmin = false;
-                            isVIP = false;
-                            UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
-                            break;
-                        case "LIVE_OPEN_PLATFORM_SEND_GIFT":
-                            MsgType = MsgTypeEnum.GiftSend;
-                            GiftName = obj["data"]["gift_name"].ToString();
-                            UserName = obj["data"]["uname"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            // Giftrcost = obj["data"]["rcost"].ToString();
-                            GiftCount = obj["data"]["gift_num"].ToObject<int>();
-                            break;
-                        case "LIVE_OPEN_PLATFORM_SUPER_CHAT":
-                            MsgType = MsgTypeEnum.SuperChat;
-                            CommentText = obj["data"]["message"]?.ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName = obj["data"]["uname"].ToString();
-                            Price = obj["data"]["rmb"].ToObject<decimal>();
-                            SCKeepTime = obj["data"]["end_time"].ToObject<int>() -
-                                         obj["data"]["start_time"].ToObject<int>();
-                            break;
-                        case "LIVE_OPEN_PLATFORM_SUPER_CHAT_DEL":
-                            break;
-                        case "LIVE_OPEN_PLATFORM_GUARD":
-                            MsgType = MsgTypeEnum.GuardBuy;
-                            UserID_str = obj["data"]["user_info"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            UserName = obj["data"]["user_info"]["uname"].ToString();
-                            UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
-                            GiftName = UserGuardLevel == 3 ? "舰长" :
-                                UserGuardLevel == 2 ? "提督" :
-                                UserGuardLevel == 1 ? "总督" : "";
-                            GiftCount = obj["data"]["guard_num"].ToObject<int>();
-                            break; 
-                        case "LIVE_OPEN_PLATFORM_LIKE":
-                            MsgType = MsgTypeEnum.Interact;
-                            UserName = obj["data"]["uname"].ToString();
-                            UserID_str = obj["data"]["uid"].ToString();
-                            try
-                            {
-                                UserID = Convert.ToInt32(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID = -1;
-                            }
-
-                            try
-                            {
-                                UserID_long = Convert.ToInt64(UserID_str);
-                            }
-                            catch (Exception)
-                            {
-                                UserID_long = -1;
-                            }
-
-                            InteractType = InteractTypeEnum.Like;
-                            break;
-                        #endregion
-                        
-                        
-                        default:
-                        {
-                            if (cmd.StartsWith("DANMU_MSG")) // "高考"fix
-                            {
+                            case "LIVE":
+                                MsgType = MsgTypeEnum.LiveStart;
+                                roomID = obj["roomid"].ToString();
+                                break;
+                            case "PREPARING":
+                                MsgType = MsgTypeEnum.LiveEnd;
+                                roomID = obj["roomid"].ToString();
+                                break;
+                            case "DANMU_MSG":
                                 MsgType = MsgTypeEnum.Comment;
                                 CommentText = obj["info"][1].ToString();
                                 UserID_str = obj["info"][2][0].ToString();
@@ -631,17 +196,469 @@ namespace BilibiliDM_PluginFramework
                                 isVIP = obj["info"][2][3].ToString() == "1";
                                 UserGuardLevel = obj["info"][7].ToObject<int>();
                                 break;
-                            }
+                            case "SEND_GIFT":
+                                MsgType = MsgTypeEnum.GiftSend;
+                                GiftName = obj["data"]["giftName"].ToString();
+                                UserName = obj["data"]["uname"].ToString();
+                                UserID_str = obj["data"]["uid"].ToString();
+                                {
+                                    int price = 0;
+                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false &&
+                                            int.TryParse(priceStr.ToString(), out price))
+                                    {
+                                        GiftPrice = price;
+                                    }
+                                }
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID = -1;
+                                }
 
-                            MsgType = MsgTypeEnum.Unknown;
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
 
-                            break;
+                                // Giftrcost = obj["data"]["rcost"].ToString();
+                                GiftCount = obj["data"]["num"].ToObject<int>();
+                                break;
+                            case "COMBO_SEND":
+                                {
+                                    MsgType = MsgTypeEnum.Unknown;
+                                    break;
+                                    // MsgType = MsgTypeEnum.GiftSend;
+                                    // GiftName = obj["data"]["gift_name"].ToString();
+                                    // UserName = obj["data"]["uname"].ToString();
+                                    // UserID = obj["data"]["uid"].ToObject<int>();
+                                    // // Giftrcost = obj["data"]["rcost"].ToString();
+                                    // GiftCount = obj["data"]["total_num"].ToObject<int>();
+                                    // break;
+                                }
+                            case "GIFT_TOP":
+                                {
+                                    MsgType = MsgTypeEnum.GiftTop;
+                                    var alltop = obj["data"].ToList();
+                                    GiftRanking = new List<GiftRank>();
+                                    foreach (var v in alltop)
+                                    {
+                                        var item = new GiftRank();
+                                        item.uid_str = v["uid"].ToString();
+                                        item.UserName = v.Value<string>("uname");
+                                        item.coin = v.Value<decimal>("coin");
+                                        try
+                                        {
+                                            item.uid = Convert.ToInt32(item.uid_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            item.uid = -1;
+                                        }
+
+                                        try
+                                        {
+                                            item.uid_long = Convert.ToInt32(item.uid_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            item.uid_long = -1;
+                                        }
+
+                                        GiftRanking.Add(item);
+                                    }
+
+                                    break;
+                                }
+                            case "WELCOME":
+                                {
+                                    MsgType = MsgTypeEnum.Welcome;
+                                    UserName = obj["data"]["uname"].ToString();
+                                    UserID_str = obj["data"]["uid"].ToString();
+                                    try
+                                    {
+                                        UserID = Convert.ToInt32(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID = -1;
+                                    }
+
+                                    try
+                                    {
+                                        UserID_long = Convert.ToInt64(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID_long = -1;
+                                    }
+
+                                    isVIP = true;
+                                    isAdmin = obj["data"]["isadmin"]?.ToString() == "1";
+                                    break;
+                                }
+                            case "WELCOME_GUARD":
+                                {
+                                    MsgType = MsgTypeEnum.WelcomeGuard;
+                                    UserName = obj["data"]["username"].ToString();
+                                    UserID_str = obj["data"]["uid"].ToString();
+                                    try
+                                    {
+                                        UserID = Convert.ToInt32(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID = -1;
+                                    }
+
+                                    try
+                                    {
+                                        UserID_long = Convert.ToInt64(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID_long = -1;
+                                    }
+
+                                    UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
+                                    break;
+                                }
+                            case "ENTRY_EFFECT":
+                                {
+                                    var msg = obj["data"]["copy_writing"] + "";
+                                    var match = EntryEffRegex.Match(msg);
+                                    if (match.Success)
+                                    {
+                                        MsgType = MsgTypeEnum.WelcomeGuard;
+                                        UserName = match.Groups[1].Value;
+                                        UserID_str = obj["data"]["uid"].ToString();
+                                        try
+                                        {
+                                            UserID = Convert.ToInt32(UserID_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            UserID = -1;
+                                        }
+
+                                        try
+                                        {
+                                            UserID_long = Convert.ToInt64(UserID_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            UserID_long = -1;
+                                        }
+
+                                        UserGuardLevel = obj["data"]["privilege_type"].ToObject<int>();
+                                    }
+                                    else
+                                    {
+                                        MsgType = MsgTypeEnum.Unknown;
+                                    }
+
+                                    break;
+                                }
+                            case "GUARD_BUY":
+                                {
+                                    MsgType = MsgTypeEnum.GuardBuy;
+                                    UserID_str = obj["data"]["uid"].ToString();
+                                    try
+                                    {
+                                        UserID = Convert.ToInt32(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID = -1;
+                                    }
+
+                                    try
+                                    {
+                                        UserID_long = Convert.ToInt64(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID_long = -1;
+                                    }
+
+                                    UserName = obj["data"]["username"].ToString();
+                                    UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
+                                    GiftName = UserGuardLevel == 3 ? "舰长" :
+                                        UserGuardLevel == 2 ? "提督" :
+                                        UserGuardLevel == 1 ? "总督" : "";
+                                    GiftCount = obj["data"]["num"].ToObject<int>();
+                                    break;
+                                }
+                            case "SUPER_CHAT_MESSAGE":
+                            case "SUPER_CHAT_MESSAGE_JP":
+                                {
+                                    MsgType = MsgTypeEnum.SuperChat;
+                                    CommentText = obj["data"]["message"]?.ToString();
+                                    UserID_str = obj["data"]["uid"].ToString();
+                                    try
+                                    {
+                                        UserID = Convert.ToInt32(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID = -1;
+                                    }
+
+                                    try
+                                    {
+                                        UserID_long = Convert.ToInt64(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID_long = -1;
+                                    }
+
+                                    UserName = obj["data"]["user_info"]["uname"].ToString();
+                                    Price = obj["data"]["price"].ToObject<decimal>();
+                                    SCKeepTime = obj["data"]["time"].ToObject<int>();
+                                    break;
+                                }
+                            case "INTERACT_WORD":
+                                {
+                                    MsgType = MsgTypeEnum.Interact;
+                                    UserName = obj["data"]["uname"].ToString();
+                                    UserID_str = obj["data"]["uid"].ToString();
+                                    try
+                                    {
+                                        UserID = Convert.ToInt32(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID = -1;
+                                    }
+
+                                    try
+                                    {
+                                        UserID_long = Convert.ToInt64(UserID_str);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        UserID_long = -1;
+                                    }
+
+                                    InteractType = (InteractTypeEnum)obj["data"]["msg_type"].ToObject<int>();
+                                    break;
+                                }
+                            case "WARNING":
+                                {
+                                    MsgType = MsgTypeEnum.Warning;
+                                    CommentText = obj["msg"]?.ToString();
+
+                                    break;
+                                }
+                            case "CUT_OFF":
+                                {
+                                    MsgType = MsgTypeEnum.LiveEnd;
+                                    CommentText = obj["msg"]?.ToString();
+                                    break;
+                                }
+                            case "WATCHED_CHANGE":
+                                {
+                                    MsgType = MsgTypeEnum.WatchedChange;
+                                    WatchedCount = obj["data"]["num"].ToObject<int>();
+                                    break;
+                                }
+
+                            #region B站開放平台
+
+                            case "LIVE_OPEN_PLATFORM_DM":
+                                MsgType = MsgTypeEnum.Comment;
+                                CommentText = obj["data"]["msg"].ToString();
+                                UserID_str = obj["data"]["uid"].ToString();
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID = -1;
+                                }
+
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
+
+                                UserName = obj["data"]["uname"].ToString();
+                                isAdmin = false;
+                                isVIP = false;
+                                UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
+                                break;
+                            case "LIVE_OPEN_PLATFORM_SEND_GIFT":
+                                MsgType = MsgTypeEnum.GiftSend;
+                                GiftName = obj["data"]["gift_name"].ToString();
+                                UserName = obj["data"]["uname"].ToString();
+                                UserID_str = obj["data"]["uid"].ToString();
+                                {
+                                    int price = 0;
+                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false &&
+                                            int.TryParse(priceStr.ToString(), out price))
+                                    {
+                                        GiftPrice = price;
+                                    }
+                                }
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+
+                                {
+                                    UserID = -1;
+                                }
+
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
+
+                                // Giftrcost = obj["data"]["rcost"].ToString();
+                                GiftCount = obj["data"]["gift_num"].ToObject<int>();
+                                break;
+                            case "LIVE_OPEN_PLATFORM_SUPER_CHAT":
+                                MsgType = MsgTypeEnum.SuperChat;
+                                CommentText = obj["data"]["message"]?.ToString();
+                                UserID_str = obj["data"]["uid"].ToString();
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID = -1;
+                                }
+
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
+
+                                UserName = obj["data"]["uname"].ToString();
+                                Price = obj["data"]["rmb"].ToObject<decimal>();
+                                SCKeepTime = obj["data"]["end_time"].ToObject<int>() -
+                                             obj["data"]["start_time"].ToObject<int>();
+                                break;
+                            case "LIVE_OPEN_PLATFORM_SUPER_CHAT_DEL":
+                                break;
+                            case "LIVE_OPEN_PLATFORM_GUARD":
+                                MsgType = MsgTypeEnum.GuardBuy;
+                                UserID_str = obj["data"]["user_info"]["uid"].ToString();
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID = -1;
+                                }
+
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
+
+                                UserName = obj["data"]["user_info"]["uname"].ToString();
+                                UserGuardLevel = obj["data"]["guard_level"].ToObject<int>();
+                                GiftName = UserGuardLevel == 3 ? "舰长" :
+                                    UserGuardLevel == 2 ? "提督" :
+                                    UserGuardLevel == 1 ? "总督" : "";
+                                GiftCount = obj["data"]["guard_num"].ToObject<int>();
+                                break;
+                            case "LIVE_OPEN_PLATFORM_LIKE":
+                                MsgType = MsgTypeEnum.Interact;
+                                UserName = obj["data"]["uname"].ToString();
+                                UserID_str = obj["data"]["uid"].ToString();
+                                try
+                                {
+                                    UserID = Convert.ToInt32(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID = -1;
+                                }
+
+                                try
+                                {
+                                    UserID_long = Convert.ToInt64(UserID_str);
+                                }
+                                catch (Exception)
+                                {
+                                    UserID_long = -1;
+                                }
+
+                                InteractType = InteractTypeEnum.Like;
+                                break;
+                            #endregion
+
+
+                            default:
+                                {
+                                    if (cmd.StartsWith("DANMU_MSG")) // "高考"fix
+                                    {
+                                        MsgType = MsgTypeEnum.Comment;
+                                        CommentText = obj["info"][1].ToString();
+                                        UserID_str = obj["info"][2][0].ToString();
+                                        try
+                                        {
+                                            UserID = Convert.ToInt32(UserID_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            UserID = -1;
+                                        }
+
+                                        try
+                                        {
+                                            UserID_long = Convert.ToInt64(UserID_str);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            UserID_long = -1;
+                                        }
+
+                                        UserName = obj["info"][2][1].ToString();
+                                        isAdmin = obj["info"][2][2].ToString() == "1";
+                                        isVIP = obj["info"][2][3].ToString() == "1";
+                                        UserGuardLevel = obj["info"][7].ToObject<int>();
+                                        break;
+                                    }
+
+                                    MsgType = MsgTypeEnum.Unknown;
+
+                                    break;
+                                }
                         }
+
+
+                        break;
                     }
-
-
-                    break;
-                }
 
                 default:
                     throw new Exception();
@@ -854,6 +871,8 @@ namespace BilibiliDM_PluginFramework
         ///     禮物名稱
         /// </summary>
         public string GiftName { get; set; }
+        public int GiftPrice { get; set; }
+        public int GiftBatteryCount => GiftPrice / 100;
 
         /// <summary>
         ///     禮物數量

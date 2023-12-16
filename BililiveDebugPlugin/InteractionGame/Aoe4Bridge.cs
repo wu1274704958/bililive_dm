@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using BililiveDebugPlugin.InteractionGame;
+using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame;
+using System.Collections.Concurrent;
 
 namespace Interaction
 {
@@ -22,13 +25,22 @@ namespace Interaction
         void SendMsg(DyMsg msg);
         void Stop();
         void Init(IT it,ILocalMsgDispatcher<IT> dispatcher);
-        void OnTick();
-
+        void OnTick(float delta);
+        void OnClear();
+        WindowInfo GetWindowInfo();
         void AppendExecCode(string code);
         void ExecSetCustomTarget(int self, int target);
-        void ExecSpawnSquad(int self, int squadId,int num);
-        void ExecSpawnSquadWithTarget(int self, int squadId,int target,int num);
+        void ExecSpawnSquad(int self, int squadId,int num, long uid,int attackTy = 0);
+        void ExecSpawnSquadWithTarget(int self, int squadId,int target,int num, long uid,int attackTy = 0);
         void ExecPrintMsg(string msg);
+        void ExecSpawnVillagers(int self, int vid, int num);
+        void ExecTryRemoveVillagersCountNotify(int vid,int next);
+        void ExecAllSquadMove(int self, long uid);
+        void ExecAllSquadMoveWithTarget(int self, int target, long uid,int attackTy = 0);
+        void ExecCheckVillagerCount(int vid);
+        void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0);
+        void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0);
+        void TryStartGame();
     }
     public class DefAoe4BridgeUtil
     {
@@ -53,12 +65,16 @@ namespace Interaction
         private List<int> m_TmpList = new List<int>();
         public int ScreenWidth =>  _ScreenWidth == 0 ? _ScreenWidth = Screen.PrimaryScreen.Bounds.Width : _ScreenWidth;
         private const int MAX_ExecutedIdx = 255;
-        private StringBuilder m_ExecCode = new StringBuilder();
+        private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb.Clear());
+        private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
+        private StringBuilder m_ExecCode = null;
+        private static readonly int MsgMaxLength = 4096;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
         private ILocalMsgDispatcher<IT> m_MsgDispatcher;
         private static readonly int NextAdded = 1;
+        private Utils.ObjectPool<StringBuilder> sbPool = new Utils.ObjectPool<StringBuilder>(()=>new StringBuilder(),(a)=>a.Clear());
 
         public void SendMsg(DyMsg msg)
         {
@@ -106,7 +122,7 @@ namespace Interaction
             }
         }
 
-        public void OnTick()
+        public void OnTick(float delta)
         {
             if (_context != null && _windowInfo != null)
             {
@@ -129,9 +145,25 @@ namespace Interaction
         
         public void AppendExecCode(string code)
         {
-            lock (m_ExecCode)
+            if(m_ExecCode != null)
             {
-                m_ExecCode.AppendLine(code);
+                lock (m_ExecCode)
+                {
+                    m_ExecCode.AppendLine(code);
+                    if (m_ExecCode.Length >= MsgMaxLength)
+                    {
+                        MsgQueue.Enqueue(m_ExecCode);
+                        m_ExecCode = null;
+                    }
+                }
+            }
+            else
+            {
+                m_ExecCode = sbPool.Get();
+                lock (m_ExecCode)
+                {
+                    m_ExecCode.AppendLine(code);
+                }
             }
         }
 
@@ -139,29 +171,80 @@ namespace Interaction
         {
             AppendExecCode($"PLAYERS[{self}].custom_target = {target};");
         }
-        public void ExecSpawnSquad(int self, int squadId, int num)
+        public void ExecSpawnSquad(int self, int squadId, int num,long uid, int attackTy = 0)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num});");
+            AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num},{uid},{attackTy});");
         }
-        public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num)
+        public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num,long uid, int attackTy = 0)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num});");
+            AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num},{uid},{attackTy});");
         }
+        public void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0)
+        {
+            if (group.Count == 0) return;
+            var groupStr = ToSpawnSquadTable(group,multiple);
+            if (groupStr.Length <= 2) return;
+            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr},{uid},{attackTy});");
+        }
+
+        private string ToSpawnSquadTable(List<(int, int)> group,int multiple = 1)
+        {
+            var sb = sbPool.Get();
+            //{{sbp = SBP.GAIA.GAIA_HERDABLE_SHEEP, numSquads = 2} ,{sbp = SBP.GAIA.GAIA_HUNTABLE_WOLF , numSquads = 3}}
+            sb.Append('{');
+            foreach (var it in group)
+            {
+                var sd = Aoe4DataConfig.GetSquad(it.Item1);
+                if (sd.SquadType == ESquadType.Villager || sd.SquadType == ESquadType.SiegeAttacker) continue;
+                sb.Append($"{{sbp=_mod.spawn_squad_tab[{it.Item1}],numSquads={it.Item2 * multiple}}},");
+            }
+            sb.Append('}');
+            var s = sb.ToString();
+            sbPool.Return(sb);
+            return s;
+        }
+
+        public void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0)
+        {
+            if (group.Count == 0) return;
+            var groupStr = ToSpawnSquadTable(group,multiple);
+            if (groupStr.Length <= 2) return;
+            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr},{uid},{attackTy});");
+        }
+        public void ExecAllSquadMove(int self,long uid)
+        {
+            AppendExecCode($"AllAttackTargetEx({self},{uid});");
+        }
+        public void ExecAllSquadMoveWithTarget(int self, int target, long uid, int attackTy = 0)
+        {
+            AppendExecCode($"AllAttackTargetEx2({self},{target},{uid},{attackTy});");
+        }
+
 
         public bool NeedFlush()
         {
-            lock (m_ExecCode)
+
+            if (MsgQueue.TryPeek(out var msg) || m_ExecCode != null)
             {
-                return m_ExecCode.Length > 0 && IsLargeLooped(GameNextIdx, CurrentWriteIdx, 20);
-            };
+                var can = IsLargeLooped(GameNextIdx, CurrentWriteIdx, 20);
+                if (can && MsgQueue.Count == 0)
+                {
+                    lock(m_ExecCode)
+                    {
+                        MsgQueue.Enqueue(m_ExecCode);
+                        m_ExecCode = null;
+                    }
+                }
+                return can;
+            }
+            return false;
         }
 
         public void flush()
         {
             bool needClickMsg = false;
-            lock (m_ExecCode)
+            if (MsgQueue.TryDequeue(out var msg))
             {
-                if(m_ExecCode.Length == 0) return;
                 FileInfo fi = null;
                 StreamWriter stream = null;
                 try
@@ -169,10 +252,10 @@ namespace Interaction
                     fi = new FileInfo($"{LuaDir.FullName}\\{GameNextIdx}.lua");
                     stream = fi.CreateText();
                     Interlocked.Exchange(ref ExpectNextIdx, GetNextIdx(GameNextIdx));
+                    stream.Write(msg);
                     stream.WriteLine($"_mod.ExecIdx = {ExpectNextIdx};");
-                    stream.Write(m_ExecCode);
                     stream.Flush();
-                    m_ExecCode.Clear();
+                    SbPool.Return(msg);
                     Interlocked.Exchange(ref CurrentWriteIdx, GameNextIdx);
                     needClickMsg = true;
                 }
@@ -269,7 +352,7 @@ namespace Interaction
 
         private WindowInfo FindWindow()
         {
-            var ls = WindowEnumerator.FindAll((w) => w.Title.Contains("Age of Empires IV"));
+            var ls = WindowEnumerator.FindAll((w) => w.Title.Contains("Age of Empires IV -dev"));
             if(ls.Count > 0) return ls[0];
             return null;
         }
@@ -277,6 +360,47 @@ namespace Interaction
         public void ExecPrintMsg(string msg)
         {
             AppendExecCode($"UI_CreateEventCueClickable(-1, 10, -1, 0, \"{msg}\", \"\", \"low_priority\", \"\", \"sfx_ui_event_queue_low_priority_play\", 255, 255, 255, 255, ECV_Queue, nothing);");
+        }
+
+        public void ExecSpawnVillagers(int self, int vid, int num)
+        {
+            AppendExecCode($"SpawnAndGatherGold(PLAYERS[{self}],{vid},PLAYERS[{self}],{num});");
+        }
+
+        public void ExecTryRemoveVillagersCountNotify(int vid, int next)
+        {
+            AppendExecCode($"TryRmVillagerCountNotify(_mod,{vid},{next});");
+        }
+
+        public void ExecCheckVillagerCount(int vid)
+        {
+            AppendExecCode($"CheckVillagerCount(_mod,{vid});");
+        }
+
+
+        public void OnClear()
+        {
+            Interlocked.Exchange(ref GameNextIdx, -1);
+            Interlocked.Exchange(ref CurrentWriteIdx, -1);
+            Interlocked.Exchange(ref ExpectNextIdx, 0);
+            SavedFileDict.Clear();
+            m_TmpList.Clear();
+            if (m_ExecCode != null)
+                SbPool.Return(m_ExecCode);
+            m_ExecCode = null;
+            DelAllLuaFiles();
+        }
+
+        public WindowInfo GetWindowInfo()
+        {
+            return _windowInfo;
+        }
+
+        public void TryStartGame()
+        {
+            DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0100, new IntPtr(97), IntPtr.Zero);
+            Thread.Sleep(10);
+            DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0101, new IntPtr(97), IntPtr.Zero);
         }
     }
 }

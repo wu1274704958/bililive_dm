@@ -52,11 +52,17 @@
     <Compile Include="DataContext.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
+    <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
     <Compile Include="InteractionGame\IGameStateObserver.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
+    <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
+    <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
+    <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
+    <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
     <Compile Include="InteractionGame\SM_SendMsg.cs" />
+    <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

@@ -36,11 +36,17 @@ namespace BililiveDebugPlugin
                     m.CommentText = ss[1];
                 }
                 m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
-                if (m.CommentText[0] == '送')
+                if (m.CommentText[0] == '给')
                 {
                     m.GiftName = m.CommentText.Substring(1);
                     m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GiftSend;
                     m.GiftCount = 1;
+                }
+                if (m.CommentText[0] == '舰')
+                {
+                    m.GiftName = m.CommentText.Substring(1);
+                    m.UserGuardLevel = m.GuardLevel = int.Parse(m.GiftName);
+                    m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GuardBuy;
                 }
                 m.UserName = string.Format("name_{0}", m.UserID_long);
                 

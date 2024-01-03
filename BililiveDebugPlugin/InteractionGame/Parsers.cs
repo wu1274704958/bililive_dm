@@ -65,6 +65,18 @@ namespace InteractionGame
         {
             return DebugPlugin.ColorMapIndex;
         }
+        public List<int> GetLeastGroupList()
+        {
+            var res = new List<int>();
+            var ls = GroupCount.ToList();
+            ls.Sort((a,b) => a.Value - b.Value);
+            for(int i = 0;i < ls.Count;i++)
+            {
+                if (ls[i].Value == ls[0].Value)
+                    res.Add(ls[i].Key);
+            }
+            return res;
+        }
         protected virtual Regex SelectGrouRegex => new Regex("(.+)");
         protected virtual void ParseChooseGroup(long uid,string con,string uName)
         {
@@ -89,19 +101,28 @@ namespace InteractionGame
                 TryParseChangTarget(uid,con,uName);
             }
         }
-        protected virtual int ParseJoinGroup(long uid,string con,string uName)
+        protected virtual int ParseJoinGroup(long uid,string con, DyMsgOrigin msgOrigin)
         {
-            if (con.StartsWith("加"))
+            if (con.StartsWith("加") || (msgOrigin.barType == MsgType.GiftSend ||
+                (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like) ||
+                msgOrigin.barType == MsgType.GuardBuy))
             {
-                var g = GetLeastGroup();
-                SetGroup(uid,g);
-                if(g == GetTarget(uid))
-                {
-                    SetTarget(uid,-1);
-                }
-                return g;
+                return ChooseGroupSystem(uid,msgOrigin);
             }
             return -1;
+        }
+
+        public int ChooseGroupSystem(long uid, DyMsgOrigin msgOrigin)
+        {
+            var g = GetLeastGroup();
+            SetGroup(uid, g);
+            if (g == GetTarget(uid))
+            {
+                SetTarget(uid, -1);
+            }
+            if (g > -1)
+                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel), g);
+            return g;
         }
 
         private int GetLeastGroup()
@@ -212,7 +233,7 @@ namespace InteractionGame
        
         public void OnAddGroup(UserData userdata, int g)
         {
-            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon);
+            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel);
             foreach(var it in Observers)
             {
                 it.Value.OnAddGroup(userdata, g);
@@ -296,22 +317,21 @@ namespace InteractionGame
                 return data;
             return null;
         }
-        public void UpdateUserData(long id,int score,int soldier_num,string name,string icon)
+        public void UpdateUserData(long id,int score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0)
         {
             if (UserDataDict.ContainsKey(id))
             {
                 UserDataDict[id].Score += score;
                 UserDataDict[id].Soldier_num += soldier_num;
+                if(group != -1)
+                    UserDataDict[id].Group = group;
             }
             else
             {
-                UserDataDict.Add(id,new UserData()
+                UserDataDict.Add(id,new UserData(id,name,icon,group,guardLv)
                 {
-                    Id = id,
-                    Name = name,
-                    Icon = icon,
                     Score = score,
-                    Soldier_num = soldier_num
+                    Soldier_num = soldier_num,
                 });
             }
         }
@@ -370,7 +390,7 @@ namespace InteractionGame
         public static bool Demand(Msg msg, MsgType barType)
         {
             return (barType == MsgType.Interact || barType == MsgType.GiftSend ||
-                barType == MsgType.Comment);
+                barType == MsgType.Comment || barType == MsgType.GuardBuy);
         }
     }
     public class UserData
@@ -381,17 +401,20 @@ namespace InteractionGame
         public long Score;
         public int Soldier_num;
         public int Group;
+        public long Honor;
+        public int Op1 = 0;
+        public int GuardLevel;
+        //public DateTime JoinTime;
+        
 
-        public UserData()
-        {
-        }
-
-        public UserData(long id, string name, string icon, int group)
+        public UserData(long id, string name, string icon, int group,int guardLvl)
         {
             Id = id;
             Name = name;
             Icon = icon;
             Group = group;
+            GuardLevel = guardLvl;
+            //JoinTime = DateTime.Now;
         }
     }
     

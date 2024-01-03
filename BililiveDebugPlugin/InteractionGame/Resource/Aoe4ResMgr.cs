@@ -102,11 +102,24 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override void AddAutoResourceById(long id)
+        public override void AddAutoResourceById(long id, float addFactor = 1f)
         {
-            AutoAddMap.TryAdd(id, new Utils.TimeLinerInteger(Aoe4DataConfig.OriginResource, AutoAddResFactor));
+            Utils.TimeLinerInteger v = null;
+            AutoAddMap.TryAdd(id, v = new Utils.TimeLinerInteger(Aoe4DataConfig.OriginResource, AutoAddResFactor));
+            v.AddFactor = addFactor;
         }
-        
+
+        public override void ChangeAutoResourceAddFactor(long id, float addFactor)
+        {
+            if (AutoAddMap.TryGetValue(id, out var v))
+            {
+                lock (v)
+                {
+                    v.AddFactor = addFactor;
+                }
+            }
+        }
+
 
         private int GetAutoResource(long id)
         {

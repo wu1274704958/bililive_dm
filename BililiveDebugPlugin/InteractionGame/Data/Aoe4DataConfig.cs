@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BililiveDebugPlugin.DB.Model;
+using SettlementData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.InteractionGame.Data
 {
@@ -65,7 +67,11 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             { 21, new SquadData("突骑",          8        )},
             { 22, new SquadData("苏丹亲兵",      16         )},
             { 23, new SquadData("骆驼骑兵",      10         )},
-            { 24, new SquadData("骑手",           5      )},
+            { 24, new SquadData("骑手",           5      , ESquadType.SiegeAttacker)},
+            { 25, new SquadData("冲车",           35      )},
+            { 26, new SquadData("旗本武士",       20      )},
+            { 27, new SquadData("旗本射手",       21      )},
+            { 28, new SquadData("旗本骑士",       23     , ESquadType.SiegeAttacker)},
 
             { 100, new SquadData("风琴炮",       2         )},
             { 101, new SquadData("长管炮",       2         ,        ESquadType.SiegeAttacker)  },
@@ -79,8 +85,40 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             { 108, new SquadData("长管炮",               2,  ESquadType.SiegeAttacker      )},
             { 109, new SquadData("皇家长管炮",           2,   ESquadType.SiegeAttacker       )},
 
-            { 111, new SquadData("精锐苏丹亲兵",         2)},
-            { 113, new SquadData("大筒兵",              20)},
+            { 111, new SquadData("精锐苏丹亲兵",              2)},
+            { 113, new SquadData("大筒兵",                     20)},
+            { 117, new SquadData("精锐旗本武士",              20)},
+            { 118, new SquadData("精锐旗本射手",              20)},
+            { 119, new SquadData("精锐旗本骑士",              20, ESquadType.SiegeAttacker    )},
+        };
+        
+        public static readonly string NiuWa = "牛哇牛哇";
+        public static readonly string GanBao = "干杯";
+        public static readonly string BBTang = "棒棒糖";
+        public static readonly string ZheGe     = "这个好诶";
+        public static readonly string XiaoCake   = "小蛋糕";
+        public static readonly string XiaoFuDie   = "小蝴蝶";
+        public static readonly string QingShu   = "情书";
+        public static readonly string Gaobai    = "告白花束";
+        public static readonly string ShuiJing   = "水晶之恋";
+        public static readonly string Xinghe = "星河入梦";
+        public static readonly string DM = "动鳗电池";
+        public static readonly string KuaKua = "花式夸夸";
+
+        public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
+        {
+            {NiuWa,         ItemData.Create(NiuWa            ,EItemType.Gift,1) },
+            {GanBao  ,      ItemData.Create(GanBao        ,EItemType.Gift,66) },
+            {BBTang ,       ItemData.Create(BBTang         ,EItemType.Gift,2) },
+            {ZheGe    ,     ItemData.Create(ZheGe          ,EItemType.Gift,10) },
+            {XiaoCake ,     ItemData.Create(XiaoCake      ,EItemType.Gift,15) },
+            {XiaoFuDie,     ItemData.Create(XiaoFuDie     ,EItemType.Gift,6) },
+            {QingShu  ,     ItemData.Create(QingShu        ,EItemType.Gift,52) },
+            {Gaobai   ,     ItemData.Create(Gaobai         ,EItemType.Gift,220) },
+            {ShuiJing ,     ItemData.Create(ShuiJing       ,EItemType.Gift,20) },
+            {Xinghe ,       ItemData.Create(Xinghe           ,EItemType.Gift,199) },
+            //{DM ,           ItemData.Create(DM              ,EItemType.Gift,260) },
+            //{KuaKua ,       ItemData.Create(KuaKua          ,EItemType.Gift,330) },
         };
 
         public static SquadData GetSquad(int index)
@@ -90,14 +128,14 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             else
                 return new SquadData("None", 0);
         }
-        public static int SquadCount => SquadDatas.Count - 11;
-
-        public static readonly int AutoGoldLimit = 6666;
-
+        public static int SquadCount => SquadDatas.Count - 14;
+        public static readonly long HonorGoldFactor = 20;
+        public static readonly int AutoGoldLimit = 3000;
         public static readonly int OriginResource = 50;
         public static readonly int BaoBingOriginResource = 0;
         public static readonly int GroupCount = 2;
         public static readonly int BaoBingAddResFactor = 1;
+
         public static int GetGroupExclude(int g)
         {
             for(int i = 0; i < GroupCount; i++)
@@ -107,5 +145,22 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             }
             return -1;
         }
+
+        public static long CalcHonorSettlement(SettlementData user, bool b,bool isLeastGroup,int i)
+        {
+            var f = (b ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
+                 + (i < 3 ? 0.0001 * (3 - i) : 0.0);
+            var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
+            if (user.GuardLevel > 0) r += (long)Math.Ceiling(r * PlayerResAddFactorArr[user.GuardLevel]);
+            return r;
+        }
+
+        public static long LoseSettlementHonorAdd = 2;
+        public static long WinSettlementHonorAdd = 5;
+        public static double LoseSettlementHonorFactor = 0.0003;
+        public static double WinSettlementHonorFactor = 0.0005;
+        private static readonly double LeastGroupSettlementHonorFactor = 0.0001;
+
+        public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 0.9f, 0.6f, 0.3f };
     }
 }

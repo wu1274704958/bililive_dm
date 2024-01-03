@@ -13,9 +13,11 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         where C : class, IContext
     {
         ConcurrentDictionary<long, Utils.TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<long, Utils.TimeLinerInteger>();
-        public override void AddAutoResourceById(long id)
+        public override void AddAutoResourceById(long id, float addFactor = 1f)
         {
-            AutoAddMap.TryAdd(id, new Utils.TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
+            Utils.TimeLinerInteger v = null;
+            AutoAddMap.TryAdd(id, v = new Utils.TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
+            v.AddFactor = addFactor;
         }
 
         public override void AddResource(long id, int c)
@@ -25,6 +27,17 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
                 lock (v)
                 {
                     v.Append(c);
+                }
+            }
+        }
+
+        public override void ChangeAutoResourceAddFactor(long id, float addFactor)
+        {
+            if (AutoAddMap.TryGetValue(id, out var v))
+            {
+                lock (v)
+                {
+                    v.AddFactor = addFactor;
                 }
             }
         }

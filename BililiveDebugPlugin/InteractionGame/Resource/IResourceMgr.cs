@@ -28,12 +28,13 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         public abstract void OnTick(float delta);
         public abstract void OnClear();
 
-        public abstract void AddAutoResourceById(long id);
+        public abstract void AddAutoResourceById(long id,float addFactor = 1f);
         public abstract bool SpawnVillager(long id,int num);
         public abstract void AddResource(long id, int c);
         public abstract bool RemoveResource(long id,int r);
         public abstract void RemoveAllVillagers(long id);
         public abstract void Foreach(int ty,Action<long,int> action);
         public abstract int PlayerCount();
+        public abstract void ChangeAutoResourceAddFactor(long id,float addFactor);
     }
 }

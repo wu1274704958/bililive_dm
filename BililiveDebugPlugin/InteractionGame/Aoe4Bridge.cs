@@ -30,17 +30,20 @@ namespace Interaction
         WindowInfo GetWindowInfo();
         void AppendExecCode(string code);
         void ExecSetCustomTarget(int self, int target);
-        void ExecSpawnSquad(int self, int squadId,int num, long uid,int attackTy = 0);
-        void ExecSpawnSquadWithTarget(int self, int squadId,int target,int num, long uid,int attackTy = 0);
+        void ExecSpawnSquad(int self, int squadId,int num, long uid,int attackTy = 0, int op1 = 1);
+        void ExecSpawnSquadWithTarget(int self, int squadId,int target,int num, long uid,int attackTy = 0, int op1 = 1);
+        void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1);
+        void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1);
         void ExecPrintMsg(string msg);
         void ExecSpawnVillagers(int self, int vid, int num);
         void ExecTryRemoveVillagersCountNotify(int vid,int next);
         void ExecAllSquadMove(int self, long uid);
         void ExecAllSquadMoveWithTarget(int self, int target, long uid,int attackTy = 0);
         void ExecCheckVillagerCount(int vid);
-        void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0);
-        void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0);
         void TryStartGame();
+        void ClickLeftMouse(int x, int y);
+        void FlushAppend();
+
     }
     public class DefAoe4BridgeUtil
     {
@@ -68,7 +71,7 @@ namespace Interaction
         private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb.Clear());
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
-        private static readonly int MsgMaxLength = 4096;
+        private static readonly int MsgMaxLength = 200;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
@@ -171,20 +174,27 @@ namespace Interaction
         {
             AppendExecCode($"PLAYERS[{self}].custom_target = {target};");
         }
-        public void ExecSpawnSquad(int self, int squadId, int num,long uid, int attackTy = 0)
+        public void ExecSpawnSquad(int self, int squadId, int num,long uid, int attackTy = 0,int op1 = 1)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num},{uid},{attackTy});");
+            AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num},{uid},{attackTy},{{op1 = {op1}}});");
         }
-        public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num,long uid, int attackTy = 0)
+        public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num,long uid, int attackTy = 0, int op1 = 1)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num},{uid},{attackTy});");
+            AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
         }
-        public void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0)
+        public void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
         {
             if (group.Count == 0) return;
             var groupStr = ToSpawnSquadTable(group,multiple);
             if (groupStr.Length <= 2) return;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr},{uid},{attackTy});");
+            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr},{uid},{attackTy},{{op1 = {op1}}});");
+        }
+        public void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
+        {
+            if (group.Count == 0) return;
+            var groupStr = ToSpawnSquadTable(group,multiple);
+            if (groupStr.Length <= 2) return;
+            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr},{uid},{attackTy},{{op1 = {op1}}});");
         }
 
         private string ToSpawnSquadTable(List<(int, int)> group,int multiple = 1)
@@ -204,13 +214,6 @@ namespace Interaction
             return s;
         }
 
-        public void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0)
-        {
-            if (group.Count == 0) return;
-            var groupStr = ToSpawnSquadTable(group,multiple);
-            if (groupStr.Length <= 2) return;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr},{uid},{attackTy});");
-        }
         public void ExecAllSquadMove(int self,long uid)
         {
             AppendExecCode($"AllAttackTargetEx({self},{uid});");
@@ -223,6 +226,12 @@ namespace Interaction
 
         public bool NeedFlush()
         {
+            int overloadVal = 0;
+            if ((overloadVal = _context.IsOverload()) != 0)
+            {
+                _context.Log($"Game overloaded {overloadVal}");
+                return false;
+            }
 
             if (MsgQueue.TryPeek(out var msg) || m_ExecCode != null)
             {
@@ -342,7 +351,7 @@ namespace Interaction
             ClickLeftMouse(x, y);
         }
 
-        private void ClickLeftMouse(int x,int y)
+        public void ClickLeftMouse(int x,int y)
         {
             DefAoe4BridgeUtil.SetCursorPos(x, y);
             Thread.Sleep(10);
@@ -398,9 +407,19 @@ namespace Interaction
 
         public void TryStartGame()
         {
+            if (_windowInfo == null) return;
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0100, new IntPtr(97), IntPtr.Zero);
             Thread.Sleep(10);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0101, new IntPtr(97), IntPtr.Zero);
+        }
+
+        public void FlushAppend()
+        {
+            if (m_ExecCode != null)
+            {
+                MsgQueue.Enqueue(m_ExecCode);
+                m_ExecCode = null;
+            }
         }
     }
 }

@@ -56,6 +56,8 @@ namespace InteractionGame
             private DateTime UpdateTime;
             private int factor;
             private int Value;
+            public double AddFactor { get;set; } = 1;
+            public double Rest = 0.0;
             public int Limit { get; private set; } = int.MaxValue;
             
             public TimeLinerInteger(int value, int factor = 1,int limit = int.MaxValue)
@@ -63,6 +65,7 @@ namespace InteractionGame
                 this.factor = factor;
                 Value = value;
                 UpdateTime = DateTime.Now;
+                Limit = limit;
             }
             public int val
             {
@@ -86,7 +89,15 @@ namespace InteractionGame
                 if (ts.TotalSeconds > 0)
                 {
                     var old = Value;
-                    var @new = Value + (int)(ts.TotalSeconds * factor);
+                    var add = (int)(ts.TotalSeconds * factor);
+                    Rest += AddFactor * add;
+                    if(Rest > 1)
+                    {
+                        var v = Math.Truncate(Rest);
+                        add += (int)v;
+                        Rest -= v;
+                    }
+                    var @new = Value + add;
                     if (old != @new)
                     {
                         Value = @new;
@@ -144,6 +155,52 @@ namespace InteractionGame
                 _objectResetor?.Invoke(item);
                 _objects.Add(item);
             }
+        }
+    }
+    //泛型单例基类
+    public abstract class Singleton<T> where T : new()
+    {
+        private static T _instance;
+        public static T Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new T();
+                }
+                return _instance;
+            }
+        }
+
+        public static void _Dispose()
+        {
+            _instance = default(T);
+        }
+    }
+
+    public class ObjPoolMgr : Singleton<ObjPoolMgr>
+    {
+        private ConcurrentDictionary<Type, object> _pools = new ConcurrentDictionary<Type, object>();
+
+        public Utils.ObjectPool<T> Get<T>(Func<T> objectGenerator = null, Action<T> objectResetor = null)
+            where T : new()
+        {
+            if(_pools.TryGetValue(typeof(T), out object pool))
+                return pool as Utils.ObjectPool<T>;
+            else
+            {
+                if(objectGenerator == null)
+                    objectGenerator = () => new T();
+                var p = new Utils.ObjectPool<T>(objectGenerator, objectResetor);
+                _pools.TryAdd(typeof(T), p);
+                return p;
+            }
+        }
+
+        public void TryRemove<T>()
+        {
+            _pools.TryRemove(typeof(T),out _);
         }
     }
 

@@ -25,7 +25,7 @@ namespace BililiveDebugPlugin.InteractionGame
     {
         readonly static string MUTEX_NAME = "SM_Mutex";
         readonly static string FILE_MAP_NAME = "FM_RANK_MSG";
-        readonly static uint MAX_MSG_SIZE = 4096 * 4;
+        readonly static uint MAX_MSG_SIZE = 4096 * 6;
 
         [DllImport("Kernel32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFileMapping(int hFile, IntPtr lpAttributes, uint flProtect, uint dwMaxSizeHi, uint dwMaxSizeLow, string lpName);
@@ -129,8 +129,8 @@ namespace BililiveDebugPlugin.InteractionGame
                 case 0:
                     Marshal.WriteByte(lpShareMemory, 1);
                     Marshal.WriteInt16(lpShareMemory + 1, id);
-                    IntPtr init = Marshal.StringToHGlobalAnsi(msg);
-                    uint len = (uint)strlen(init) + 1;
+                    IntPtr init = Marshal.StringToHGlobalUni(msg);
+                    uint len = (uint)(msg.Length * 2);// (uint)strlen(init) + 1;
                     CopyMemory(lpShareMemory + 3, init, len);
                     Marshal.FreeHGlobal(init);
                     break;
@@ -156,6 +156,15 @@ namespace BililiveDebugPlugin.InteractionGame
                     MsgQueue.TryDequeue(out _);
             }
         }
+        public void waitClean()
+        {
+            while(MsgQueue.TryPeek(out var it))
+            {
+                var ret = SendMessage(it.Key, it.Value, false);
+                if (ret == 0)
+                    MsgQueue.TryDequeue(out _);
+            }
+        }
 
         public void SendMsg(short id, object msg)
         {
@@ -163,7 +172,7 @@ namespace BililiveDebugPlugin.InteractionGame
             {
                 var str = JsonConvert.SerializeObject(msg);
                 SendMessage(id, str);
-            }catch (Exception ex) { 
+            }catch (Exception _) { 
                 
             }
         }
@@ -171,10 +180,10 @@ namespace BililiveDebugPlugin.InteractionGame
         private static int strlen(IntPtr init)
         {
             int len = 0;
-            while (Marshal.ReadByte(init) != 0)
+            while (Marshal.ReadInt16(init) != 0)
             {
-                len += 1;
-                init += 1;
+                len += 2;
+                init += 2;
             }
             return len;
         }

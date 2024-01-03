@@ -45,6 +45,7 @@ namespace InteractionGame
         void PrintGameMsg(string text);
         void SendTestDanMu(object sender, ReceivedDanmakuArgs e);
         int IsGameStart();
+        int IsOverload();
     }
 
     public interface ILocalMsgDispatcher<IT>

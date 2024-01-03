@@ -1,0 +1,39 @@
+﻿using System;
+using System.Threading;
+using BililiveDebugPlugin.DB;
+using InteractionGame;
+
+namespace BililiveDebugPlugin
+{
+    public static class Program
+    {
+        //main func
+        public static void Main()
+        {
+            var db = DB.DBMgr.Instance;
+            db.OnSettlement(new UserData(1,"姓名1","hjkaskjkdhjkas.png",0)
+            {
+                Score                = 100,
+                Honor                = 10,
+                Soldier_num = 9,
+            }, true);
+            db.AddGiftItem(new UserData(1, "姓名1", "hjkaskjkdhjkas.png", 0), "告白花束", 3);
+            var r = db.DepleteItem(1,"牛哇牛哇",3,out var c);
+            Console.WriteLine($"{r},{c}");
+            var ls = db.GetUserItems(1);
+            foreach (var item in ls)
+            {
+                Console.WriteLine(item);
+            }
+            
+            // Console.WriteLine(db.PrintUsers());
+            // Console.WriteLine(db.DepleteHonor(1, 100));
+            // Console.WriteLine("-----------------------honor----------------------");
+            // Console.WriteLine(db.PrintUsers(db.GetSortedUsersByHonor()));
+            // Console.WriteLine(db.DepleteHonor(1, 10000));
+            // Console.WriteLine("-----------------------score----------------------");
+            // Console.WriteLine(db.PrintUsers(db.GetSortedUsersByScore()));
+            db.Dispose();
+        }
+    }
+}

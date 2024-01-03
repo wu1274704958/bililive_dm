@@ -50,6 +50,8 @@
   <ItemGroup>
     <Compile Include="BililiveDebugPlugin.cs" />
     <Compile Include="DataContext.cs" />
+    <Compile Include="DB\DBMgr.cs" />
+    <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
@@ -64,6 +66,7 @@
     <Compile Include="InteractionGame\SM_SendMsg.cs" />
     <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
+    <Content Include="Main.cs.txt" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -83,10 +86,12 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FreeSql" Version="3.2.806" />
+    <PackageReference Include="FreeSql.DbContext" Version="3.2.806" />
+    <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.806" />
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -158,6 +158,12 @@ namespace BilibiliDM_PluginFramework
                         {
                             if (((JObject)data).TryGetValue("uface", out var uface))
                                 UserFace = uface.ToString();
+                            if (((JObject)data).TryGetValue("guard_level", out var guard_level))
+                                GuardLevel = guard_level.Value<int>();
+                            if (((JObject)data).TryGetValue("fans_medal_level", out var fans_medal_level))
+                                FansMedalLevel = fans_medal_level.Value<int>();
+                            if (((JObject)data).TryGetValue("fans_medal_name", out var fans_medal_name))
+                                FansMedalName = fans_medal_name.ToString();
                         }
                         switch (cmd)
                         {
@@ -203,10 +209,9 @@ namespace BilibiliDM_PluginFramework
                                 UserID_str = obj["data"]["uid"].ToString();
                                 {
                                     int price = 0;
-                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false &&
-                                            int.TryParse(priceStr.ToString(), out price))
+                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false)
                                     {
-                                        GiftPrice = price;
+                                        GiftPrice = priceStr.Value<int>();
                                     }
                                 }
                                 try
@@ -506,10 +511,9 @@ namespace BilibiliDM_PluginFramework
                                 UserID_str = obj["data"]["uid"].ToString();
                                 {
                                     int price = 0;
-                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false &&
-                                            int.TryParse(priceStr.ToString(), out price))
+                                    if (((JObject)obj["data"])?.TryGetValue("price", out var priceStr) ?? false)
                                     {
-                                        GiftPrice = price;
+                                        GiftPrice = priceStr.Value<int>();
                                     }
                                 }
                                 try
@@ -751,7 +755,9 @@ namespace BilibiliDM_PluginFramework
         ///     </para>
         /// </summary>
         public string UserFace { get; set; }
-
+        public int GuardLevel { get; set; }
+        public int FansMedalLevel { get; set; }
+        public string FansMedalName { get; set; }
         /// <summary>
         ///     消息触发者用户ID, 弃用
         ///     <para>

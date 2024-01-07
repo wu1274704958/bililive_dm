@@ -68,7 +68,7 @@ namespace Interaction
         private List<int> m_TmpList = new List<int>();
         public int ScreenWidth =>  _ScreenWidth == 0 ? _ScreenWidth = Screen.PrimaryScreen.Bounds.Width : _ScreenWidth;
         private const int MAX_ExecutedIdx = 255;
-        private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb.Clear());
+        private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb?.Clear());
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
         private static readonly int MsgMaxLength = 200;
@@ -393,6 +393,11 @@ namespace Interaction
             Interlocked.Exchange(ref CurrentWriteIdx, -1);
             Interlocked.Exchange(ref ExpectNextIdx, 0);
             SavedFileDict.Clear();
+            while (!MsgQueue.IsEmpty)
+            {
+                if(MsgQueue.TryDequeue(out var sb))
+                    sbPool.Return(sb);
+            }
             m_TmpList.Clear();
             if (m_ExecCode != null)
                 SbPool.Return(m_ExecCode);

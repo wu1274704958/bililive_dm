@@ -89,7 +89,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
     }
 
-    public class MsgGiftParser<IT> : IDyMsgParser<IT>
+    public class MsgGiftParser<IT> : IDyMsgParser<IT>, IPlayerParserObserver
         where IT : class, IContext
     {
         public Utils.ObjectPool<List<(int, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(int, int)>>(
@@ -109,6 +109,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new AutoSpawnSquadSubMsgParser<IT>());
             AddSubMsgParse(new SignInSubMsgParser<IT>());
             base.Init(it, dispatcher);
+            m_MsgDispatcher.GetPlayerParser().AddObserver(this);
         }
 
         public override (int, int) Parse(DyMsgOrigin msgOrigin)
@@ -239,6 +240,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.ZheGe, 30);
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5);
                     AddHonor(ud, 1000);
+                    GivePlayerUpgrade(ud, "UPG.COMMON.UPGRADE_RANGED_INCENDIARY");
                     m_MsgDispatcher.GetResourceMgr().ChangeAutoResourceAddFactor(ud.Id,Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.UserGuardLevel]);
                 }
             }
@@ -418,7 +420,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            var attackTy = sd.SquadType == ESquadType.SiegeAttacker ? ((int)ESquadType.SiegeAttacker) : 0;
+            var attackTy = sd.SquadType >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
             if (target < 0)
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sid, c, u.Id, attackTy,u?.Op1 ?? 0);
@@ -460,27 +462,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
         }
 
-        //public void SpawnManySquad(long uid, List<(int,int)> specialSquad,List<(int,int)> squad, int c)
-        //{
-        //    int score = 0;
-        //    int num = 0;
-        //    UserData u = GetUserData(uid);
-        //    foreach (var it in specialSquad)
-        //    {
-        //        var sd = Aoe4DataConfig.GetSquad(it.Item1);
-        //        score += sd.Score * it.Item2;
-        //        num += it.Item2;
-        //        SendSpawnSquad(u, it.Item1, it.Item2 * c, sd);
-        //    }
-        //    foreach (var it in squad)
-        //    {
-        //        var sd = Aoe4DataConfig.GetSquad(it.Item1);
-        //        score += sd.Score * it.Item2;
-        //        num += it.Item2;
-        //    }
-        //    SendSpawnSquad(u, squad, c, false);
-        //    UpdateUserData(uid, score * c, num * c, null, null);
-        //}
+        public void GivePlayerUpgrade(UserData u, string upg)
+        {
+            m_MsgDispatcher.GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{u.Group + 1}].id, nil, nil, {upg});");
+        }
+        
 
         public void SpawnManySquad(long uid, SquadData v, int c)
         {
@@ -527,6 +513,21 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             UpdateUserData(uid, v.score * c, v.num * c, null, null);
         }
 
+        public void OnAddGroup(UserData userData, int g)
+        {
+            if (userData.GuardLevel > 0)
+                GivePlayerUpgrade(userData, "UPG.COMMON.UPGRADE_RANGED_INCENDIARY");
+        }
+
+        public void OnChangeGroup(UserData userData, int old, int n)
+        {
+
+        }
+
+        public void OnClear()
+        {
+
+        }
     }
 
     public class SquadData

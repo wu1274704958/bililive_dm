@@ -152,6 +152,7 @@ namespace InteractionGame
 
             public void Return(T item)
             {
+                if (item == null) return;
                 _objectResetor?.Invoke(item);
                 _objects.Add(item);
             }

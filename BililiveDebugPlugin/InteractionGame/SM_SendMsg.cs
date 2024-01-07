@@ -25,7 +25,7 @@ namespace BililiveDebugPlugin.InteractionGame
     {
         readonly static string MUTEX_NAME = "SM_Mutex";
         readonly static string FILE_MAP_NAME = "FM_RANK_MSG";
-        readonly static uint MAX_MSG_SIZE = 4096 * 6;
+        readonly static uint MAX_MSG_SIZE = 4096 * 20;
 
         [DllImport("Kernel32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFileMapping(int hFile, IntPtr lpAttributes, uint flProtect, uint dwMaxSizeHi, uint dwMaxSizeLow, string lpName);

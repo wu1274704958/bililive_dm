@@ -10,6 +10,8 @@ using BililiveDebugPlugin.DB;
 using BililiveDebugPlugin.InteractionGame.Resource;
 using System.Threading;
 using System.Linq;
+using Utils;
+using static InteractionGame.Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -108,6 +110,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             AddSubMsgParse(new AutoSpawnSquadSubMsgParser<IT>());
             AddSubMsgParse(new SignInSubMsgParser<IT>());
+            AddSubMsgParse(new GroupUpLevel<IT>());
             base.Init(it, dispatcher);
             m_MsgDispatcher.GetPlayerParser().AddObserver(this);
         }
@@ -241,7 +244,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5);
                     AddHonor(ud, 1000);
                     GivePlayerUpgrade(ud, "UPG.COMMON.UPGRADE_RANGED_INCENDIARY");
-                    m_MsgDispatcher.GetResourceMgr().ChangeAutoResourceAddFactor(ud.Id,Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.UserGuardLevel]);
+                    m_MsgDispatcher.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.UserGuardLevel]);
                 }
             }
             return (0, 0);
@@ -305,6 +308,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     InitCtx.PrintGameMsg($"{ud.Name}获得{rest}个金矿");
                     m_MsgDispatcher.GetResourceMgr().AddResource(ud.Id, rest);
                 }
+                GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(ud.Group,(int)count * squad.price);
             }
             SquadData.Recycle(squad);
         }
@@ -383,7 +387,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     {
                         if(SpecialSquad.Count > 0 || Squad.Count > 0)
                         {
-                            SpawnManySquad(u.Id, SquadData.FromData(Squad, SpecialSquad), c);
+                            SquadData squad = null;
+                            SpawnManySquad(u.Id, squad = SquadData.FromData(Squad, SpecialSquad), c);
                             InitCtx.PrintGameMsg($"{u.Name}出了{giftName}*{c}");
                         }
                     }
@@ -393,6 +398,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             SquadListPool.Return(Squad);
             if (transHonorfactor > 0.0f && battery > 0)
             {
+                GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(u.Group, (int)(battery * giftCount * Aoe4DataConfig.HonorGoldFactor));
                 var v = (long)Math.Ceiling(transHonorfactor * battery * giftCount);
                 AddHonor(u, v);
             }
@@ -561,7 +567,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var squad = new SquadData();
             squad.squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, OnClearList).Get();
             squad.specialSquad = ObjPoolMgr.Instance.Get<List<(int, int)>>().Get();
-            Utils.StringToDictAndForeach(s, (item) =>
+            StringToDictAndForeach(s, (item) =>
             {
                 if (item.Key >= Aoe4DataConfig.SquadCount) return;
                 var sd = Aoe4DataConfig.GetSquad(item.Key);
@@ -616,6 +622,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private IDyMsgParser<IT> m_Owner;
         public Utils.ObjectPool<List<(int, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(int, int)>>(
             () => new List<(int, int)>(), (a) => a.Clear());
+        private DateTime m_AutoBoomCkTime = DateTime.Now;
 
         public void Init(IDyMsgParser<IT> owner)
         {
@@ -641,6 +648,20 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         }
                     }
                 }
+            }
+
+            if (DateTime.Now - m_AutoBoomCkTime > TimeSpan.FromSeconds(2.0f))
+            {
+                foreach (var it in m_Dict)
+                {
+                    var gold = m_Owner.m_MsgDispatcher.GetResourceMgr().GetResource(it.Key);
+                    if(gold >= Aoe4DataConfig.AutoGoldLimit)
+                    {
+                        var c = 1000 / it.Value.price;
+                        Boom(it.Key,c);
+                    }
+                }
+                m_AutoBoomCkTime = DateTime.Now;
             }
         }
 
@@ -710,7 +731,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     lock (squad)
                     {
                         if(!needAdd)squad.Reset();
-                        Utils.StringToDictAndForeach(match.Groups[1].Value, (item) =>
+                        StringToDictAndForeach(match.Groups[1].Value, (item) =>
                         {
                             if (item.Key >= Aoe4DataConfig.SquadCount) return;
                             var sd = Aoe4DataConfig.GetSquad(item.Key);
@@ -743,39 +764,45 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     return true;
                 }else if (lower.StartsWith("暴") || lower.StartsWith("爆"))
                 {
-                    if (m_Dict.TryGetValue(uid, out var squad))
+                    var maxCount = 5000;
+                    if((lower.Length > 1 && int.TryParse(lower.Substring(1), out var _maxCount)))
                     {
-                        var maxCount = 5000;
-                        if((lower.Length > 1 && int.TryParse(lower.Substring(1), out var _maxCount)))
-                        {
-                            if (_maxCount > 0) maxCount = _maxCount;
-                        }
-
-                        var resMgr = m_Owner.m_MsgDispatcher.GetResourceMgr();
-                        var g = resMgr.GetResource(uid);
-                        var c = g / squad.price;
-                        if(c > maxCount) c = maxCount;
-                        if (c == 0)
-                        {
-                            m_Owner.InitCtx.PrintGameMsg($"{uName}没有足够的资源暴兵");
-                        }
-                        else
-                        {
-                            if (resMgr.RemoveResource(uid,c * squad.price))
-                            {
-                                (m_Owner as MsgGiftParser<IT>).SpawnManySquad(uid, squad, c);
-                                m_Owner.InitCtx.PrintGameMsg($"{squad.uName}暴兵{c}组");
-                            }
-                        }
+                        if (_maxCount > 0) maxCount = _maxCount;
                     }
-                    else
-                    {
-                        m_Owner.InitCtx.PrintGameMsg($"{uName}需要先设置自动出兵才能暴兵");
-                    }
-                    
+                    Boom(uid,maxCount,uName);
+                    return true;
                 }
             }
             return false;
+        }
+
+        private void Boom(long uid,int maxCount,string uName = null)
+        {
+            if (m_Dict.TryGetValue(uid, out var squad))
+            {
+                var resMgr = m_Owner.m_MsgDispatcher.GetResourceMgr();
+                var g = resMgr.GetResource(uid);
+                var c = g / squad.price;
+                if(c > maxCount) c = maxCount;
+                if (c == 0)
+                {
+                    m_Owner.InitCtx.PrintGameMsg($"{squad.uName}没有足够的资源暴兵");
+                }
+                else
+                {
+                    if (resMgr.RemoveResource(uid,c * squad.price))
+                    {
+                        (m_Owner as MsgGiftParser<IT>).SpawnManySquad(uid, squad, c);
+                        m_Owner.InitCtx.PrintGameMsg($"{squad.uName}暴兵{c}组");
+                        m_Owner.GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(
+                            m_Owner.m_MsgDispatcher.GetPlayerParser().GetGroupById(uid),c * squad.price);
+                    }
+                }
+            }
+            else
+            {
+                m_Owner.InitCtx.PrintGameMsg($"{uName}需要先设置自动出兵才能暴兵");
+            }
         }
 
         public void Stop()
@@ -834,7 +861,7 @@ public class SignInSubMsgParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
                     var u = m_Owner.m_MsgDispatcher.GetMsgParser().GetUserData(msg.msg.UserID_long);
                     if (DB.DBMgr.Instance.SignIn(u))
                     {
-                        var probability = 1000 - (msg.msg.GuardLevel > 0 ? (4 - msg.msg.GuardLevel) * 300 : 0);
+                        var probability = 200 - (msg.msg.GuardLevel > 0 ? (4 - msg.msg.GuardLevel) * 20 : 0);
                         var now = DateTime.Now;
                         var r = new Random((int)now.Ticks);
                         var isYearFirstDay = DateTime.Now.DayOfYear == 1;

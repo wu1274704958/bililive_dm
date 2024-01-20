@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using BililiveDebugPlugin.DB.Model;
 using BililiveDebugPlugin.InteractionGame.Data;
-using InteractionGame;
+using Utils;
 using UserData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.DB
@@ -126,6 +126,13 @@ namespace BililiveDebugPlugin.DB
             else
                 return m_fsql.Update<Model.UserData>(data.Id).Set(a => a.Honor, d.Honor).ExecuteAffrows();
         }
+        public int AddHonor(long id,long honor)
+        {
+            var d = GetUser(id);
+            if(d == null) return 0;
+            d.Honor += honor;
+            return m_fsql.Update<Model.UserData>(id).Set(a => a.Honor, d.Honor).ExecuteAffrows();
+        }
         public bool DepleteHonor(long id,long honor)
         {
             var d = GetUser(id);
@@ -170,6 +177,23 @@ namespace BililiveDebugPlugin.DB
                 else
                     ret += ChangeItemCount(itemData,num,out _);
             }
+            return ret;
+        }
+        public int AddGiftItem(long id, string name, int num)
+        {
+            int ret = 0;
+            if (!Aoe4DataConfig.ItemDatas.TryGetValue(name, out var item))
+                return 0;
+            
+            
+            var itemData = GetItem(id,name);
+            if (itemData == null)
+            {
+                var newItem = ItemData.Create(item, num, id);
+                ret += m_fsql.Insert(newItem).ExecuteAffrows();
+            }
+            else
+                ret += ChangeItemCount(itemData,num,out _);
             return ret;
         }
         
@@ -219,6 +243,53 @@ namespace BililiveDebugPlugin.DB
                 else
                     return false;
             }
+        }
+        
+        public SystemData GetSystemDataOrCreate(long id,out bool isNew)
+        {
+            var r = m_fsql.Select<Model.SystemData>().Where((a) => a.Id == id).ToOne();
+            isNew = r == null;
+            if (isNew)
+                r = new Model.SystemData()
+                {
+                    Id = id,
+                    StrValue = "",
+                    IntValue = 0,
+                    LongValue = 0,
+                    DateTimeValue = new DateTime(1990, 1, 1)
+                };
+            return r;
+        }
+        public bool SetSysValue<T>(long id,T v,out bool isNew)
+        {
+            var d = GetSystemDataOrCreate(id, out isNew);
+            if (v is int iv)
+            {
+                d.IntValue = iv;
+                if(!isNew)
+                    return m_fsql.Update<Model.SystemData>(id).Set(a => a.IntValue, iv).ExecuteAffrows() == 1;
+            }
+            else if (v is long lv)
+            {
+                d.LongValue = lv;
+                if(!isNew)
+                    return m_fsql.Update<Model.SystemData>(id).Set(a => a.LongValue, lv).ExecuteAffrows() == 1;
+            }
+            else if (v is string sv)
+            {
+                d.StrValue = sv;
+                if(!isNew)
+                    return m_fsql.Update<Model.SystemData>(id).Set(a => a.StrValue, sv).ExecuteAffrows() == 1;
+            }
+            else if (v is DateTime dt)
+            {
+                d.DateTimeValue = dt;
+                if(!isNew)
+                    return m_fsql.Update<Model.SystemData>(id).Set(a => a.DateTimeValue, dt).ExecuteAffrows() == 1;
+            }
+            else
+                return false;
+            return m_fsql.Insert(d).ExecuteAffrows() == 1;
         }
         
     }

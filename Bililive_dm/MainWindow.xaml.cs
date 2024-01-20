@@ -973,7 +973,7 @@ namespace Bililive_dm
                     await Task.Delay(TimeSpan.FromSeconds(0.5));
                     if (_isOpm)
                     {
-                       OPMConnBtn_OnClick(null,null);
+                        OPMConnBtn_OnClick(new Reconnect(),null);
                     }
                     else
                     {
@@ -1673,7 +1673,25 @@ namespace Bililive_dm
             this.OldConnPanel.Visibility = Visibility.Collapsed;
             _isOpm = true;
         }
+        class Reconnect {}
 
+        private async Task<Tuple<string, List<string>,int>> GetRoomInfo(string roomcode)
+        {
+            
+            Tuple<string, List<string>,int> info;
+            try
+            {
+                info = await BOpen.GetRoomInfoByCode(roomcode + "");
+            }
+            catch (Exception exception)
+            {
+                this.logging(exception.Message);
+                this.logging(exception+"");
+                //MessageBox.Show(exception.Message);
+                return null;
+            }
+            return info;
+        }
         private async void OPMConnBtn_OnClick(object sender, RoutedEventArgs e)
         {
 
@@ -1688,22 +1706,24 @@ namespace Bililive_dm
             OPMConnBtn.IsEnabled = false;
             OPMDisconnBtn.IsEnabled = true;
             DisableOPM.IsEnabled = false;
-           
             var roomcode = this.OPCode.Password?.Trim();
-            Tuple<string, List<string>,int> info;
-            try
+            int trytimes = sender is Reconnect ? 5 : 1;
+            Tuple<string, List<string>,int> info = null;
+            while (trytimes > 0)
             {
-                info = await BOpen.GetRoomInfoByCode(roomcode + "");
+                info = await GetRoomInfo(roomcode);
+                if(info != null)
+                    break;
+                trytimes--;
+                await Task.Delay(1000);
             }
-            catch (Exception exception)
+            
+            if (info == null)
             {
-               this.logging(exception.Message);
-               this.logging(exception+"");
-               MessageBox.Show(exception.Message);
-               OPMConnBtn.IsEnabled = true;
-               OPMDisconnBtn.IsEnabled = true;
-               DisableOPM.IsEnabled = true;
-               return;
+                OPMConnBtn.IsEnabled = true;
+                OPMDisconnBtn.IsEnabled = true;
+                DisableOPM.IsEnabled = true;
+                return;
             }
 
             try

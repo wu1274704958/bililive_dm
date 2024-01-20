@@ -2,12 +2,16 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using ProtoBuf;
+using System.Reflection;
+using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame
 {
@@ -21,6 +25,19 @@ namespace BililiveDebugPlugin.InteractionGame
 //        }
 //    ]
 //  }
+
+    public enum EMsgTy:short
+    {
+        None = 0,
+        Settlement = 1,
+        AddPlayer = 2,
+        ClearAllPlayer = 3,
+        UpdatePlayerGold = 4,
+        ShowPlayerAction = 5,
+        RemoveGroup = 6,
+        UpdateGroupLevel = 7,
+        StartGame = 8,
+    }
     public class SM_SendMsg
     {
         readonly static string MUTEX_NAME = "SM_Mutex";
@@ -62,10 +79,13 @@ namespace BililiveDebugPlugin.InteractionGame
         private static readonly IntPtr NULL = IntPtr.Zero;
 
         private IntPtr hFileMapping = IntPtr.Zero;
-        private ConcurrentQueue<KeyValuePair<short,string>> MsgQueue = new ConcurrentQueue<KeyValuePair<short, string>>();
+        private ConcurrentQueue<KeyValuePair<short,byte[]>> MsgQueue = new ConcurrentQueue<KeyValuePair<short, byte[]>>();
+        private byte[] TmpBuf = new byte[MAX_MSG_SIZE - 3];
+        private MemoryStream m_TmpStream;// = new MemoryStream();
 
         public bool Init()
         {
+            //Assembly ass = Assembly.LoadFrom("System.Runtime.CompilerServices.Unsafe.dll");
             hFileMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
                 NULL,
                 PAGE_READWRITE,
@@ -108,8 +128,8 @@ namespace BililiveDebugPlugin.InteractionGame
         {
             if (NULL != hFileMapping) CloseHandle(hFileMapping);
         }
-
-        public int SendMessage(short id,string msg,bool pushQueue = true)
+        
+        public int SendMessage(short id,byte[] msg,bool pushQueue = true)
         {
             if(hFileMapping == IntPtr.Zero)
                 return -1;
@@ -124,19 +144,25 @@ namespace BililiveDebugPlugin.InteractionGame
                 ret = GetLastError();
                 goto END;
             }
+
+            if (msg != null && msg.Length > MAX_MSG_SIZE + 5)
+            {
+                Locator.Instance.Get<DebugPlugin>().Log($"Send Message to big id = {id} len = {msg.Length}");
+                return -3;
+            }
             switch(Marshal.ReadByte(lpShareMemory))
             {
                 case 0:
                     Marshal.WriteByte(lpShareMemory, 1);
                     Marshal.WriteInt16(lpShareMemory + 1, id);
-                    IntPtr init = Marshal.StringToHGlobalUni(msg);
-                    uint len = (uint)(msg.Length * 2);// (uint)strlen(init) + 1;
-                    CopyMemory(lpShareMemory + 3, init, len);
-                    Marshal.FreeHGlobal(init);
+                    Marshal.WriteInt16(lpShareMemory + 3, (short)(msg?.Length ?? 0));
+                    if(msg != null && msg.Length > 0)
+                        Marshal.Copy(msg, 0, lpShareMemory + 5, msg.Length);
+                    //CopyMemory(lpShareMemory + 3, init, (uint)len);
                     break;
                 default:
                     ret = -2;
-                    if(pushQueue)MsgQueue.Enqueue(new KeyValuePair<short, string>(id, msg));
+                    if(pushQueue)MsgQueue.Enqueue(new KeyValuePair<short, byte[]>(id, msg));
                     goto END;
                     break;
             }
@@ -166,14 +192,22 @@ namespace BililiveDebugPlugin.InteractionGame
             }
         }
 
-        public void SendMsg(short id, object msg)
+        public void SendMsg<T>(short id, T obj)
+            where T:class
         {
             try
             {
-                var str = JsonConvert.SerializeObject(msg);
-                SendMessage(id, str);
-            }catch (Exception _) { 
-                
+                if(obj == null)
+                {
+                    SendMessage(id, null);
+                    return;
+                }
+                m_TmpStream = new MemoryStream();
+                Serializer.Serialize(m_TmpStream, obj);
+                var msg = m_TmpStream.ToArray();
+                SendMessage(id, msg);
+            }catch (Exception e) { 
+                MessageBox.Show($"SendMsg error: {e.Message}");
             }
         }
 

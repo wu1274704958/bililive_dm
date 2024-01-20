@@ -36,5 +36,6 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         public abstract void Foreach(int ty,Action<long,int> action);
         public abstract int PlayerCount();
         public abstract void ChangeAutoResourceAddFactor(long id,float addFactor);
+        public abstract void AddAutoResourceAddFactor(long id,float addFactor);
     }
 }

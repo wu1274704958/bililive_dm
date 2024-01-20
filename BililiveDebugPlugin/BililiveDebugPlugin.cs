@@ -9,48 +9,47 @@ using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.Parser;
 using BililiveDebugPlugin.InteractionGame.Resource;
+using BililiveDebugPlugin.InteractionGame.Settlement;
+using BililiveDebugPlugin.InteractionGameUtils;
 using Interaction;
 using InteractionGame;
 using Newtonsoft.Json;
+using ProtoBuf;
+using Utils;
 
 namespace BililiveDebugPlugin
 {
+    [ProtoContract]
+    class GoldInfo
+    {
+        [ProtoMember(1)]
+        public long Id;
+        [ProtoMember(2)]
+        public int Gold;
+        [ProtoMember(3)]
+        public float Progress;
+    }
+    [ProtoContract]
+    class GoldInfoArr
+    {
+        [ProtoMember(1)]
+        public List<GoldInfo> Items = new List<GoldInfo>();
+    }
+
+    public enum EGameAction
+    {
+        GameStart,
+        GameStop
+    }
     public class DebugPlugin : DMPlugin ,IContext,IPlayerParserObserver
     {
-        class RankMsg
-        {
-            public string Title;
-            public int WinGroup;
-            public List<UserData> Items;
-            public List<DB.Model.UserData> HonorItems;
-            public List<DB.Model.UserData> ScoreItems;
-        }
-        class GoldInfo
-        {
-            public long Id;
-            public int Gold;
-            public float Progress;
-        }
-        class GoldInfoArr
-        {
-            public List<GoldInfo> Items = new List<GoldInfo>();
-        }
-        enum EMsgTy:short
-        {
-            None = 0,
-            Settlement = 1,
-            AddPlayer = 2,
-            ClearAllPlayer = 3,
-            UpdatePlayerGold = 4,
-            ShowPlayerAction = 5,
-            RemoveGroup = 6
-        }
         private bool IsStart = false;
         public MessageDispatcher<
             PlayerBirthdayParser<DebugPlugin>,
             MsgGiftParser<DebugPlugin>,
             DefAoe4Bridge<DebugPlugin>,
             Aoe4BaoBingResMgr<DebugPlugin>, DebugPlugin> messageDispatcher { get; private set; }
+        private PlugMgr<EGameAction> m_PlugMgr = new PlugMgr<EGameAction>();
         private MainPage mp;
         private Action<DyMsg> m_AppendMsgAction;
         private DateTime m_AutoAppendMsgTime;
@@ -72,7 +71,7 @@ namespace BililiveDebugPlugin
         };
         private IGameStateObserver<EAoe4State, Aoe4StateData> m_GameState = new Aoe4GameState();
         private List<(Action, DateTime)> TaskList = new List<(Action, DateTime)>();
-        SM_SendMsg SendMsg = new SM_SendMsg();
+        public SM_SendMsg SendMsg { private set; get; } = new SM_SendMsg();
         private int IsDispatch = 0;
         private int GameSt = 1;
         private DateTime UpdatePlayerGoldTime = DateTime.Now;
@@ -80,6 +79,7 @@ namespace BililiveDebugPlugin
         private DateTime CheckIsBlackPopTime = DateTime.Now;
         private Utils.ObjectPool<GoldInfo> GoldInfoPool = new Utils.ObjectPool<GoldInfo>(()=>new GoldInfo());
         private Utils.ObjectPool<GoldInfoArr> GoldInfoArrPool;
+        private Aoe4Settlement<DebugPlugin> m_Settlement = new Aoe4Settlement<DebugPlugin>();
 
         private void OnRetGoldInfoArr(GoldInfoArr a)
         {
@@ -153,7 +153,13 @@ namespace BililiveDebugPlugin
             messageDispatcher.GetPlayerParser().AddObserver(this);
             m_GameState.Init();
             SendMsg.Init();
-            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, "{}");
+            m_PlugMgr.Add(1000 * 30,new AutoForceStopPlug());
+            m_PlugMgr.Init();
+            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
+            Locator.Instance.Deposit(m_GameState);
+            Locator.Instance.Deposit(this);
+            Locator.Instance.Deposit(messageDispatcher);
+            Locator.Instance.Deposit(m_PlugMgr);
             Log("Start ...");
         }
 
@@ -171,6 +177,7 @@ namespace BililiveDebugPlugin
             m_GameState.Stop();
             SendMsg.Dispose();
             messageDispatcher = null;
+            m_PlugMgr.Dispose();
             DB.DBMgr.Instance.Dispose();
         }
 
@@ -217,26 +224,21 @@ namespace BililiveDebugPlugin
                     {
                         GameSt = 1;
                         Interlocked.Exchange(ref LastState, d.r);
-                        //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
-                        messageDispatcher.MsgParser.AddWinScore(d.g, 300);
-                        var data = messageDispatcher.MsgParser.GetSortedUserData();
-                        messageDispatcher.MsgParser.ClearUserData();
-                        SendMsg.SendMsg((short)EMsgTy.ClearAllPlayer, "{}");
-                        DB.DBMgr.Instance.OnSettlement(data, d.g - 1,messageDispatcher.PlayerParser.GetLeastGroupList());
-                        //todo show settlement
-                        SendSettlement($"{GetColorById(d.g)}方获胜", data, d.g - 1);
-                        SendMsg.waitClean();
-                        messageDispatcher.Clear();
+                        m_PlugMgr.Notify(EGameAction.GameStop);
+                        m_Settlement.ShowSettlement(this,d.g);
                         Thread.Sleep(EndDelay);
                     }
                     else
                         Interlocked.Exchange(ref LastState, d.r);
                     Interlocked.Exchange(ref IsDispatch, d.b);
+                    m_GameState.OnTick();
+                    m_PlugMgr.Tick(0.1f);
                     break;
                 case 1:
                     if (d.r == 1 && d.g == 0 && d.b == 0)
                     {
                         GameSt = 0;
+                        m_PlugMgr.Notify(EGameAction.GameStart);
                     }
                     else
                     {
@@ -260,19 +262,6 @@ namespace BililiveDebugPlugin
                 UpdatePlayerGoldTime = now;
             }
             SendMsg.flush();
-        }
-
-        private void SendSettlement(string v, List<UserData> data,int win)
-        {
-            RankMsg rankMsg = new RankMsg()
-            {
-                Title = v,
-                Items = data.Take(10).ToList(),
-                ScoreItems = DB.DBMgr.Instance.GetSortedUsersByScore(),
-                HonorItems = DB.DBMgr.Instance.GetSortedUsersByHonor(),
-                WinGroup = win
-            };
-            SendMsg.SendMsg((short)EMsgTy.Settlement, rankMsg);
         }
 
         public static string GetColorById(int id)
@@ -354,7 +343,7 @@ namespace BililiveDebugPlugin
 
         public void OnClear()
         {
-            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, "{}");
+            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
         }
 
         public int IsGameStart()
@@ -365,6 +354,17 @@ namespace BililiveDebugPlugin
         public int IsOverload()
         {
             return IsDispatch;
+        }
+
+        public void SendMsgToOverlay<T>(short id, T msg)
+            where T : class
+        {
+            if (msg is byte[] s)
+            {
+                SendMsg.SendMessage(id,s);
+                return;
+            }
+            SendMsg.SendMsg<T>(id, msg);
         }
     }
 }

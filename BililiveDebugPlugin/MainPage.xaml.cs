@@ -1,6 +1,8 @@
 ﻿using InteractionGame;
 using System;
 using System.Windows;
+using System.Windows.Input;
+using BililiveDebugPlugin.InteractionGame.Data;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -13,11 +15,58 @@ namespace BililiveDebugPlugin
     {
 
         IContext m_Cxt = null;
+        private bool m_DragDown = false;
+        private Point m_DragDownPos = new Point(0,0);
+
         public MainPage(IContext context)
         {
             InitializeComponent();
             m_Cxt = context; 
+            //让BackgroundRectangle可以点击移动整个窗口
+            //BackgroundRectangle.AllowDrop = true;
+            //BackgroundRectangle.MouseDown += BackgroundRectangle_MouseDown;
+            //BackgroundRectangle.MouseUp += BackgroundRectangle_MouseUp;
+            //BackgroundRectangle.MouseMove += BackgroundRectangle_MouseMove;
+            TestIn.KeyUp += OnInputKeyUp;
         }
+
+        private void OnInputKeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                Test_Click(null,null);
+                TestIn.Text = "";
+            }
+        }
+
+        private void BackgroundRectangle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (m_DragDown)
+            {
+                var p = e.GetPosition(BackgroundRectangle) - m_DragDownPos;
+                Left += p.X;
+                Top += p.Y;
+                m_DragDownPos = e.GetPosition(BackgroundRectangle);
+            }
+        }
+
+        private void BackgroundRectangle_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                m_DragDown = false;
+            }
+        }
+
+        private void BackgroundRectangle_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                m_DragDown = true;
+                m_DragDownPos = e.GetPosition(BackgroundRectangle);
+            }
+        }
+        
 
         private void Test_Click(object sender, RoutedEventArgs e)
         {
@@ -39,8 +88,14 @@ namespace BililiveDebugPlugin
                 if (m.CommentText[0] == '给')
                 {
                     m.GiftName = m.CommentText.Substring(1);
-                    m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GiftSend;
-                    m.GiftCount = 1;
+                    if (Aoe4DataConfig.ItemDatas.TryGetValue(m.GiftName, out var it))
+                    {
+                        m.GiftPrice = it.Price * 100;
+                        m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GiftSend;
+                        m.GiftCount = 1;
+                    }else
+                        return;
+                    
                 }
                 if (m.CommentText[0] == '舰')
                 {
@@ -66,7 +121,7 @@ namespace BililiveDebugPlugin
             {
                 var d = (m_Cxt as BililiveDebugPlugin.DebugPlugin);
                 var w = d.messageDispatcher.Aoe4Bridge.GetWindowInfo();
-                var c = d?.GetGameState().GetData(x, y,w.Hwnd);
+                var c = d?.GetGameState().GetData(x, y,IntPtr.Zero);
                 Text.Content = c.ToString();
             }
         }

@@ -42,6 +42,17 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
+        public override void AddAutoResourceAddFactor(long id, float addFactor)
+        {
+            if (AutoAddMap.TryGetValue(id, out var v))
+            {
+                lock (v)
+                {
+                    v.AddFactor += addFactor;
+                }
+            }
+        }
+
         public override void Foreach(int ty, Action<long, int> action)
         {
             foreach(var it in AutoAddMap)

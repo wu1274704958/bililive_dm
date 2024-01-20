@@ -23,7 +23,6 @@
             <Rectangle.RenderTransform>
                 <TranslateTransform />
             </Rectangle.RenderTransform>
-
         </Rectangle>
         <TextBox FontSize="20" Foreground="#0083d0" TextAlignment="Center" VerticalAlignment="Center" Name="TestIn">
         </TextBox>

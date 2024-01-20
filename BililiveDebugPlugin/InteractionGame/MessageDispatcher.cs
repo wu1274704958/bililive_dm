@@ -46,6 +46,7 @@ namespace InteractionGame
         void SendTestDanMu(object sender, ReceivedDanmakuArgs e);
         int IsGameStart();
         int IsOverload();
+        void SendMsgToOverlay<T>(short id, T msg) where T:class;
     }
 
     public interface ILocalMsgDispatcher<IT>
@@ -246,6 +247,7 @@ namespace InteractionGame
             resMgr.OnClear();
             bridge.OnClear();
             pp.OnClear();
+            mp.Clear();
         }
 
         public void SetIsEmit(bool v)

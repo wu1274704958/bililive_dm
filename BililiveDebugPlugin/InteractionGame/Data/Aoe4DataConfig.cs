@@ -130,6 +130,13 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                 return new SquadData("None", 0);
         }
         public static int SquadCount => SquadDatas.Count - 14;
+        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromHours(1);
+
+        public static readonly int OneTimesSpawnSquadCount = 470;
+
+        public static readonly int SquadLimit = 1100;
+        public static readonly int AutoSquadLimit = SquadLimit - 200;
+
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 3000;
         public static readonly int OriginResource = 50;

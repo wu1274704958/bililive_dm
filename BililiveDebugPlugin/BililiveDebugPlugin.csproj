@@ -51,21 +51,33 @@
     <Compile Include="BililiveDebugPlugin.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="DB\DBMgr.cs" />
+    <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
     <Compile Include="InteractionGame\IGameStateObserver.cs" />
+    <Compile Include="InteractionGame\LiveGameUtils.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
     <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
+    <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
+    <Compile Include="InteractionGame\Settlement\Aoe4Settlement.cs" />
+    <Compile Include="InteractionGame\Settlement\ISettlement.cs" />
     <Compile Include="InteractionGame\SM_SendMsg.cs" />
     <Compile Include="InteractionGame\Utils.cs" />
+    <Compile Include="InteractionGame\Utils\AutoForceStopPlug.cs" />
+    <Compile Include="InteractionGame\Utils\ISpawnSquadQueue.cs" />
+    <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
+    <Compile Include="Utils\IPlugMgr.cs" />
+    <Compile Include="Utils\Locator.cs" />
+    <Compile Include="Utils\ObjectPool.cs" />
+    <Compile Include="Utils\TimeLinerInteger.cs" />
     <Content Include="Main.cs.txt" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -92,6 +104,7 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
     </PackageReference>
+    <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin;
-using BililiveDebugPlugin.InteractionGame.Data;
-using System.Security.Cryptography;
+using ProtoBuf;
+using Utils;
 
 namespace InteractionGame 
 {
@@ -60,6 +60,17 @@ namespace InteractionGame
             {
                 it.Value.OnClear();
             }
+        }
+
+        public List<long> GetUsersByGroup(int g)
+        {
+            var res = ObjPoolMgr.Instance.Get<List<long>>(null,a=>a?.Clear()).Get();
+            foreach (var it in GroupDict)
+            {
+                if (it.Value == g)
+                    res.Add(it.Key);
+            }
+            return res;
         }
         protected virtual Dictionary<string,int> GetPlayerGroupMap()
         {
@@ -296,7 +307,7 @@ namespace InteractionGame
         }
         public abstract bool Demand(Msg msg, MsgType barType);
 
-        public virtual void ClearUserData()
+        public virtual void Clear()
         {
             UserDataDict.Clear();
             lock (subMsgParsers)
@@ -393,16 +404,26 @@ namespace InteractionGame
                 barType == MsgType.Comment || barType == MsgType.GuardBuy);
         }
     }
+    [ProtoContract]
     public class UserData
     {
+        [ProtoMember(1)]
         public long Id;
+        [ProtoMember(2)]
         public string Name;
+        [ProtoMember(3)]
         public string Icon;
+        [ProtoMember(4)]
         public long Score;
+        [ProtoMember(5)]
         public int Soldier_num;
+        [ProtoMember(6)]
         public int Group;
+        [ProtoMember(7)]
         public long Honor;
+        [ProtoMember(8)]
         public int Op1 = 0;
+        [ProtoMember(9)]
         public int GuardLevel;
         //public DateTime JoinTime;
         

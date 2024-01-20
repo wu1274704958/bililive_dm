@@ -119,7 +119,16 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
                 }
             }
         }
-
+        public override void AddAutoResourceAddFactor(long id, float addFactor)
+        {
+            if (AutoAddMap.TryGetValue(id, out var v))
+            {
+                lock (v)
+                {
+                    v.AddFactor += addFactor;
+                }
+            }
+        }
 
         private int GetAutoResource(long id)
         {

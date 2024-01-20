@@ -10,6 +10,8 @@ using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame;
 using System.Collections.Concurrent;
+using Utils;
+using System.Text.RegularExpressions;
 
 namespace Interaction
 {
@@ -43,6 +45,7 @@ namespace Interaction
         void TryStartGame();
         void ClickLeftMouse(int x, int y);
         void FlushAppend();
+        void SendKeyEvent(int key);
 
     }
     public class DefAoe4BridgeUtil
@@ -71,6 +74,7 @@ namespace Interaction
         private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb?.Clear());
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
+        private Object m_ExecCodeLock = new object();
         private static readonly int MsgMaxLength = 200;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
@@ -115,10 +119,11 @@ namespace Interaction
         private void DelAllLuaFiles()
         {
             var fs = LuaDir.GetFiles();
+            var reg = new Regex("run([0-9]+).lua");
             foreach (var f in fs)
             {
-                var ss = f.Name.Split('.');
-                if(int.TryParse(ss[0], out var idx) && idx <= MAX_ExecutedIdx && idx >= 0)
+                var match = reg.Match(f.Name);
+                if(match.Success && int.TryParse(match.Groups[1].ToString(), out var idx) && idx <= MAX_ExecutedIdx && idx >= 0)
                 {
                     f.Delete();
                 }
@@ -145,12 +150,12 @@ namespace Interaction
                 }
             }
         }
-        
+
         public void AppendExecCode(string code)
         {
-            if(m_ExecCode != null)
+            lock (m_ExecCodeLock)
             {
-                lock (m_ExecCode)
+                if (m_ExecCode != null)
                 {
                     m_ExecCode.AppendLine(code);
                     if (m_ExecCode.Length >= MsgMaxLength)
@@ -159,12 +164,9 @@ namespace Interaction
                         m_ExecCode = null;
                     }
                 }
-            }
-            else
-            {
-                m_ExecCode = sbPool.Get();
-                lock (m_ExecCode)
+                else
                 {
+                    m_ExecCode = sbPool.Get();
                     m_ExecCode.AppendLine(code);
                 }
             }
@@ -177,41 +179,48 @@ namespace Interaction
         public void ExecSpawnSquad(int self, int squadId, int num,long uid, int attackTy = 0,int op1 = 1)
         {
             AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num},{uid},{attackTy},{{op1 = {op1}}});");
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
         public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num,long uid, int attackTy = 0, int op1 = 1)
         {
             AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
         public void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
         {
             if (group.Count == 0) return;
             var groupStr = ToSpawnSquadTable(group,multiple);
-            if (groupStr.Length <= 2) return;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr},{uid},{attackTy},{{op1 = {op1}}});");
+            if (groupStr.Item1.Length <= 2) return;
+            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
         public void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
         {
             if (group.Count == 0) return;
             var groupStr = ToSpawnSquadTable(group,multiple);
-            if (groupStr.Length <= 2) return;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr},{uid},{attackTy},{{op1 = {op1}}});");
+            if (groupStr.Item1.Length <= 2) return;
+            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
 
-        private string ToSpawnSquadTable(List<(int, int)> group,int multiple = 1)
+        private (string,int) ToSpawnSquadTable(List<(int, int)> group,int multiple = 1)
         {
             var sb = sbPool.Get();
             //{{sbp = SBP.GAIA.GAIA_HERDABLE_SHEEP, numSquads = 2} ,{sbp = SBP.GAIA.GAIA_HUNTABLE_WOLF , numSquads = 3}}
             sb.Append('{');
+            int num = 0;
             foreach (var it in group)
             {
                 var sd = Aoe4DataConfig.GetSquad(it.Item1);
                 if (sd.SquadType == ESquadType.Villager || sd.SquadType == ESquadType.SiegeAttacker) continue;
-                sb.Append($"{{sbp=_mod.spawn_squad_tab[{it.Item1}],numSquads={it.Item2 * multiple}}},");
+                int c = it.Item2 * multiple;
+                sb.Append($"{{sbp=_mod.spawn_squad_tab[{it.Item1}],numSquads={c}}},");
+                num += c;
             }
             sb.Append('}');
             var s = sb.ToString();
             sbPool.Return(sb);
-            return s;
+            return (s,num);
         }
 
         public void ExecAllSquadMove(int self,long uid)
@@ -233,18 +242,18 @@ namespace Interaction
                 return false;
             }
 
-            if (MsgQueue.TryPeek(out var msg) || m_ExecCode != null)
+            lock (m_ExecCodeLock)
             {
-                var can = IsLargeLooped(GameNextIdx, CurrentWriteIdx, 20);
-                if (can && MsgQueue.Count == 0)
+                if (MsgQueue.TryPeek(out var msg) || m_ExecCode != null)
                 {
-                    lock(m_ExecCode)
+                    var can = IsLargeLooped(GameNextIdx, CurrentWriteIdx, 20);
+                    if (can && MsgQueue.Count == 0)
                     {
                         MsgQueue.Enqueue(m_ExecCode);
                         m_ExecCode = null;
                     }
+                    return can;
                 }
-                return can;
             }
             return false;
         }
@@ -258,7 +267,7 @@ namespace Interaction
                 StreamWriter stream = null;
                 try
                 {
-                    fi = new FileInfo($"{LuaDir.FullName}\\{GameNextIdx}.lua");
+                    fi = new FileInfo($"{LuaDir.FullName}\\run{GameNextIdx}.lua");
                     stream = fi.CreateText();
                     Interlocked.Exchange(ref ExpectNextIdx, GetNextIdx(GameNextIdx));
                     stream.Write(msg);
@@ -368,7 +377,7 @@ namespace Interaction
 
         public void ExecPrintMsg(string msg)
         {
-            AppendExecCode($"UI_CreateEventCueClickable(-1, 10, -1, 0, \"{msg}\", \"\", \"low_priority\", \"\", \"sfx_ui_event_queue_low_priority_play\", 255, 255, 255, 255, ECV_Queue, nothing);");
+            AppendExecCode($"UI_CreateEventCue( \"{msg}\", \"\",  \"\", \"\", \"\", ECV_Queue, 10);");
         }
 
         public void ExecSpawnVillagers(int self, int vid, int num)
@@ -399,9 +408,14 @@ namespace Interaction
                     sbPool.Return(sb);
             }
             m_TmpList.Clear();
-            if (m_ExecCode != null)
-                SbPool.Return(m_ExecCode);
-            m_ExecCode = null;
+            lock (m_ExecCodeLock)
+            {
+                if (m_ExecCode != null)
+                {
+                    SbPool.Return(m_ExecCode);
+                    m_ExecCode = null;
+                }
+            }
             DelAllLuaFiles();
         }
 
@@ -420,11 +434,22 @@ namespace Interaction
 
         public void FlushAppend()
         {
-            if (m_ExecCode != null)
+            lock (m_ExecCodeLock)
             {
-                MsgQueue.Enqueue(m_ExecCode);
-                m_ExecCode = null;
+                if (m_ExecCode != null)
+                {
+                    MsgQueue.Enqueue(m_ExecCode);
+                    m_ExecCode = null;
+                }
             }
+        }
+
+        public void SendKeyEvent(int key)
+        {
+            if (_windowInfo == null) return;
+            DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0100, new IntPtr(key), IntPtr.Zero);
+            Thread.Sleep(10);
+            DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0101, new IntPtr(key), IntPtr.Zero);
         }
     }
 }

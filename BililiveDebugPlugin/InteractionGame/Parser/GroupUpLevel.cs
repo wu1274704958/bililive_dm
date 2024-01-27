@@ -58,7 +58,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_I",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_I"
                 }
-                , "1攻1防，+40%金币产出",0.4f ),
+                , "1攻1防，+10%攻击力，+10%血量，+40%金币产出",0.4f ),
             
             new LevelConfig(10000,new List<string>()
                 {
@@ -67,7 +67,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_II",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_II"
                 }
-                , "2攻2防，+90%金币产出",0.5f ),
+                , "2攻2防，+20%攻击力，+20%血量，+90%金币产出",0.5f ),
             new LevelConfig(18000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_III",
@@ -75,7 +75,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_III",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_III"
                 }
-                , "3攻3防，+150%金币产出",0.6f ),
+                , "3攻3防，+30%攻击力，+30%血量，+150%金币产出",0.6f ),
         };
         public void Init(IDyMsgParser<IT> owner)
         {
@@ -150,7 +150,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             c.NowLevel = config.Price;
             c.NowConf++;
             
-            LiveGameUtils.AddGoldAddFactorByGroup(m_Owner.InitCtx,g,config.GoldAddFactor);
+            LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) => Utils.Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor),
+                (u) =>
+                {
+                    u.AddHpMultiple(1);
+                    u.AddDamageMultiple(1);
+                });
             foreach (var t in config.Technology)
             {
                 GivePlayerUpgrade(g,t);   

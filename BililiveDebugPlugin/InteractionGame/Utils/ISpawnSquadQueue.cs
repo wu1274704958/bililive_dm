@@ -74,19 +74,30 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     
     public abstract class ISpawnSquadQueue
     {
-        protected ConcurrentQueue<SpawnSquadActionBound> Actions =
-            new ConcurrentQueue<SpawnSquadActionBound>();
+        protected ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>> Actions =
+            new ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>>();
 
         public void AppendAction(ISpawnSquadAction action)
         {
             var group = action.GetGroup();
             var remaining = RemainingQuantity(group);
-            if(remaining <= 0 && IsGroupLimit(action.GetCount(),remaining))
-                Actions.Enqueue(new SpawnSquadActionBound(action, action.GetFallback()));
+            if (remaining <= 0 && IsGroupLimit(action.GetCount(), remaining))
+            {
+                ConcurrentQueue<SpawnSquadActionBound> queue = GetQueue(group);
+                queue.Enqueue(new SpawnSquadActionBound(action, action.GetFallback()));
+            }
             else
             {
                 SpawnNew(action,remaining);
             }
+        }
+        
+        private ConcurrentQueue<SpawnSquadActionBound> GetQueue(int group)
+        {
+            if (!Actions.TryGetValue(group, out var queue))
+                if(!Actions.TryAdd(group,queue = new ConcurrentQueue<SpawnSquadActionBound>()))
+                    queue = Actions[group];
+            return queue;
         }
 
         private void SpawnNew(ISpawnSquadAction action,int remaining)
@@ -94,22 +105,31 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var res = action.Spawn(remaining);
             if (res.Result == ESpawnResult.SpawnedSome)
             {
-                Actions.Enqueue(new SpawnSquadActionBound(action, res.Fallback));
+                GetQueue(action.GetGroup()).Enqueue(new SpawnSquadActionBound(action, res.Fallback));
             }
             else
             {
                 action.OnDestroy();
             }
         }
+
+        public abstract bool IsGameEnd();
         
         public void Tick()
         {
             int remaining = 0;
-            while (Actions.TryPeek(out var action) && 
-                   (remaining = RemainingQuantity(action.Action.GetGroup())) > 0 
-                   && !IsGroupLimit(action.Action.GetCount(),remaining))
+            foreach (var queue in Actions)
             {
-                SpawnInQueue(action,remaining);
+                while (queue.Value.TryPeek(out var action) && 
+                       (remaining = RemainingQuantity(action.Action.GetGroup())) > 0 
+                       && !IsGroupLimit(action.Action.GetCount(),remaining))
+                {
+                    if (IsGameEnd())
+                        break;
+
+                    if (!SpawnInQueue(action, remaining))
+                        break;
+                }
             }
         }
 
@@ -121,8 +141,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 action.Fallback = res.Fallback;
             }else if (res.Result == ESpawnResult.SpawnedAll)
             {
+                var group = action.Action.GetGroup();
                 action.Action.OnDestroy();
-                Actions.TryDequeue(out _);
+                GetQueue(group).TryDequeue(out _);
                 return true;
             }
             return false;
@@ -133,9 +154,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public virtual void OnClear()
         {
-            while (Actions.TryDequeue(out var action))
+            foreach (var queue in Actions)
             {
-                action.Fallback?.Fallback();
+                while (queue.Value.TryDequeue(out var action))
+                {
+                    action.Fallback?.Fallback();
+                }
             }
         }
     

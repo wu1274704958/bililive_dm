@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Documents;
 using InteractionGame;
 using Utils;
@@ -7,14 +8,22 @@ namespace BililiveDebugPlugin.InteractionGame
 {
     public class LiveGameUtils
     {
-        public static void AddGoldAddFactorByGroup<IT>(IT cxt,int id, float addFactor)
+        public static void ForeachUsersByGroup<IT>(IT cxt,int id,Action<long> a1, Action<UserData> a2)
             where IT : class, IContext
         {
             var c = cxt as DebugPlugin;
-            var ls = c.messageDispatcher.GetPlayerParser().GetUsersByGroup(id);
+            var pp = c.messageDispatcher.GetPlayerParser();
+            var mp = c.messageDispatcher.GetMsgParser();
+            var ls = pp.GetUsersByGroup(id);
             foreach (var it in ls)
             {
-                c.messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(it,addFactor);
+                a1(it);
+                if(a2 != null)
+                {
+                    var u = mp.GetUserData(it);
+                    if (u != null)
+                        a2(u);
+                }
             }
             ObjPoolMgr.Instance.Get<List<long>>().Return(ls);
         }

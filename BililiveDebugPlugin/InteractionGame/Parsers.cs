@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin;
 using ProtoBuf;
 using Utils;
+using Interaction;
 
 namespace InteractionGame 
 {
@@ -132,7 +134,7 @@ namespace InteractionGame
                 SetTarget(uid, -1);
             }
             if (g > -1)
-                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel), g);
+                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel,Utils.GetFansLevel(msgOrigin)), g);
             return g;
         }
 
@@ -244,7 +246,7 @@ namespace InteractionGame
        
         public void OnAddGroup(UserData userdata, int g)
         {
-            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel);
+            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel,userdata.FansLevel);
             foreach(var it in Observers)
             {
                 it.Value.OnAddGroup(userdata, g);
@@ -328,7 +330,7 @@ namespace InteractionGame
                 return data;
             return null;
         }
-        public void UpdateUserData(long id,int score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0)
+        public void UpdateUserData(long id,int score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0,int fansLv = 0)
         {
             if (UserDataDict.ContainsKey(id))
             {
@@ -339,7 +341,7 @@ namespace InteractionGame
             }
             else
             {
-                UserDataDict.Add(id,new UserData(id,name,icon,group,guardLv)
+                UserDataDict.Add(id,new UserData(id,name,icon,group,guardLv,fansLv)
                 {
                     Score = score,
                     Soldier_num = soldier_num,
@@ -425,17 +427,45 @@ namespace InteractionGame
         public int Op1 = 0;
         [ProtoMember(9)]
         public int GuardLevel;
+        public int FansLevel;
         //public DateTime JoinTime;
-        
 
-        public UserData(long id, string name, string icon, int group,int guardLvl)
+
+        public UserData(long id, string name, string icon, int group, int guardLvl, int fansLevel = 0)
         {
             Id = id;
             Name = name;
             Icon = icon;
             Group = group;
             GuardLevel = guardLvl;
+            FansLevel = fansLevel;
             //JoinTime = DateTime.Now;
+        }
+        public int HpMultiple => (Op1 >> 16) & 255;
+        public int DamageMultiple => (Op1 >> 24) & 255;
+        public int AddHpMultiple(int n)
+        {
+            var op = Op1;
+            var high_l = (op >> 16) & 255;
+            high_l += n;
+            if(high_l > 255) high_l = 255;
+            op = (int)(op & 0xFF00_0000) | (high_l << 16) | (op & 0xFFFF);
+            Interlocked.Exchange(ref Op1, op);
+            return high_l;
+        }
+        public int AddDamageMultiple(int n)
+        {
+            var op = Op1;
+            var high_h = (op >> 24) & 255;
+            high_h += n;
+            if(high_h > 255) high_h = 255;
+            op = (high_h << 24) | (op & 0x00FF_0000) | (op & 0xFFFF);
+            Interlocked.Exchange(ref Op1, op);
+            return high_h;
+        }
+        public int AppendSquadAttribute(ushort attr)
+        {
+            return Op1 | attr;
         }
     }
     

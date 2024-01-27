@@ -11,6 +11,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 {
     public class SpawnSquadQueue : ISpawnSquadQueue
     {
+        private IContext debugPlugin;
+        public override bool IsGameEnd()
+        {
+            if(debugPlugin == null) debugPlugin = Locator.Instance.Get<IContext>();
+            return debugPlugin.IsGameStart() != 1;
+        }
+
         protected override bool IsGroupLimit(int count, int remaining)
         {
             if(count < Aoe4DataConfig.OneTimesSpawnSquadCount)
@@ -124,7 +131,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
     public static class SpawnSquad
     {
-        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, int sid, int c, Aoe4DataConfig.SquadData sd)
+        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, int sid, int c, Aoe4DataConfig.SquadData sd,ushort attribute = 0)
         {
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             if(m_MsgDispatcher == null) return;
@@ -136,31 +143,35 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             var attackTy = sd.SquadType >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
+            var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sid, c, u.Id, attackTy,u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sid, c, u.Id, attackTy,op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sid, target + 1, c, u.Id,attackTy,u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sid, target + 1, c, u.Id,attackTy,op);
             }
             Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.Score * c ,c);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c);
         }
-        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(int,int)> group,int score,int squadNum,int multiple = 1)
+        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(int,int)> group,int score,int squadNum,int multiple = 1,ushort attribute = 0)
         {
             if (group.Count == 0) return;
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
             }
             Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,score * multiple ,squadNum * multiple);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, squadNum * multiple);
         }
         
     }
@@ -214,10 +225,11 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public int _sid;
         public int _count;
         public Aoe4DataConfig.SquadData _squad;
+        public ushort _attribute = 0;
         protected FT _fallback;
 
         public SpawnSingleSquadAction(UserData user, int sid, int count, Aoe4DataConfig.SquadData squad, FT fallback,
-            int restGold,int upLevelgold,int giveHonor,bool notRecycle = false)
+            int restGold,int upLevelgold,int giveHonor,bool notRecycle = false, ushort attribute = 0)
         {
             _user = user;
             _sid = sid;
@@ -229,6 +241,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             _upLevelgold = upLevelgold;
             _givHonor = giveHonor;
             _notRecycle = notRecycle;
+            _attribute = attribute;
         }
 
         protected override double SpawnInternal(int max)
@@ -238,7 +251,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
-                this.SendSpawnSquad(_user, _sid, sc, _squad);
+                this.SendSpawnSquad(_user, _sid, sc, _squad,_attribute);
                 count -= sc;
                 max -= sc;
             }
@@ -327,7 +340,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var c = sc / _Squad.specialCount;
                 if(c <= 0) break;
                 foreach (var it in _Squad.specialSquad)
-                    this.SendSpawnSquad(_user,it.Item1, c * it.Item2, Aoe4DataConfig.GetSquad(it.Item1));
+                    this.SendSpawnSquad(_user,it.Item1, c * it.Item2, Aoe4DataConfig.GetSquad(it.Item1), _Squad.AddedAttr);
                 count -= c * _Squad.specialCount;
                 max -= c * _Squad.specialCount;
             }
@@ -342,7 +355,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 if(sc > max) sc = max;
                 var c = sc / _Squad.normalCount;
                 if(c <= 0) break;
-                this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c);
+                this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr);
                 count -= c * _Squad.normalCount;
                 max -= c * _Squad.normalCount;
             }

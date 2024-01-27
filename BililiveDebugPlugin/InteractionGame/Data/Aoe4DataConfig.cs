@@ -74,23 +74,24 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             { 27, new SquadData("旗本射手",       21      )},
             { 28, new SquadData("旗本骑士",       23     , ESquadType.SiegeAttacker)},
 
-            { 100, new SquadData("风琴炮",       2         )},
-            { 101, new SquadData("长管炮",       2         ,        ESquadType.SiegeAttacker)  },
-            { 102, new SquadData("精锐古拉姆",    2          )  },
+            { 100, new SquadData("风琴炮",       44         )},
+            { 101, new SquadData("国王",         100         )},
+            { 102, new SquadData("精锐古拉姆",     9          ) },
 
-            { 104, new SquadData("射击军",              2)},
-            { 105, new SquadData("教士",                2)},
-            { 106, new SquadData("乌尔班巨炮",           2 ,  ESquadType.BuildingAttacker)},
+            { 104, new SquadData("射击军",              20)},
+            { 105, new SquadData("教士",                10)},
+            { 106, new SquadData("乌尔班巨炮",           70 ,  ESquadType.BuildingAttacker)},
 
-            { 107, new SquadData("精锐掷弹兵",           2)},
-            { 108, new SquadData("长管炮",               2,  ESquadType.SiegeAttacker      )},
-            { 109, new SquadData("皇家长管炮",           2,   ESquadType.SiegeAttacker       )},
+            { 107, new SquadData("精锐掷弹兵",                   12)},
+            { 108, new SquadData("长管炮",                       60,  ESquadType.SiegeAttacker      )},
+            { 109, new SquadData("皇家长管炮",                   70,   ESquadType.SiegeAttacker       )},
+            { 110, new SquadData("精锐长弓兵",                   6       )},
 
-            { 111, new SquadData("精锐苏丹亲兵",              2)},
+            { 111, new SquadData("精锐苏丹亲兵",              16)},
             { 113, new SquadData("大筒兵",                     20)},
-            { 117, new SquadData("精锐旗本武士",              20)},
-            { 118, new SquadData("精锐旗本射手",              20)},
-            { 119, new SquadData("精锐旗本骑士",              20, ESquadType.SiegeAttacker    )},
+            { 117, new SquadData("精锐旗本武士",              25)},
+            { 118, new SquadData("精锐旗本射手",              26)},
+            { 119, new SquadData("精锐旗本骑士",              27, ESquadType.SiegeAttacker    )},
         };
         
         public static readonly string NiuWa = "牛哇牛哇";
@@ -103,12 +104,15 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly string Gaobai    = "告白花束";
         public static readonly string ShuiJing   = "水晶之恋";
         public static readonly string Xinghe = "星河入梦";
-        public static readonly string DM = "动鳗电池";
-        public static readonly string KuaKua = "花式夸夸";
+        //public static readonly string DM = "动鳗电池";
+        //public static readonly string KuaKua = "花式夸夸";
+        public static readonly string ShuiJingBall = "星愿水晶球";
+        public static readonly string PPJ = "泡泡机";
+        public static readonly string FriendShip = "友谊的小船";
 
         public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
         {
-            {NiuWa,         ItemData.Create(NiuWa            ,EItemType.Gift,1) },
+            {NiuWa,         ItemData.Create(NiuWa         ,EItemType.Gift,1) },
             {GanBao  ,      ItemData.Create(GanBao        ,EItemType.Gift,66) },
             {BBTang ,       ItemData.Create(BBTang         ,EItemType.Gift,2) },
             {ZheGe    ,     ItemData.Create(ZheGe          ,EItemType.Gift,10) },
@@ -118,8 +122,9 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             {Gaobai   ,     ItemData.Create(Gaobai         ,EItemType.Gift,220) },
             {ShuiJing ,     ItemData.Create(ShuiJing       ,EItemType.Gift,20) },
             {Xinghe ,       ItemData.Create(Xinghe           ,EItemType.Gift,199) },
-            //{DM ,           ItemData.Create(DM              ,EItemType.Gift,260) },
-            //{KuaKua ,       ItemData.Create(KuaKua          ,EItemType.Gift,330) },
+            {PPJ ,           ItemData.Create(PPJ              ,EItemType.Gift,50) },
+            {FriendShip ,    ItemData.Create(FriendShip       ,EItemType.Gift,52) },
+            {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000) },
         };
 
         public static SquadData GetSquad(int index)
@@ -129,7 +134,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             else
                 return new SquadData("None", 0);
         }
-        public static int SquadCount => SquadDatas.Count - 14;
+        public static int SquadCount => SquadDatas.Count - 15;
         public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromHours(1);
 
         public static readonly int OneTimesSpawnSquadCount = 470;
@@ -160,6 +165,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                  + (i < 3 ? 0.0001 * (3 - i) : 0.0);
             var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
             if (user.GuardLevel > 0) r += (long)Math.Ceiling(r * PlayerResAddFactorArr[user.GuardLevel]);
+            if (user.FansLevel > 0) r += (int)(r * (user.FansLevel / 20));
             return r;
         }
 
@@ -167,8 +173,9 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static long WinSettlementHonorAdd = 5;
         public static double LoseSettlementHonorFactor = 0.0003;
         public static double WinSettlementHonorFactor = 0.0005;
-        private static readonly double LeastGroupSettlementHonorFactor = 0.0001;
+        private static readonly double LeastGroupSettlementHonorFactor = 0.0002;
 
-        public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 0.9f, 0.6f, 0.3f };
+        public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 2.0f, 1.2f, 0.6f };
+        public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 3, 2, 1 };
     }
 }

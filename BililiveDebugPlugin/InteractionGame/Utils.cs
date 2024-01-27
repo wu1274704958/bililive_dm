@@ -51,6 +51,22 @@ namespace InteractionGame
                 }
             }
         }
+
+        public static ushort Merge(byte hD, byte lHP)
+        {
+            return (ushort)(hD << 8 | lHP);
+        }
+        public static int Merge(ushort h, ushort l)
+        {
+            return h << 16 | l;
+        }
+
+        public static int GetFansLevel(DyMsgOrigin msgOrigin)
+        {
+            if(msgOrigin.msg.FansMedalName != null && msgOrigin.msg.FansMedalName.Equals("回回炮"))
+                return msgOrigin.msg.FansMedalLevel;
+            return 0;
+        }
     }
 }
 

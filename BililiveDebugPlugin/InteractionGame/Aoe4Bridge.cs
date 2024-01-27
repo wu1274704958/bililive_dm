@@ -179,12 +179,12 @@ namespace Interaction
         public void ExecSpawnSquad(int self, int squadId, int num,long uid, int attackTy = 0,int op1 = 1)
         {
             AppendExecCode($"SpawnAndAttackTargetEx({self},{squadId},{num},{uid},{attackTy},{{op1 = {op1}}});");
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
+            //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
         public void ExecSpawnSquadWithTarget(int self, int squadId, int target, int num,long uid, int attackTy = 0, int op1 = 1)
         {
             AppendExecCode($"SpawnAndAttackTargetEx2({self},{squadId},{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
+            //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
         public void ExecSpawnGroup(int self, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
         {
@@ -192,7 +192,7 @@ namespace Interaction
             var groupStr = ToSpawnSquadTable(group,multiple);
             if (groupStr.Item1.Length <= 2) return;
             AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
+            //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
         public void ExecSpawnGroupWithTarget(int self, int target, List<(int, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
         {
@@ -200,7 +200,7 @@ namespace Interaction
             var groupStr = ToSpawnSquadTable(group,multiple);
             if (groupStr.Item1.Length <= 2) return;
             AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
+            //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
 
         private (string,int) ToSpawnSquadTable(List<(int, int)> group,int multiple = 1)

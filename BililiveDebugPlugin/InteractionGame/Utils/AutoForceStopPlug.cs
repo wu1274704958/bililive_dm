@@ -15,7 +15,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     }
     public class AutoForceStopPlug : IPlug<EGameAction>
     {
-        public DateTime _startTime = DateTime.Now;
+        private DateTime _startTime = DateTime.Now;
+        public DateTime StartTime => _startTime;
+        public override void Init()
+        {
+            base.Init();
+            Locator.Instance.Deposit(this);
+        }
         public override void Tick()
         {
             if(DateTime.Now - _startTime > Aoe4DataConfig.OneTimesGameTime)

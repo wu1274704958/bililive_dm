@@ -158,10 +158,10 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         {
             if(_windowInfo == null && _windowInfo.Hwnd == IntPtr.Zero) return;
             var d = InitCtx.CheckState(EAoe4State.VillagerState);
-            if(d.r == ExpectInfoIdx)
+            if(d.R == ExpectInfoIdx)
             {
-                UpdateVillagerGatherRes(d.g, d.b);
-                MoveNextExpectInfoIdx(d.g);
+                UpdateVillagerGatherRes(d.G, d.B);
+                MoveNextExpectInfoIdx(d.G);
             }
         }
 

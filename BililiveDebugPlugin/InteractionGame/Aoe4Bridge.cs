@@ -62,6 +62,7 @@ namespace Interaction
     {
         private WindowInfo _windowInfo = null;
         private int _ScreenWidth = 0;
+        private int _ScreenHeight = 0;
         private IT _context;
         private Int32 GameNextIdx = -1;
         private Int32 CurrentWriteIdx = -1;
@@ -70,6 +71,7 @@ namespace Interaction
         private static DirectoryInfo LuaDir = new DirectoryInfo("E:\\AOEs");
         private List<int> m_TmpList = new List<int>();
         public int ScreenWidth =>  _ScreenWidth == 0 ? _ScreenWidth = Screen.PrimaryScreen.Bounds.Width : _ScreenWidth;
+        public int ScreenHeight => _ScreenHeight == 0 ? _ScreenHeight = Screen.PrimaryScreen.Bounds.Height : _ScreenHeight;   
         private const int MAX_ExecutedIdx = 255;
         private Utils.ObjectPool<StringBuilder> SbPool = new Utils.ObjectPool<StringBuilder>(()=> new StringBuilder(),(sb) => sb?.Clear());
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
@@ -135,13 +137,13 @@ namespace Interaction
             if (_context != null && _windowInfo != null)
             {
                 var state = _context.CheckState(EAoe4State.ExecExtern);
-                if(!(Math.Abs(state.r - ExpectNextIdx) < NextAdded))
+                if(!(Math.Abs(state.R - ExpectNextIdx) < NextAdded))
                 {
-                    _context.Log($"Game Exec Id {state.r} != ExpectNextIdx {ExpectNextIdx}");
+                    //_context.Log($"Game Exec Id {state.r} != ExpectNextIdx {ExpectNextIdx}");
                 }
                 else
                 {
-                    Interlocked.Exchange(ref GameNextIdx, state.r);
+                    Interlocked.Exchange(ref GameNextIdx, state.R);
                 }
                 CheckAndRemoveExecutedFile();
                 if(NeedFlush())
@@ -211,7 +213,7 @@ namespace Interaction
             int num = 0;
             foreach (var it in group)
             {
-                var sd = Aoe4DataConfig.GetSquad(it.Item1);
+                var sd = Aoe4DataConfig.GetSquadPure(it.Item1);
                 if (sd.SquadType == ESquadType.Villager || sd.SquadType == ESquadType.SiegeAttacker) continue;
                 int c = it.Item2 * multiple;
                 sb.Append($"{{sbp=_mod.spawn_squad_tab[{it.Item1}],numSquads={c}}},");
@@ -235,12 +237,12 @@ namespace Interaction
 
         public bool NeedFlush()
         {
-            int overloadVal = 0;
-            if ((overloadVal = _context.IsOverload()) != 0)
-            {
-                _context.Log($"Game overloaded {overloadVal}");
-                return false;
-            }
+            //int overloadVal = 0;
+            //if ((overloadVal = _context.IsOverload()) != 0)
+            //{
+            //    _context.Log($"Game overloaded {overloadVal}");
+            //    return false;
+            //}
 
             lock (m_ExecCodeLock)
             {
@@ -362,7 +364,9 @@ namespace Interaction
 
         public void ClickLeftMouse(int x,int y)
         {
-            DefAoe4BridgeUtil.SetCursorPos(x, y);
+            x = (x / 2560) * ScreenWidth;
+            y = (y / 1440) * ScreenHeight;
+            DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x200, IntPtr.Zero, new IntPtr(x + (y << 16)));
             Thread.Sleep(10);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x201, IntPtr.Zero, new IntPtr(x + (y << 16)));
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x202, IntPtr.Zero, new IntPtr(x + (y << 16)));
@@ -370,7 +374,7 @@ namespace Interaction
 
         private WindowInfo FindWindow()
         {
-            var ls = WindowEnumerator.FindAll((w) => w.Title.Contains("Age of Empires IV -dev"));
+            var ls = WindowEnumerator.FindAll((w) => w.Title.Contains(Aoe4DataConfig.Aoe4WinTitle));
             if(ls.Count > 0) return ls[0];
             return null;
         }

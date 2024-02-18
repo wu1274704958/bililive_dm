@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows.Documents;
 using BililiveDebugPlugin.InteractionGame.Data;
+using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame;
 using ProtoBuf;
 
@@ -31,16 +32,29 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     class LevelConfig
     {
         public List<string> Technology;
-        public string Desc;
+        public int Level;
         public float GoldAddFactor;
         public int Price;
+        public int AddHp;
+        public int AddDamage;
 
-        public LevelConfig(int price,List<string> technology, string desc, float goldAddFactor )
+        public LevelConfig(int level,int price,List<string> technology, float goldAddFactor,int addHp,int addDamage)
         {
+            Level = level;
             Price = price;
             Technology = technology;
-            Desc = desc;
             GoldAddFactor = goldAddFactor;
+            AddDamage = addDamage;
+            AddHp = addHp;
+        }
+
+        public string GetDesc(int goldMultiplier = 1, int damageMultiplier = 1, int hpMultiplier = 1)
+        {
+            return $"{Level}攻{Level}防，+{AddDamage * damageMultiplier * 10}%攻击力，+{AddHp * hpMultiplier * 10}%血量，+{GoldAddFactor * goldMultiplier * 100}%金币产出";
+        }
+        public string GetDesc((int,int,int) multiplier)
+        {
+            return GetDesc(multiplier.Item1, multiplier.Item2, multiplier.Item3);
         }
     }
     public class GroupUpLevel<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
@@ -51,31 +65,32 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private static readonly List<LevelConfig> LevelConfigs = new List<LevelConfig>()
         {
-            new LevelConfig(3200,new List<string>()
+            new LevelConfig(1,3200,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_I",
                     "UPG.COMMON.UPGRADE_MELEE_ARMOR_I",
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_I",
-                    "UPG.COMMON.UPGRADE_RANGED_ARMOR_I"
+                    "UPG.COMMON.UPGRADE_RANGED_ARMOR_I",
+                    "UPG.MALIAN.UPGRADE_ARCHER_POISON_ARROW_MAL_LANDMARKVARIANT"
                 }
-                , "1攻1防，+10%攻击力，+10%血量，+40%金币产出",0.4f ),
+                , 0.4f,1,1 ),
             
-            new LevelConfig(10000,new List<string>()
+            new LevelConfig(2,10000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_II",
                     "UPG.COMMON.UPGRADE_MELEE_ARMOR_II",
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_II",
-                    "UPG.COMMON.UPGRADE_RANGED_ARMOR_II"
+                    "UPG.COMMON.UPGRADE_RANGED_ARMOR_II",
                 }
-                , "2攻2防，+20%攻击力，+20%血量，+90%金币产出",0.5f ),
-            new LevelConfig(18000,new List<string>()
+                , 0.8f,2,2 ),
+            new LevelConfig(3,18000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_III",
                     "UPG.COMMON.UPGRADE_MELEE_ARMOR_III",
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_III",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_III"
                 }
-                , "3攻3防，+30%攻击力，+30%血量，+150%金币产出",0.6f ),
+                , 1.6f,3,3 ),
         };
         public void Init(IDyMsgParser<IT> owner)
         {
@@ -136,31 +151,43 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var conf = LevelConfigs[c.NowConf];
             if(c.All >= conf.Price)
             {
-                Up(g, c,conf);
+                var (goldMultiplier, damageMultiplier, hpMultiplier) = GetGiftMultiplier();
+                Up(g, c,conf,goldMultiplier,damageMultiplier,hpMultiplier);
                 CheckUp(g,c);
             }
             else
             {
-                SendGroupLevel(g,c.NowConf + 1,conf.Desc,GetProgress(c,conf));
+                SendGroupLevel(g,c.NowConf + 1,conf.GetDesc(GetGiftMultiplier()),GetProgress(c,conf));
             }
         }
+        
+        private (int,int,int) GetGiftMultiplier()
+        {
+            if(global::InteractionGame.Utils.GetNewYearActivity() > 0)
+                return (2,1,1);
+            return (1,1,1);
+        }
 
-        private void Up(int g, LevelCxt c,LevelConfig config)
+        private void Up(int g, LevelCxt c,LevelConfig config,int goldMultiplier = 1, int damageMultiplier = 1, int hpMultiplier = 1)
         {
             c.NowLevel = config.Price;
             c.NowConf++;
+            var desc = config.GetDesc(goldMultiplier,damageMultiplier,hpMultiplier);
+            LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{DebugPlugin.GetColorById(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
+                .SetBottom(desc).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));
             
-            LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) => Utils.Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor),
+            LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) => 
+                    Utils.Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
                 (u) =>
                 {
-                    u.AddHpMultiple(1);
-                    u.AddDamageMultiple(1);
+                    u.AddHpMultiple(config.AddHp * hpMultiplier);
+                    u.AddDamageMultiple(config.AddDamage * damageMultiplier);
                 });
             foreach (var t in config.Technology)
             {
                 GivePlayerUpgrade(g,t);   
             }
-            SendGroupLevel(g,c.NowConf + 1,config.Desc,GetProgress(c,config));
+            SendGroupLevel(g,c.NowConf + 1,desc,GetProgress(c,config));
         }
 
         private float GetProgress(LevelCxt c, LevelConfig conf)
@@ -173,5 +200,22 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             m_Owner.m_MsgDispatcher.GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{g + 1}].id, nil, nil, {upg});");
         }
+        private string GetLevelStr(int l)
+        {
+            switch (l)
+            {
+                case 1:return "I";
+                case 2:return "II";
+                case 3:return "III";
+                case 4:return "IV";
+                case 5:return "V";
+                case 6:return "VI";
+                case 7:return "VII";
+            }
+
+            return "";
+        }
     }
-}
+
+       
+    }

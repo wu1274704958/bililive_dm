@@ -34,6 +34,7 @@ namespace InteractionGame
         private Regex mSelectGrouRegex;
         protected IT InitCtx;
         protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
+        private readonly object m_LockChooseGroup = new object();
 
         public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
         {
@@ -127,8 +128,12 @@ namespace InteractionGame
 
         public int ChooseGroupSystem(long uid, DyMsgOrigin msgOrigin)
         {
-            var g = GetLeastGroup();
-            SetGroup(uid, g);
+            int g = -1;
+            lock (m_LockChooseGroup)
+            {
+                g = GetLeastGroup();
+                SetGroup(uid, g);
+            }
             if (g == GetTarget(uid))
             {
                 SetTarget(uid, -1);
@@ -274,7 +279,7 @@ namespace InteractionGame
     public abstract class IDyMsgParser<IT>
         where IT : class,IContext
     {
-        protected Dictionary<long,UserData> UserDataDict = new Dictionary<long,UserData>();
+        protected ConcurrentDictionary<long,UserData> UserDataDict = new ConcurrentDictionary<long,UserData>();
         public IT InitCtx { get;protected set; }
         public ILocalMsgDispatcher<IT> m_MsgDispatcher { get; protected set; }
         protected List<ISubMsgParser<IDyMsgParser<IT>, IT>> subMsgParsers = new List<ISubMsgParser<IDyMsgParser<IT>, IT>>();
@@ -341,7 +346,7 @@ namespace InteractionGame
             }
             else
             {
-                UserDataDict.Add(id,new UserData(id,name,icon,group,guardLv,fansLv)
+                UserDataDict.TryAdd(id,new UserData(id,name,icon,group,guardLv,fansLv)
                 {
                     Score = score,
                     Soldier_num = soldier_num,

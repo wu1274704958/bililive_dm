@@ -164,7 +164,7 @@ namespace InteractionGame
                 //}
                 //else
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(30);
                 }
                 var now = DateTime.Now;
                 var sp = now - startTime;

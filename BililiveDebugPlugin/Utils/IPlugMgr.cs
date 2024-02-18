@@ -17,7 +17,7 @@ namespace Utils
 
         public abstract void Tick();
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Interlocked.Exchange(ref State, 0);
         }
@@ -36,6 +36,7 @@ namespace Utils
         public bool IsInit => State == 1;
         private int State = 0;
         protected ConcurrentDictionary<int, PlugCxt<M>> _plugs = new ConcurrentDictionary<int, PlugCxt<M>>();
+        protected ConcurrentDictionary<int, IPlug<M>> _NotTickPlugs = new ConcurrentDictionary<int, IPlug<M>>();
 
         public virtual void Init()
         {
@@ -46,6 +47,10 @@ namespace Utils
                 {
                     p.Init();
                 }
+            }
+            foreach (var plug in _NotTickPlugs)
+            {
+                plug.Value.Init();
             }
         }
 
@@ -59,6 +64,10 @@ namespace Utils
                     p.Dispose();
                 }
             }
+            foreach (var plug in _NotTickPlugs)
+            {
+                plug.Value.Dispose();
+            }
         }
 
         public void Notify(M m)
@@ -69,6 +78,10 @@ namespace Utils
                 {
                     p.Notify(m);
                 }
+            }
+            foreach (var plug in _NotTickPlugs)
+            {
+                plug.Value.Notify(m);
             }
         }
 
@@ -93,6 +106,16 @@ namespace Utils
 
         public void Add(int second, IPlug<M> plug)
         {
+            if (second < 0)
+            {
+                if(!_NotTickPlugs.ContainsKey(plug.GetHashCode()))
+                {
+                    _NotTickPlugs.TryAdd(plug.GetHashCode(), plug);
+                    if (IsInit && !plug.IsInit)
+                        plug.Init();
+                }
+                return;
+            }
             var cxt = _plugs.GetOrAdd(second, _ => new PlugCxt<M>());
             cxt.Plugs.Add(plug);
             if (IsInit && !plug.IsInit)
@@ -101,6 +124,10 @@ namespace Utils
 
         public bool Remove(int second, IPlug<M> plug)
         {
+            if(second < 0)
+            {
+                return _plugs.TryRemove(plug.GetHashCode(), out _);
+            }
             if (!_plugs.TryGetValue(second, out PlugCxt<M> cxt)) return false;
             for (int i = 0; i < cxt.Plugs.Count; i++)
             {

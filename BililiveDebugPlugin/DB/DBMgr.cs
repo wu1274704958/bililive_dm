@@ -150,6 +150,16 @@ namespace BililiveDebugPlugin.DB
         {
             return m_fsql.Select<Model.UserData>().OrderByDescending((a) => a.Honor).Limit(limit).ToList();
         }
+
+        public void ForeachUsers(Action<Model.UserData> action)
+        {
+            m_fsql.Select<Model.UserData>().ToList().ForEach(action);
+        }
+
+        public int ClearSignInDate(long id)
+        {
+            return m_fsql.Update<Model.UserData>(id).Set(a => a.SignTime, new DateTime(1997, 1, 1)).ExecuteAffrows();
+        }
         
         public ItemData GetItem(long id,string name)
         {

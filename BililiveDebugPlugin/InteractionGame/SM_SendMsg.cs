@@ -37,6 +37,8 @@ namespace BililiveDebugPlugin.InteractionGame
         RemoveGroup = 6,
         UpdateGroupLevel = 7,
         StartGame = 8,
+        SquadCountChanged = 9,
+        ShowLargeTips = 10,
     }
     public class SM_SendMsg
     {

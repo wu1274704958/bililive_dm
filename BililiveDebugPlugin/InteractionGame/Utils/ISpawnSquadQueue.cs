@@ -1,6 +1,9 @@
-﻿using System;
+﻿using BililiveDebugPlugin.InteractionGame;
+using InteractionGame;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utils;
 
 namespace BililiveDebugPlugin.InteractionGameUtils
 {
@@ -33,7 +36,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var res = SpawnInternal(max);
             if(res > 0)OnSpawned(res);
             _Percentage -= res;
-            if (_Percentage < 0.0001)
+            if (_Percentage < 0.0001 || GetCount() <= 0)
             {
                 OnSpawnedAll();
                 return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 1, Fallback = null };
@@ -79,17 +82,25 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public void AppendAction(ISpawnSquadAction action)
         {
+            //var gs = Locator.Instance.Get<Aoe4GameState>();
             var group = action.GetGroup();
-            var remaining = RemainingQuantity(group);
-            if (remaining <= 0 && IsGroupLimit(action.GetCount(), remaining))
-            {
-                ConcurrentQueue<SpawnSquadActionBound> queue = GetQueue(group);
-                queue.Enqueue(new SpawnSquadActionBound(action, action.GetFallback()));
-            }
-            else
-            {
-                SpawnNew(action,remaining);
-            }
+            //if (gs.HasCheckSquadCountTask(group, this))
+            //    return;
+            
+                var remaining = RemainingQuantity(group);
+                var count = action.GetCount();
+                bool limit = remaining <= 0 ? true : IsGroupLimit(count, remaining);
+                Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
+                if (limit)
+                {
+                    ConcurrentQueue<SpawnSquadActionBound> queue = GetQueue(group);
+                    queue.Enqueue(new SpawnSquadActionBound(action, action.GetFallback()));
+                }
+                else
+                {
+                    SpawnNew(action, remaining);
+                }
+            
         }
         
         private ConcurrentQueue<SpawnSquadActionBound> GetQueue(int group)
@@ -117,18 +128,28 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         
         public void Tick()
         {
-            int remaining = 0;
+            if (IsGameEnd()) 
+                return;
+            int group = -1;
+            
             foreach (var queue in Actions)
             {
-                while (queue.Value.TryPeek(out var action) && 
-                       (remaining = RemainingQuantity(action.Action.GetGroup())) > 0 
-                       && !IsGroupLimit(action.Action.GetCount(),remaining))
+                if(queue.Value.TryPeek(out var action))
                 {
-                    if (IsGameEnd())
-                        break;
-
-                    if (!SpawnInQueue(action, remaining))
-                        break;
+                    group = action.Action.GetGroup();
+                    //if (gs.HasCheckSquadCountTask(group))
+                    //    continue;
+                    
+                        int remaining = 0;
+                        int count = 0;
+                        bool limit = false;
+                        if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
+                        !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
+                        {
+                            Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit}");
+                            SpawnInQueue(action, remaining);
+                        }
+                    
                 }
             }
         }

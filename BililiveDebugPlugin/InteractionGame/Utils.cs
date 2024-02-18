@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -65,6 +66,18 @@ namespace InteractionGame
         {
             if(msgOrigin.msg.FansMedalName != null && msgOrigin.msg.FansMedalName.Equals("回回炮"))
                 return msgOrigin.msg.FansMedalLevel;
+            return 0;
+        }
+        
+        public static int GetNewYearActivity()
+        {
+            var now = DateTime.Now;
+            if(now.DayOfYear == 1)
+                return 1; // 4
+            var chineseDate = new ChineseLunisolarCalendar();
+            var doy = chineseDate.GetDayOfYear(now);
+            if (doy < 4)
+                return doy;// 1 2 3
             return 0;
         }
     }

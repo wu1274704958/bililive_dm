@@ -61,8 +61,12 @@
     <Compile Include="InteractionGame\LiveGameUtils.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
+    <Compile Include="InteractionGame\Parser\AdminParser.cs" />
     <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
+    <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
+    <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
+    <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
@@ -72,6 +76,7 @@
     <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\Utils\AutoForceStopPlug.cs" />
     <Compile Include="InteractionGame\Utils\ISpawnSquadQueue.cs" />
+    <Compile Include="InteractionGame\Utils\LargeTips.cs" />
     <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />

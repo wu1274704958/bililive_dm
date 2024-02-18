@@ -8,6 +8,7 @@ using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.Parser;
+using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGame.Resource;
 using BililiveDebugPlugin.InteractionGame.Settlement;
 using BililiveDebugPlugin.InteractionGameUtils;
@@ -103,7 +104,7 @@ namespace BililiveDebugPlugin
         }
         public static string GetSquadName(int id)
         {
-            var sd = Aoe4DataConfig.GetSquad(id);
+            var sd = Aoe4DataConfig.GetSquadPure(id);
             if (sd.Invaild) return "";
             return sd.Name;
         }
@@ -148,19 +149,22 @@ namespace BililiveDebugPlugin
             messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>,
                 MsgGiftParser<DebugPlugin>, DefAoe4Bridge<DebugPlugin>,
                 Aoe4BaoBingResMgr<DebugPlugin>, DebugPlugin>();
-            messageDispatcher.Init(this);
-            messageDispatcher.Start();
-            messageDispatcher.GetPlayerParser().AddObserver(this);
-            m_GameState.Init();
-            SendMsg.Init();
             m_PlugMgr.Add(1000 * 30,new AutoForceStopPlug());
-            m_PlugMgr.Init();
-            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
+            m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
+            m_PlugMgr.Add(1000 * 60,new AutoDownLivePlug());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
             Locator.Instance.Deposit(messageDispatcher);
             Locator.Instance.Deposit(m_PlugMgr);
+            Locator.Instance.Deposit(SendMsg);
+            m_GameState.Init();
+            SendMsg.Init();
+            m_PlugMgr.Init();
+            messageDispatcher.Init(this);
+            messageDispatcher.Start();
             Log("Start ...");
+            SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
+            messageDispatcher.GetPlayerParser().AddObserver(this);
         }
 
         public override void Stop()
@@ -204,7 +208,7 @@ namespace BililiveDebugPlugin
             {
                 CheckIsBlackPopTime = now;
                 var c = m_GameState.CheckState(EAoe4State.VillagerState);
-                if(c.r < 250 && c.r > 10 && c.g == 0 && c.b == 0)
+                if(c.R < 250 && c.R > 10 && c.G == 0 && c.B == 0)
                 {
                     messageDispatcher.GetBridge().ClickLeftMouse(1550, 835);
                 }
@@ -220,22 +224,25 @@ namespace BililiveDebugPlugin
             switch(GameSt)
             {
                 case 0:
-                    if (LastState != 2 && d.r == 2)
+                    if (LastState != 2 && d.R == 2)
                     {
                         GameSt = 1;
-                        Interlocked.Exchange(ref LastState, d.r);
+                        Interlocked.Exchange(ref LastState, d.R);
+                        m_Settlement.ShowSettlement(this,d.G);
                         m_PlugMgr.Notify(EGameAction.GameStop);
-                        m_Settlement.ShowSettlement(this,d.g);
+                        Log("Game end send msg fulsh b");
+                        SendMsg.waitClean();
+                        Log("Game end send msg fulsh e");
                         Thread.Sleep(EndDelay);
                     }
                     else
-                        Interlocked.Exchange(ref LastState, d.r);
-                    Interlocked.Exchange(ref IsDispatch, d.b);
+                        Interlocked.Exchange(ref LastState, d.R);
+                    Interlocked.Exchange(ref IsDispatch, d.B);
                     m_GameState.OnTick();
                     m_PlugMgr.Tick(0.1f);
                     break;
                 case 1:
-                    if (d.r == 1 && d.g == 0 && d.b == 0)
+                    if (d.R == 1 && d.G == 0 && d.B == 0)
                     {
                         GameSt = 0;
                         m_PlugMgr.Notify(EGameAction.GameStart);
@@ -261,7 +268,7 @@ namespace BililiveDebugPlugin
                 UpdatePlayerGold();
                 UpdatePlayerGoldTime = now;
             }
-            SendMsg.flush();
+            SendMsg.waitClean();
         }
 
         public static string GetColorById(int id)

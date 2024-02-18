@@ -42,8 +42,11 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             SendSettlement(sendMsg, data, winGroup - 1);
             Locator.Instance.Get<DebugPlugin>().Log("Wait Send Message clean");
             sendMsg?.waitClean();
+            Locator.Instance.Get<DebugPlugin>().Log("messageDispatcher clean");
             messageDispatcher.Clear();
+            Locator.Instance.Get<DebugPlugin>().Log("Aoe4GameState clean");
             Locator.Instance.Get<Aoe4GameState>().OnClear();
+            Locator.Instance.Get<DebugPlugin>().Log("Settlement end");
         }
         
         private void SendSettlement(SM_SendMsg sendMsg, List<UserData> data,int win)

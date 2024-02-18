@@ -103,8 +103,23 @@ namespace BililiveDebugPlugin
                     m.UserGuardLevel = m.GuardLevel = int.Parse(m.GiftName);
                     m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GuardBuy;
                 }
+                if (m.CommentText.StartsWith("ClearSign"))
+                {
+                    if(m.CommentText.Length > 9)
+                    {
+                        var id = int.Parse(m.CommentText.Substring(9));
+                        m_Cxt.Log($"ClearSign {DB.DBMgr.Instance.ClearSignInDate(id)}");
+                        return;
+                    }
+                    var c = 0;
+                    DB.DBMgr.Instance.ForeachUsers((u) => c += DB.DBMgr.Instance.ClearSignInDate(u.Id));
+                    m_Cxt.Log($"ClearSign {c}");
+                    return;
+                }
                 m.UserName = string.Format("name_{0}", m.UserID_long);
-                
+                m.GuardLevel = m.UserGuardLevel = (int)(m.UserID_long <= 3 ? m.UserID_long : 0);
+
+
                 var a = new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m };
                 m_Cxt.SendTestDanMu(this,a);
             }
@@ -121,7 +136,7 @@ namespace BililiveDebugPlugin
             {
                 var d = (m_Cxt as BililiveDebugPlugin.DebugPlugin);
                 var w = d.messageDispatcher.Aoe4Bridge.GetWindowInfo();
-                var c = d?.GetGameState().GetData(x, y,IntPtr.Zero);
+                var c = d?.GetGameState().GetData(x, y,w.Hwnd);
                 Text.Content = c.ToString();
             }
         }

@@ -16,7 +16,8 @@ namespace BililiveDebugPlugin.DB.Model
     public enum EItemType : uint
     {
         None,
-        Gift
+        Gift,
+        Ticket
     }
     [ProtoBuf.ProtoContract]
     public class UserData

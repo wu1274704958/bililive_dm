@@ -36,7 +36,7 @@ namespace InteractionGame
         protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
         private readonly object m_LockChooseGroup = new object();
 
-        public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
+        public virtual void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
         {
             InitCtx = it;
             m_MsgDispatcher = dispatcher;

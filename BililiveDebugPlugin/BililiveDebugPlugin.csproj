@@ -55,6 +55,8 @@
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
+    <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
+    <Compile Include="InteractionGame\conf\Squad\SquadDataMgr.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
     <Compile Include="InteractionGame\IGameStateObserver.cs" />
@@ -65,6 +67,7 @@
     <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
+    <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />

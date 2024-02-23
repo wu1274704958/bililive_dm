@@ -152,6 +152,7 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(1000 * 30,new AutoForceStopPlug());
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60,new AutoDownLivePlug());
+            //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
             Locator.Instance.Deposit(messageDispatcher);

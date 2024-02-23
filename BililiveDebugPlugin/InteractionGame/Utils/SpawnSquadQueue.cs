@@ -143,7 +143,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             }
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c, 3);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c, 5);
             var attackTy = sd.SquadType >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
@@ -165,7 +165,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, squadNum * multiple, 3);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, squadNum * multiple, 5);
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {

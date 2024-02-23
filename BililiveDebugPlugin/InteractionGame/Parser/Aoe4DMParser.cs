@@ -21,10 +21,17 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     public class PlayerBirthdayParser<IT> : IDyPlayerParser<IT>
          where IT : class, IContext
     {
+
+        public override void Init(IT it, ILocalMsgDispatcher<IT> dispatcher)
+        {
+            base.Init(it, dispatcher);
+            Locator.Instance.Deposit(this);
+        }
         public override bool Demand(Msg msg, MsgType barType)
         {
             return StaticMsgDemand.Demand(msg, barType) || barType == MsgType.Welcome;
         }
+
         
         public override int Parse(DyMsgOrigin msgOrigin)
         {
@@ -257,7 +264,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.QingShu, 20 * c);
                     AddGift(ud, Aoe4DataConfig.ZheGe, 30 * c);
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
-                    AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1));
+                    AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
                     var activityAdd = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 0.8f : 0.0f;
                     m_MsgDispatcher.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,
                         Aoe4DataConfig.PlayerResAddFactorArr[ud.GuardLevel] + activityAdd);
@@ -491,9 +498,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             return (0, 0);
         }
 
-        private void AddHonor(UserData u, long v)
+        private void AddHonor(UserData u, long v,bool hasAddition = true)
         {
-            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerResAddFactorArr[u.GuardLevel]);
+            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerResAddFactorArr[u.GuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u,v) > 0)
                 InitCtx.PrintGameMsg($"{u.Name}获得{v}功勋");
         }

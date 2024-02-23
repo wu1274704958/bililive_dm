@@ -3,6 +3,7 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 using BililiveDebugPlugin.InteractionGame.Data;
+using System.Text.RegularExpressions;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -72,6 +73,15 @@ namespace BililiveDebugPlugin
         {
             try
             {
+                Match match = null;
+                if ((match = new Regex("AddSign ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var count))
+                    {
+                        m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(id, Aoe4DataConfig.SignTicket, count)}");
+                    }
+                    return;
+                }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
                 var ss = TestIn.Text.Split(' ');
                 if (ss.Length == 1)

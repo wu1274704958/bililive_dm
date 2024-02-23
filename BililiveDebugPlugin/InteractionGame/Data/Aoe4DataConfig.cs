@@ -76,7 +76,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             { 27, new SquadData("旗本射手",       12      )},
             { 28, new SquadData("旗本骑士",       11     , ESquadType.SiegeAttacker)},
             { 29, new SquadData("旗本骑士",       23     , ESquadType.SiegeAttacker)},
-            //{ 30, new SquadData("武僧",           6      )},
+            { 30, new SquadData("武僧",           6      )},
 
             { 100, new SquadData("风琴炮",       80         )},
             { 101, new SquadData("国王",         100         )},
@@ -118,6 +118,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly string DaCall = "打call";
         //public static readonly string PPJ = "泡泡机";
         //public static readonly string FriendShip = "友谊的小船";
+        public static readonly string SignTicket = "签到券";
 
         public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
         {
@@ -134,8 +135,9 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             //{PPJ ,           ItemData.Create(PPJ              ,EItemType.Gift,50) },
             //{FriendShip ,    ItemData.Create(FriendShip       ,EItemType.Gift,52) },
             {DaCall,        ItemData.Create(DaCall          ,EItemType.Gift,5)     },
-            {KuaKua ,        ItemData.Create(KuaKua           ,EItemType.Gift,330) },
+            {KuaKua ,        ItemData.Create(KuaKua          ,EItemType.Gift,330)  },
             {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000)  },
+            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,10)  },
         };
 
         public static readonly int[] RandomPool = { 100,102,104,106,107,109,110,111,113,117,118,122 };
@@ -185,10 +187,10 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromHours(1);
 
-        public static readonly int OneTimesSpawnSquadCount = 400;
+        public static readonly int OneTimesSpawnSquadCount = 300;
 
-        public static readonly int SquadLimit = 1200;
-        public static readonly int AutoSquadLimit = SquadLimit - 200;
+        public static readonly int SquadLimit = 900;
+        public static readonly int AutoSquadLimit = SquadLimit - 160;
 
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 4000;
@@ -213,22 +215,23 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             var minutes = (DateTime.Now - Locator.Instance.Get<AutoForceStopPlug>().StartTime).TotalMinutes;
             var f = (b ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
                  + (i < 3 ? 0.0003 * (3 - i) : 0.0) + (minutes / 10 / 1000);
+            if (user.FansLevel > 0) f += (user.FansLevel / 2000);
+            if (user.GuardLevel > 0) f += f * SettlementPlayerResAddFactorArr[user.GuardLevel];
             var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
-            if (user.GuardLevel > 0) r += (long)Math.Ceiling(r * PlayerResAddFactorArr[user.GuardLevel]);
-            if (user.FansLevel > 0) r += (int)(r * (user.FansLevel / 20));
             var activityMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
             
             return r * activityMult;
         }
 
-        public static long LoseSettlementHonorAdd = 5;
+        public static long LoseSettlementHonorAdd = 3;
         public static long WinSettlementHonorAdd = 10;
-        public static double LoseSettlementHonorFactor = 0.0005;
+        public static double LoseSettlementHonorFactor = 0.0003;
         public static double WinSettlementHonorFactor = 0.0010;
         private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
 
+        public static readonly float[] SettlementPlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
         public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
         public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 140, 10, 1 };
-        internal static readonly string Aoe4WinTitle = "Age of Empires IV -dev";
+        internal static readonly string Aoe4WinTitle = "Age of Empires IV";
     }
 }

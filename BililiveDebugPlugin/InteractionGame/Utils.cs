@@ -76,6 +76,8 @@ namespace InteractionGame
                 return 1; // 4
             var chineseDate = new ChineseLunisolarCalendar();
             var doy = chineseDate.GetDayOfYear(now);
+            if(doy == 15)
+                return 1;
             if (doy < 4)
                 return doy;// 1 2 3
             return 0;

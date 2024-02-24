@@ -137,7 +137,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             {DaCall,        ItemData.Create(DaCall          ,EItemType.Gift,5)     },
             {KuaKua ,        ItemData.Create(KuaKua          ,EItemType.Gift,330)  },
             {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000)  },
-            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,10)  },
+            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,100)  },
         };
 
         public static readonly int[] RandomPool = { 100,102,104,106,107,109,110,111,113,117,118,122 };

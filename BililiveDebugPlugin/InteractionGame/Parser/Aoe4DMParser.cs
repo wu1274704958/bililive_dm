@@ -178,7 +178,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var resMgr = m_MsgDispatcher.GetResourceMgr();
                     var res = resMgr.GetResource(msgOrigin.msg.UserID_long);
                     var c = DB.DBMgr.Instance.GetUser(uid)?.Honor ?? 0;
-                    InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}金矿{res},功勋{c}");
+                    InitCtx.PrintGameMsg($"{msgOrigin.msg.UserName}金矿{(int)res},功勋{c}");
                 }
                 else if (false && (con[0] == '防' || con[0] == '撤'))
                 {
@@ -896,7 +896,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         return true;
                     }
                     if (needAdd) m_Dict.TryAdd(uid, squad);
-                    m_Owner.InitCtx.PrintGameMsg($"{uName}设置自动出兵，出兵时间{spawnTime}秒");
+                    m_Owner.InitCtx.PrintGameMsg($"{uName}设置自动出兵，出兵时间{spawnTime:.00}秒");
                     m_Owner.UpdateUserData(uid, 1, 0, uName, msg.msg.UserFace);
                     return true;
                 }else if (lower.StartsWith("暴") || lower.StartsWith("爆"))

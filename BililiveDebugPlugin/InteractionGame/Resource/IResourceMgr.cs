@@ -23,17 +23,17 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             InitCtx = null;
             m_MsgDispatcher = null;
         }
-        public abstract int GetResource(long id,int ty = 0);
+        public abstract double GetResource(long id,int ty = 0);
         public abstract int GetVillagerCount(long id);
         public abstract void OnTick(float delta);
         public abstract void OnClear();
 
         public abstract void AddAutoResourceById(long id,float addFactor = 1f);
         public abstract bool SpawnVillager(long id,int num);
-        public abstract void AddResource(long id, int c);
-        public abstract bool RemoveResource(long id,int r);
+        public abstract void AddResource(long id, double c);
+        public abstract bool RemoveResource(long id,double r);
         public abstract void RemoveAllVillagers(long id);
-        public abstract void Foreach(int ty,Action<long,int> action);
+        public abstract void Foreach(int ty,Action<long,double> action);
         public abstract int PlayerCount();
         public abstract void ChangeAutoResourceAddFactor(long id,float addFactor);
         public abstract void AddAutoResourceAddFactor(long id,float addFactor);

@@ -14,6 +14,7 @@ using System.Windows.Forms;
 using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Resource;
+using Utils;
 
 namespace InteractionGame
 {
@@ -102,6 +103,8 @@ namespace InteractionGame
             SetupGlobalKeyMapListener();
             thread = new Thread(ThreadBody);
             thread.Start();
+
+            mp.Start();
         }
 
         private void SetupGlobalKeyMapListener()

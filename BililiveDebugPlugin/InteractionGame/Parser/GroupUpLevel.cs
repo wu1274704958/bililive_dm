@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing.Design;
 using System.Windows.Documents;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGameUtils;
@@ -57,12 +58,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             return GetDesc(multiplier.Item1, multiplier.Item2, multiplier.Item3);
         }
     }
-    public class GroupUpLevel<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
+    public class GroupUpLevel<IT> : ISubMsgParser<IDyMsgParser<IT>, IT> , IPlayerParserObserver
         where IT : class,IContext 
     {
         private IDyMsgParser<IT> m_Owner;   
         private ConcurrentDictionary<int,LevelCxt> GroupLevel = new ConcurrentDictionary<int, LevelCxt>();
-
+        private DebugPlugin _cxt;
         private static readonly List<LevelConfig> LevelConfigs = new List<LevelConfig>()
         {
             new LevelConfig(1,3200,new List<string>()
@@ -73,7 +74,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_I",
                     "UPG.MALIAN.UPGRADE_ARCHER_POISON_ARROW_MAL_LANDMARKVARIANT"
                 }
-                , 0.4f,1,1 ),
+                , 1.0f,1,1 ),
             
             new LevelConfig(2,10000,new List<string>()
                 {
@@ -82,7 +83,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_II",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_II",
                 }
-                , 0.8f,2,2 ),
+                , 1.2f,2,2 ),
             new LevelConfig(3,18000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_III",
@@ -176,8 +177,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{DebugPlugin.GetColorById(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
                 .SetBottom(desc).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));
             
-            LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) => 
-                    Utils.Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
+            LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) =>
+                    _cxt.messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
                 (u) =>
                 {
                     u.AddHpMultiple(config.AddHp * hpMultiplier);
@@ -214,6 +215,32 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
 
             return "";
+        }
+
+        public void Start()
+        {
+            _cxt = Utils.Locator.Instance.Get<DebugPlugin>();
+            m_Owner.m_MsgDispatcher.GetPlayerParser().AddObserver(this);
+        }
+
+        public void OnAddGroup(UserData userData, int g)
+        {
+            if(GroupLevel.TryGetValue(g,out var levelCxt) && levelCxt.NowConf >= 1)
+            {
+                var (goldMultiplier, damageMultiplier, hpMultiplier) = GetGiftMultiplier();
+                for (int i = 0;i <= Math.Min(levelCxt.NowConf - 1, LevelConfigs.Count - 1);i++)
+                {
+                    var conf = LevelConfigs[i];
+                    _cxt.messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(userData.Id, conf.GoldAddFactor * goldMultiplier);
+                    userData.AddHpMultiple(conf.AddHp * hpMultiplier);
+                    userData.AddDamageMultiple(conf.AddDamage * damageMultiplier);
+                }
+            }
+        }
+
+        public void OnChangeGroup(UserData userData, int old, int n)
+        {
+
         }
     }
 

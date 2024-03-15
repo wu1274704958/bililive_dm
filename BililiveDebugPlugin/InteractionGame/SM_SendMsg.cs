@@ -39,6 +39,8 @@ namespace BililiveDebugPlugin.InteractionGame
         StartGame = 8,
         SquadCountChanged = 9,
         ShowLargeTips = 10,
+        SyncSquadConfig = 11,
+        EventCue = 12,
     }
     public class SM_SendMsg
     {
@@ -205,7 +207,7 @@ namespace BililiveDebugPlugin.InteractionGame
                     return;
                 }
                 m_TmpStream = new MemoryStream();
-                Serializer.Serialize(m_TmpStream, obj);
+                Serializer.SerializeWithLengthPrefix(m_TmpStream, obj,PrefixStyle.Fixed32BigEndian);
                 var msg = m_TmpStream.ToArray();
                 SendMessage(id, msg);
             }catch (Exception e) { 

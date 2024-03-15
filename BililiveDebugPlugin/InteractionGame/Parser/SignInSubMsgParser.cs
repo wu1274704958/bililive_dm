@@ -112,8 +112,10 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                                     {
                                         var mult = it.Value.Price < 50 ? 5 : 1;
                                         giftCount *= mult;  
+                                        if(it.Key == Aoe4DataConfig.SignTicket)
+                                            giftCount = 1;
                                         if(DB.DBMgr.Instance.AddGiftItem(u, it.Key, giftCount) > 0)
-                                            m_Owner.InitCtx.PrintGameMsg($"恭喜{u.Name}签到成功获得{it.Value.Name}*{giftCount}");
+                                            m_Owner.InitCtx.PrintGameMsg($"恭喜{u.NameColored}签到成功获得{it.Value.Name}*{giftCount}");
                                         break;
                                     }
                                     --l;
@@ -130,13 +132,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                                     LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{u.Name}", "签到成功")
                                         .SetBottom($"获得{c}功勋").SetLeftColor(LargeTips.GetGroupColor(u.Group)).SetRightColor(LargeTips.Yellow).SetBottomColor(LargeTips.Cyan).SetShowTime(3.6f));
                                 else
-                                    m_Owner.InitCtx.PrintGameMsg($"恭喜{u.Name}签到成功获得{c}功勋");
+                                    m_Owner.InitCtx.PrintGameMsg($"恭喜{u.NameColored}签到成功获得{c}功勋");
                             }
                         }
                     }
                     else
                     {
-                        m_Owner.InitCtx.PrintGameMsg($"{u.Name}今天已经签过到了，明天再来吧");
+                        m_Owner.InitCtx.PrintGameMsg($"{u.NameColored}今天已经签过到了，明天再来吧");
                     }
                     return true;
                 }
@@ -158,6 +160,10 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             
         }
-        
+
+        public void Start()
+        {
+
+        }
     }
 }

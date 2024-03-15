@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Utils
 {
@@ -70,6 +71,17 @@ namespace Utils
         public void TryRemove<T>()
         {
             _pools.TryRemove(typeof(T),out _);
+        }
+    }
+    
+    public static class DefObjectRecycle{
+        public static void OnListRecycle<T>(List<T> ls)
+        {
+            ls.Clear();   
+        }
+        public static void OnDictRecycle<K,V>(Dictionary<K,V> dict)
+        {
+            dict.Clear();
         }
     }
 }

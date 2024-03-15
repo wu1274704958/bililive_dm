@@ -80,7 +80,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         protected ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>> Actions =
             new ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>>();
 
-        public void AppendAction(ISpawnSquadAction action)
+        public virtual void AppendAction(ISpawnSquadAction action)
         {
             //var gs = Locator.Instance.Get<Aoe4GameState>();
             var group = action.GetGroup();
@@ -126,31 +126,30 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public abstract bool IsGameEnd();
         
-        public void Tick()
+        public virtual void Tick()
         {
             if (IsGameEnd()) 
                 return;
-            int group = -1;
             
             foreach (var queue in Actions)
             {
                 if(queue.Value.TryPeek(out var action))
                 {
-                    group = action.Action.GetGroup();
-                    //if (gs.HasCheckSquadCountTask(group))
-                    //    continue;
-                    
-                        int remaining = 0;
-                        int count = 0;
-                        bool limit = false;
-                        if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
-                        !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
-                        {
-                            Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit}");
-                            SpawnInQueue(action, remaining);
-                        }
-                    
+                    PeekQueueAndSpawn(queue.Key,action);
                 }
+            }
+        }
+
+        protected virtual void PeekQueueAndSpawn(int group, SpawnSquadActionBound action)
+        {
+            int remaining = 0;
+            int count = 0;
+            bool limit = false;
+            if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
+            !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
+            {
+                Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit}");
+                SpawnInQueue(action, remaining);
             }
         }
 

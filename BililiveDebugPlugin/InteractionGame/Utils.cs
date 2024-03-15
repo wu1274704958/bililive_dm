@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Utils;
 
 namespace InteractionGame
 {
@@ -13,44 +14,29 @@ namespace InteractionGame
     {
         public static int CharToInt(char c)
         {
-            int sub = c >= '0' && c <= '9' ? '0' : c >= 'a' && c <= 'z' ? ('a' - 10) : 0;
-            return sub > 0 ? c - sub : -1;
+            return (int)c;
+            // int sub = c >= '0' && c <= '9' ? '0' : c >= 'a' && c <= 'z' ? ('a' - 10) : 0;
+            // return sub > 0 ? c - sub : -1;
         }
-        private static Dictionary<int, int> TmpDict = new Dictionary<int, int>();
-        public static Dictionary<int, int> StringToDict(string s)
+        
+
+        public static void StringToDictAndForeach(string s, Action<KeyValuePair<int, int>> f)
         {
-            TmpDict.Clear();
+            var dict = ObjPoolMgr.Instance.Get<Dictionary<int, int>>(null,DefObjectRecycle.OnDictRecycle).Get();
             for (int i = 0; i < s.Length; i++)
             {
                 var v = CharToInt(s[i]);
                 if (v < 0) continue;
-                if (TmpDict.ContainsKey(v))
-                    TmpDict[v] = TmpDict[v] + 1;
+                if (dict.ContainsKey(v))
+                    dict[v] = dict[v] + 1;
                 else
-                    TmpDict[v] = 1;
+                    dict[v] = 1;
             }
-            return TmpDict;
-        }
-
-        public static void StringToDictAndForeach(string s, Action<KeyValuePair<int, int>> f)
-        {
-            lock (TmpDict)
+            foreach (var v in dict)
             {
-                TmpDict.Clear();
-                for (int i = 0; i < s.Length; i++)
-                {
-                    var v = CharToInt(s[i]);
-                    if (v < 0) continue;
-                    if (TmpDict.ContainsKey(v))
-                        TmpDict[v] = TmpDict[v] + 1;
-                    else
-                        TmpDict[v] = 1;
-                }
-                foreach (var v in TmpDict)
-                {
-                    f?.Invoke(v);
-                }
+                f?.Invoke(v);
             }
+            ObjPoolMgr.Instance.Get<Dictionary<int, int>>(null, DefObjectRecycle.OnDictRecycle).Return(dict);
         }
 
         public static ushort Merge(byte hD, byte lHP)

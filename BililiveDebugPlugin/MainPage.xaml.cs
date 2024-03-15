@@ -4,6 +4,9 @@ using System.Windows;
 using System.Windows.Input;
 using BililiveDebugPlugin.InteractionGame.Data;
 using System.Text.RegularExpressions;
+using conf;
+using Utils;
+using BililiveDebugPlugin.InteractionGame.plugs;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -80,6 +83,19 @@ namespace BililiveDebugPlugin
                     {
                         m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(id, Aoe4DataConfig.SignTicket, count)}");
                     }
+                    return;
+                }
+
+                if (TestIn.Text == "Reload")
+                {
+                    ConfigMgr.ReloadAll();
+                    Locator.Instance.Get<SyncSquadConfig>().SendMsg();
+                    return;
+                }
+
+                if (TestIn.Text == "Settlement")
+                {
+                    Locator.Instance.Get<DebugPlugin>().DoSettlement(2,0,false);
                     return;
                 }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();

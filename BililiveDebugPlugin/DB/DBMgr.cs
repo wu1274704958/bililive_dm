@@ -9,7 +9,7 @@ using UserData = InteractionGame.UserData;
 namespace BililiveDebugPlugin.DB
 {
     using SettlementData = UserData;
-    public class DBMgr : Singleton<DBMgr>
+    public partial class DBMgr : Singleton<DBMgr>
     {
         private IFreeSql m_fsql;
 
@@ -87,7 +87,7 @@ namespace BililiveDebugPlugin.DB
         public int OnSettlement(SettlementData data,bool win)
         {
             var d = GetUserOrCreate(data.Id,data.Name,data.Icon,out var isNew);
-            d.Score += data.Score;
+            d.Score += (long)data.Score;
             d.SpawnSoldierNum += data.Soldier_num;
             if (isNew)
             {
@@ -160,80 +160,6 @@ namespace BililiveDebugPlugin.DB
         {
             return m_fsql.Update<Model.UserData>(id).Set(a => a.SignTime, new DateTime(1997, 1, 1)).ExecuteAffrows();
         }
-        
-        public ItemData GetItem(long id,string name)
-        {
-            return m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && a.Name == name).ToOne();
-        }
-
-        public int AddGiftItem(SettlementData data, string name, int num)
-        {
-            int ret = 0;
-            if (!Aoe4DataConfig.ItemDatas.TryGetValue(name, out var item))
-                return 0;
-            var newItem = ItemData.Create(item, num, data.Id);
-            var d = GetUserOrCreate(data.Id,data.Name,data.Icon,out var isNew);
-            if (isNew)
-            {
-                ret += m_fsql.Insert(d).ExecuteAffrows();
-                if (ret > 0)
-                    ret += m_fsql.Insert(newItem).ExecuteAffrows();
-            }
-            else
-            {
-                var itemData = GetItem(data.Id,name);
-                if (itemData == null)
-                    ret += m_fsql.Insert(newItem).ExecuteAffrows();
-                else
-                    ret += ChangeItemCount(itemData,num,out _);
-            }
-            return ret;
-        }
-        public int AddGiftItem(long id, string name, int num)
-        {
-            int ret = 0;
-            if (!Aoe4DataConfig.ItemDatas.TryGetValue(name, out var item))
-                return 0;
-            
-            
-            var itemData = GetItem(id,name);
-            if (itemData == null)
-            {
-                var newItem = ItemData.Create(item, num, id);
-                ret += m_fsql.Insert(newItem).ExecuteAffrows();
-            }
-            else
-                ret += ChangeItemCount(itemData,num,out _);
-            return ret;
-        }
-        
-        public int DepleteItem(long id,string name,int num,out int newCount)
-        {
-            newCount = 0;
-            var d = GetUser(id);
-            if (d == null)
-                return 0;
-            var itemData = GetItem(id,name);
-            if (itemData == null)
-                return 0;
-            return ChangeItemCount(itemData,-num,out newCount);
-        }
-
-        private int ChangeItemCount(ItemData data, int offNum,out int newCount)
-        {
-            newCount = data.Count + offNum;
-            if(newCount > 0)
-                return m_fsql.Update<ItemData>(data.Id).Set(a => a.Count, newCount).ExecuteAffrows();       
-            else if(newCount == 0)
-                return m_fsql.Delete<ItemData>(data.Id).ExecuteAffrows();
-            else
-                return -1;
-        }
-
-        public List<ItemData> GetUserItems(long id,int limit = 100)
-        {
-            return m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id).Limit(limit).ToList();
-        }
 
         public bool SignIn(SettlementData data)
         {
@@ -252,6 +178,18 @@ namespace BililiveDebugPlugin.DB
                 }
                 else
                     return false;
+            }
+        }
+
+        public bool CanSign(long id)
+        {
+            var d = GetUser(id);
+            if (d == null)
+                return true;
+            else
+            {
+                var now = DateTime.Now;
+                return now > d.SignTime && (now.Day != d.SignTime.Day || now.Year != d.SignTime.Year);
             }
         }
         

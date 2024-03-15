@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.Parser;
+using conf.Squad;
 using InteractionGame;
 using Utils;
 
@@ -12,6 +14,26 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     public class SpawnSquadQueue : ISpawnSquadQueue
     {
         private IContext debugPlugin;
+        private class CheckSCCxt {
+            public int g;
+            public SpawnSquadActionBound action;
+            public Action<int, SpawnSquadActionBound> func;
+
+            public CheckSCCxt(int g, SpawnSquadActionBound action, Action<int, SpawnSquadActionBound> func)
+            {
+                this.g = g;
+                this.action = action;
+                this.func = func;
+            }
+
+            public void OnResult(int c,int g)
+            {
+                func.Invoke(g, action);
+            }
+        }
+        private Aoe4GameState GameState => _gameState ?? (_gameState = Locator.Instance.Get<Aoe4GameState>());
+        private Aoe4GameState _gameState = null;
+        private ConcurrentDictionary<int, CheckSCCxt> _checkSCCxtMap = new ConcurrentDictionary<int, CheckSCCxt>();
         public override bool IsGameEnd()
         {
             if(debugPlugin == null) debugPlugin = Locator.Instance.Get<IContext>();
@@ -27,7 +49,31 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         protected override int RemainingQuantity(int group)
         {
-            return Aoe4DataConfig.SquadLimit - Locator.Instance.Get<Aoe4GameState>().GetSquadCount(group);
+            return Aoe4DataConfig.SquadLimit - GameState.GetSquadCount(group);
+        }
+
+        public override void AppendAction(ISpawnSquadAction action)
+        {
+            var g = action.GetGroup();
+            GameState.CheckNewSquadCount(g, this, (count, g_) => base.AppendAction(action));
+        }
+
+        protected override void PeekQueueAndSpawn(int g, SpawnSquadActionBound action)
+        {
+            CheckSCCxt v = null;
+            if (_checkSCCxtMap.TryGetValue(g,out v))
+            {
+                if (!GameState.HasCheckSquadCountTask(g, v))
+                {
+                    v.action = action;
+                    GameState.CheckNewSquadCount(g, v, v.OnResult);
+                }
+            }
+            else
+            {
+                _checkSCCxtMap.TryAdd(g, v = new CheckSCCxt(g, action, base.PeekQueueAndSpawn));
+                GameState.CheckNewSquadCount(g, v, v.OnResult);
+            }
         }
     }
 
@@ -131,12 +177,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
     public static class SpawnSquad
     {
-        public static void SendSpawnSquad(this ISpawnSquadAction a, UserData u, int sid, int c, Aoe4DataConfig.SquadData sd, ushort attribute = 0,
+        public static void SendSpawnSquad(this ISpawnSquadAction a, UserData u, int c, SquadData sd, ushort attribute = 0,
             bool log = false)
         {
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             if(m_MsgDispatcher == null) return;
-            if (sid == Aoe4DataConfig.VILLAGER_ID)
+            if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
             {
                 m_MsgDispatcher.GetResourceMgr().SpawnVillager(u.Id, c);
                 return;
@@ -144,21 +190,21 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c, 5);
-            var attackTy = sd.SquadType >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
+            var attackTy = sd.SquadType_e >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sid, c, u.Id, attackTy,op);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sd.GetBlueprint(u.Group), c, u.Id, attackTy,op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sid, target + 1, c, u.Id,attackTy,op);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
             }
-            Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.Score * c ,c);
+            Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
             if (log)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
-        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(int,int)> group,int score,int squadNum,int multiple = 1,ushort attribute = 0,
+        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(string,int)> group,double score,int squadNum,int multiple = 1,ushort attribute = 0,
             bool log = false)
         {
             if (group.Count == 0) return;
@@ -184,8 +230,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
     public abstract class BaseSpawnSquadAction : ISpawnSquadAction
     {
-        protected int _restGold;
-        protected int _upLevelgold;
+        protected double _restGold;
+        protected double _upLevelgold;
         protected int _givHonor;
         protected bool _notRecycle = false;
 
@@ -210,7 +256,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
             if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerResAddFactorArr[u.GuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u, v) > 0)
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{u.Name}获得{v}功勋");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }
 
         protected override void OnSpawnedAll()
@@ -228,17 +274,15 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         where FT: ISpawnFallback
     {
         public UserData _user;
-        public int _sid;
         public int _count;
-        public Aoe4DataConfig.SquadData _squad;
+        public SquadData _squad;
         public ushort _attribute = 0;
         protected FT _fallback;
 
-        public SpawnSingleSquadAction(UserData user, int sid, int count, Aoe4DataConfig.SquadData squad, FT fallback,
+        public SpawnSingleSquadAction(UserData user,int count, SquadData squad, FT fallback,
             int restGold,int upLevelgold,int giveHonor,bool notRecycle = false, ushort attribute = 0)
         {
             _user = user;
-            _sid = sid;
             _count = count;
             _squad = squad;
             _fallback = fallback;
@@ -257,7 +301,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
-                this.SendSpawnSquad(_user, _sid, sc, _squad,_attribute,true);
+                this.SendSpawnSquad(_user, sc, _squad,_attribute,true);
                 count -= sc;
                 max -= sc;
             }
@@ -294,15 +338,15 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         where FT: ISpawnFallback
     {
         public UserData _user;
-        public SquadData _Squad;
+        public SquadGroup _Squad;
         public int _count;
         protected FT _fallback;
         protected double _specialPercentage = 1;
         protected double _normalPercentage = 1;
         private readonly double _constSpecialPercentage;
 
-        public SpawnGroupSquadAction(UserData user, SquadData squad, int count, FT fallback,
-            int restGold, int upLevelgold, int giveHonor, bool notRecycle = false)
+        public SpawnGroupSquadAction(UserData user, SquadGroup squad, int count, FT fallback,
+            double restGold, double upLevelgold, int giveHonor, bool notRecycle = false)
         {
             _user = user;
             _Squad = squad;
@@ -346,7 +390,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var c = sc / _Squad.specialCount;
                 if(c <= 0) break;
                 foreach (var it in _Squad.specialSquad)
-                    this.SendSpawnSquad(_user,it.Item1, c * it.Item2, Aoe4DataConfig.GetSquadPure(it.Item1), _Squad.AddedAttr,true);
+                    this.SendSpawnSquad(_user,c*it.Item2,it.Item1,_Squad.AddedAttr,true);
                 count -= c * _Squad.specialCount;
                 max -= c * _Squad.specialCount;
             }
@@ -386,7 +430,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public override void OnDestroy()
         {
             if(!_notRecycle && _Squad != null)
-                SquadData.Recycle(_Squad);
+                SquadGroup.Recycle(_Squad);
         }
         public override object GetUser()
         {

@@ -25,5 +25,6 @@ namespace BililiveDebugPlugin.InteractionGame
         void AddObserver(ISquadCountObserver observer);
 
         void RemoveObserver(ISquadCountObserver observer);
+        void CloseDisconnectPopup();
     }
 }

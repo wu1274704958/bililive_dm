@@ -42,12 +42,12 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override int GetResource(long id, int ty = 0)
+        public override double GetResource(long id, int ty = 0)
         {
             return GetAutoResource(id) + GetVillagerGatherRes(id);
         }
 
-        private int GetVillagerGatherRes(long id)
+        private double GetVillagerGatherRes(long id)
         {
             lock (MapTable)
             {
@@ -59,7 +59,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return 0;
         }
 
-        private int GetVillagerGatherRes(int k)
+        private double GetVillagerGatherRes(int k)
         {
             lock(VillagerCountMap)
             {
@@ -130,7 +130,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        private int GetAutoResource(long id)
+        private double GetAutoResource(long id)
         {
             if(AutoAddMap.TryGetValue(id,out var v))
             {
@@ -181,7 +181,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
                 if(vc.Factor / VillagerResFactor >= MaxVillagerCount)
                 {
                     var ud = m_MsgDispatcher.GetMsgParser().GetUserData(id);
-                    InitCtx.PrintGameMsg($"{ud.Name}村民超出上限,产出村民失败");
+                    InitCtx.PrintGameMsg($"{ud.NameColored}村民超出上限,产出村民失败");
                     return false;
                 }
                 RealSpawnVillager(id,v,num);
@@ -221,9 +221,9 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return -1;
         }
 
-        public override void AddResource(long id, int c)
+        public override void AddResource(long id, double c)
         {
-            if(AutoAddMap.TryGetValue(c, out var v))
+            if(AutoAddMap.TryGetValue(id, out var v))
             {
                 lock (v)
                 {
@@ -232,7 +232,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override bool RemoveResource(long id, int r)
+        public override bool RemoveResource(long id, double r)
         {
             int f = 0;
             if (AutoAddMap.TryGetValue(id, out var v)) ++f;
@@ -309,7 +309,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return 0;
         }
 
-        public override void Foreach(int ty, Action<long, int> action)
+        public override void Foreach(int ty, Action<long, double> action)
         {
             foreach (var it in AutoAddMap)
             {

@@ -10,11 +10,17 @@ namespace conf
         public static void Init()
         {
             conf.Squad.SquadDataMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "SquadData.dat")));
+            conf.Squad.SettingMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "Setting.dat")));
+            
+            conf.Squad.SquadDataMgr.GetInstance().OnLoaded();
         }
 
         public static void ReloadAll()
         {
             conf.Squad.SquadDataMgr.Reload();
+            conf.Squad.SettingMgr.Reload();
+            
+            conf.Squad.SquadDataMgr.GetInstance().OnLoaded();
         }
     }
 }

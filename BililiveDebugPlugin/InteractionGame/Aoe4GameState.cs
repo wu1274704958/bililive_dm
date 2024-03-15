@@ -7,8 +7,10 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Forms;
+using System.Windows.Media;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame
@@ -47,6 +49,31 @@ namespace BililiveDebugPlugin.InteractionGame
 
         [DllImport("gdi32.dll")]
         static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
+
+        [DllImport("Aoe4GS.dll")]
+        static extern uint AGS_GetColor(int nXPos, int nYPos);
+
+        [DllImport("Aoe4GS.dll")]
+        static extern int AGS_Init(IntPtr hwnd);
+
+        [DllImport("Aoe4GS.dll")]
+        static extern void AGS_Stop();
+
+        struct LPRECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        };
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowRect(IntPtr hWnd, ref LPRECT lpRect);
+
+        [DllImport("user32.dll")]
+        static extern int GetClientRect(IntPtr hWnd, ref LPRECT lpRect);
+
+
         private ConcurrentDictionary<int,int> _squadCountByGroup = new ConcurrentDictionary<int, int>();
 
         private ConcurrentDictionary<int, ISquadCountObserver> _observers =
@@ -59,36 +86,55 @@ namespace BililiveDebugPlugin.InteractionGame
         private ConcurrentQueue<(int,object,Action<int, int>)> _squadCountCheckQueue = new ConcurrentQueue<(int, object, Action<int, int>)> ();
         private int _lastSquadCountNid = -1;
         private int _lastCheckGroup = 0;
-        private int _squadCountNotifyFailedTimes = 0; 
-        private double _screenScalingFactorX => Screen.PrimaryScreen.Bounds.Width == 1920 ? 1.0 : 1.5;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
-        private double _screenScalingFactorY => Screen.PrimaryScreen.Bounds.Width == 1920 ? 1.0 : 1.5;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPVERTRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), VERTRES);
+        private int _squadCountNotifyFailedTimes = 0;
+        private int Aoe4Width = 1920;
+        private int Aoe4Height = 1080;
+        private double _screenScalingFactorX => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
+        private double _screenScalingFactorY => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPVERTRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), VERTRES);
 
         [DllImport("gdi32.dll", EntryPoint = "GetDeviceCaps", SetLastError = true)]
         public static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
         private IntPtr Aoe4Hwnd = IntPtr.Zero;
+        private LPRECT _Aoe4RECT;
+        private LPRECT _Aoe4ClientRECT;
+        private int[] _CkSquadCountExecCallbackLock = new int[8];
 
+        //public Aoe4StateData CheckState(EAoe4State state)
+        //{
+        //    int x = ((int)state * (int)(12 * _screenScalingFactorX)) + (int)(3 * _screenScalingFactorX);
+        //    int y = (int)(2 * _screenScalingFactorY);
+        //    System.Drawing.Point p = new System.Drawing.Point(x, y);//取置顶点坐标 
+        //    IntPtr hdc = GetDC(IntPtr.Zero);
+        //    uint pixel = GetPixel(hdc, x, y);
+        //    ReleaseDC(IntPtr.Zero, hdc);
+        //    return new Aoe4StateData()
+        //    {
+        //        R = (int)(pixel & 0x000000FF),
+        //        G = (int)(pixel & 0x0000FF00) >> 8,
+        //        B = (int)(pixel & 0x00FF0000) >> 16
+        //    };
+        //}
         public Aoe4StateData CheckState(EAoe4State state)
         {
-            int x = ((int)state * (int)(12 * _screenScalingFactorX)) + (int)(3 * _screenScalingFactorX);
-            int y = (int)(2 * _screenScalingFactorY);
-            Point p = new Point(x,y);//取置顶点坐标 
-            IntPtr hdc = GetDC(Aoe4Hwnd);
-            uint pixel = GetPixel(hdc, x, y);
-            ReleaseDC(Aoe4Hwnd, hdc);
-            return new Aoe4StateData() {
-                R = (int)(pixel & 0x000000FF), 
-                G = (int)(pixel & 0x0000FF00) >> 8,
-                B = (int)(pixel & 0x00FF0000) >> 16 };
+            int x = ((int)state * (int)(12 * _screenScalingFactorX)) + (int)(6 * _screenScalingFactorX) + (Aoe4Width >= 2560 ? 0 : 1 );
+            int y = (int)(6 * _screenScalingFactorY) + +(Aoe4Width >= 2560 ? 0 : 31);
+            uint pixel = AGS_GetColor(x, y);
+            return new Aoe4StateData()
+            {
+                B = (int)((pixel >> 24) & 255),
+                G = (int)((pixel >> 16) & 255),
+                R = (int)((pixel >> 8) & 255),
+            };
         }
 
         public Aoe4StateData CheckState(EAoe4State state,IntPtr hwnd)
         {
-            int x = ((int)state * 2) + 2;
-            int y = 2;
-            Point p = new Point(x, y);//取置顶点坐标 
-            IntPtr hdc = GetDC(hwnd);
-            uint pixel = GetPixel(hdc, x, y);
-            ReleaseDC(hwnd, hdc);
+            //int x = ((int)state * 2) + 2;
+            //int y = 2;
+            //Point p = new Point(x, y);//取置顶点坐标 
+            //IntPtr hdc = GetDC(hwnd);
+            uint pixel = 0;// GetPixel(hdc, x, y);
+            //ReleaseDC(hwnd, hdc);
             return new Aoe4StateData()
             {
                 R = (int)(pixel & 0x000000FF),
@@ -101,9 +147,17 @@ namespace BililiveDebugPlugin.InteractionGame
         {
             ResetLockGroupSquadCount();
             ResetSquadCountCheck();
-            return;
             var ls = WindowEnumerator.FindAll((w) => w.Title.Contains(Aoe4DataConfig.Aoe4WinTitle));
-            if (ls.Count > 0) Aoe4Hwnd = ls[0].Hwnd;
+            if (ls.Count > 0)
+            {
+                Aoe4Hwnd = ls[0].Hwnd;
+                AGS_Init(Aoe4Hwnd);
+                LPRECT pRECT = new LPRECT();
+                GetWindowRect(Aoe4Hwnd, ref _Aoe4RECT);
+                GetClientRect(Aoe4Hwnd, ref _Aoe4ClientRECT);
+                Aoe4Width = _Aoe4ClientRECT.right;
+                Aoe4Height = _Aoe4ClientRECT.bottom;
+            }
         }
 
         private void ResetSquadCountCheck()
@@ -117,6 +171,7 @@ namespace BililiveDebugPlugin.InteractionGame
             for(int i = 0; i < _lockGroupSquadCount.Length; i++)
             {
                 Interlocked.Exchange(ref _lockGroupSquadCount[i], 0);
+                Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[i], 0);
             }
         }
 
@@ -139,24 +194,46 @@ namespace BililiveDebugPlugin.InteractionGame
 
         public void Stop()
         {
-
+            AGS_Stop();
         }
 
         public void CheckNewSquadCount(int g,object who = null,Action<int,int> on = null)
         {
-            if(_squadCountCheckQueue.Count >= 3)
+            if(!HasCheckSquadCountTask(g))
+            {
+                CheckNewSquadCountInter(g, who,on);
+            }
+            else
+            {
+                AddCheckSquadCountCallback(g, who,on);
+            }
+        }
+
+        protected void CheckNewSquadCountInter(int g, object who = null, Action<int, int> on = null)
+        {
+            if (_squadCountCheckQueue.Count >= 3)
             {
                 Locator.Instance.Get<IContext>().Log($"WARN!!! _squadCountCheckQueue has {_squadCountCheckQueue.Count}");
             }
-            if(_squadCountChecking > 0)
+            if (_squadCountChecking > 0)
             {
                 _squadCountCheckQueue.Enqueue((g, who, on));
                 return;
             }
-            var nid = _SquadCheckId;
-            if(_ckSquadCountDict.TryGetValue(g,out var v))
+            AddCheckSquadCountCallback(g, who, on);
+            ExecGetSquadCount(g, _SquadCheckId);
+            Interlocked.Exchange(ref _squadCountChecking, g + 1);
+        }
+
+        public bool AddCheckSquadCountCallback(int g,object who,Action<int,int> on)
+        {
+            while (_CkSquadCountExecCallbackLock[g] == 1) { }
+            if (_CkSquadCountExecCallbackLock[g] == 2)
+                return false;
+            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g],1);
+            if (_ckSquadCountDict.TryGetValue(g, out var v))
             {
-                if(who != null)
+                if (who != null)
                     v.Add((who.GetHashCode(), on));
             }
             else
@@ -168,13 +245,15 @@ namespace BililiveDebugPlugin.InteractionGame
                     _ckSquadCountDict.TryAdd(g, list);
                 }
             }
-            ExecGetSquadCount(g, nid);
-            Interlocked.Exchange(ref _squadCountChecking, g + 1);
+            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 0);
+            return true;
         }
 
         private void ExecGetSquadCount(int g,int nid)
         {
-            Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().AppendExecCode($@"NSC_UpdateToColor(PLAYERS[{g + 1}],{nid})");
+            //Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().AppendExecCode($@"NSC_UpdateToColor(PLAYERS[{g + 1}],{nid})");
+            Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ClickLeftMouse(((int)EAoe4State.SquadGroupCount * (int)(12 * _screenScalingFactorX)) + (int)(6 * _screenScalingFactorX),
+            (int)( 15 * _screenScalingFactorY));
         }
         public bool HasCheckSquadCountTask(int g,object who)
         {
@@ -246,6 +325,11 @@ namespace BililiveDebugPlugin.InteractionGame
         public void OnTick()
         {
             var c = CheckState(EAoe4State.SquadGroupCount);
+            if(c.R == 255 && c.B == 0 && c.G ==0)
+            {
+                ExecGetSquadCount(_squadCountChecking - 1, _SquadCheckId);
+                return;
+            }    
             var g = (c.R & 0x7) - 1;
             if (g < Aoe4DataConfig.GroupCount && g >= 0) 
             //if (c.r != LastGroup)
@@ -290,13 +374,13 @@ namespace BililiveDebugPlugin.InteractionGame
             
             if(_squadCountChecking == 0 && _squadCountCheckQueue.TryDequeue(out var msg))
             {
-                CheckNewSquadCount(msg.Item1,msg.Item2,msg.Item3);
+                CheckNewSquadCountInter(msg.Item1,msg.Item2,msg.Item3);
             }
             if ((DateTime.Now - _lastUpdate).TotalMilliseconds >= 1000)
             {
                 _lastUpdate = DateTime.Now;
                 if(!HasCheckSquadCountTask(_lastCheckGroup))
-                    CheckNewSquadCount(_lastCheckGroup, this, null);
+                    CheckNewSquadCountInter(_lastCheckGroup, this, null);
                 Interlocked.Exchange(ref _lastCheckGroup, _lastCheckGroup + 1);
                 if(_lastCheckGroup >= Aoe4DataConfig.GroupCount)
                     Interlocked.Exchange(ref _lastCheckGroup, 0);
@@ -305,6 +389,8 @@ namespace BililiveDebugPlugin.InteractionGame
 
         private bool NotifyCheckSquadCount(int g, int nid, int count)
         {
+            while (_CkSquadCountExecCallbackLock[g] != 0) { }
+            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 2);
             if (_ckSquadCountDict.TryGetValue(g, out var v))
             {
                 while (v.TryTake(out var val))
@@ -312,6 +398,7 @@ namespace BililiveDebugPlugin.InteractionGame
                     val.Item2?.Invoke(count,g);
                 }
             }
+            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 0);
             return true;
         }
 
@@ -322,10 +409,10 @@ namespace BililiveDebugPlugin.InteractionGame
 
         public Aoe4StateData GetData(int x, int y, IntPtr hwnd)
         {
-            Point p = new Point(x, y);//取置顶点坐标 
-            IntPtr hdc = GetDC(hwnd);
-            uint pixel = GetPixel(hdc, x, y);
-            ReleaseDC(hwnd, hdc);
+            //Point p = new Point(x, y);//取置顶点坐标 
+            //IntPtr hdc = GetDC(hwnd);
+            uint pixel = 0;
+            //ReleaseDC(hwnd, hdc);
             return new Aoe4StateData()
             {
                 R = (int)(pixel & 0x000000FF),
@@ -370,6 +457,17 @@ namespace BililiveDebugPlugin.InteractionGame
             foreach(var o in _observers)
             {
                 o.Value.SquadCountChanged(group,oldCount,count);
+            }
+        }
+
+        public void CloseDisconnectPopup()
+        {
+            var c = CheckState(EAoe4State.VillagerState);
+            if (c.R < 250 && c.R > 10 && c.G == 0 && c.B == 0)
+            {
+                int x = (int)((1550 / 2560.0) * Aoe4Width);
+                int y = (int)((835 / 1440.0) * Aoe4Height);
+                Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ClickLeftMouse(x,y);
             }
         }
     }

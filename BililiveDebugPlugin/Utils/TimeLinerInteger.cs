@@ -6,7 +6,7 @@ namespace Utils
         {
             private DateTime UpdateTime;
             private int factor;
-            private int Value;
+            private double Value;
             public double AddFactor { get;set; } = 0.0;
             public double Rest = 0.0;
             public int Limit { get; private set; } = int.MaxValue;
@@ -18,7 +18,7 @@ namespace Utils
                 UpdateTime = DateTime.Now;
                 Limit = limit;
             }
-            public int val
+            public double val
             {
                 get
                 {
@@ -64,19 +64,19 @@ namespace Utils
                     factor = f;
                 }
             }
-            public int Append(int a)
+            public double Append(double a)
             {
                 UpdateVal();
                 Value += a;
                 return Value;
             }
-            public int Sub(int a)
+            public double Sub(double a)
             {
                 UpdateVal();
                 Value -= a;
                 return Value;
             }
-            public int SubNotNeg(int a)
+            public double SubNotNeg(double a)
             {
                 UpdateVal();
                 Value -= a;

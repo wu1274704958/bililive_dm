@@ -52,6 +52,10 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             
         }
-        
+
+        public void Start()
+        {
+
+        }
     }
 }

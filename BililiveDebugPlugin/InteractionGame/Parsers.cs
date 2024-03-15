@@ -9,6 +9,8 @@ using BililiveDebugPlugin;
 using ProtoBuf;
 using Utils;
 using Interaction;
+using BililiveDebugPlugin.InteractionGame.Data;
+using conf.Squad;
 
 namespace InteractionGame 
 {
@@ -101,7 +103,7 @@ namespace InteractionGame
                 SetGroup(uid, v);
                 //if(Appsetting.Current.PrintBarrage)
                 {
-                    InitCtx.PrintGameMsg($"{uName}选择加入{match.Groups[1].Value}方");
+                    InitCtx.PrintGameMsg($"{SettingMgr.GetColorWrap(uName,v)}选择加入{match.Groups[1].Value}方");
                     if (oldGroup != -1 && oldGroup != v)
                         m_MsgDispatcher.GetResourceMgr().RemoveAllVillagers(uid);
                     if (GetTarget(uid) == v)
@@ -139,7 +141,10 @@ namespace InteractionGame
                 SetTarget(uid, -1);
             }
             if (g > -1)
-                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel,Utils.GetFansLevel(msgOrigin)), g);
+            {
+                m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.GuardLevel]);
+                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
+            }
             return g;
         }
 
@@ -166,11 +171,13 @@ namespace InteractionGame
             if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value, out var v))
             {
                 var self = GetGroupById(uid);
+                var tar = SettingMgr.GetColorWrap(match.Groups[1].Value, v >= 10 ? v - 10 : v);
                 if (autoChangeGroup && (self == v || self < 0))
                 {
                     SetGroup(uid,GetGroupExclude(v));
                 }
-
+                if (self > -1)
+                    uName = SettingMgr.GetColorWrap(uName, self);
                 if (!autoChangeGroup && (self == v || self < 0))
                 {
                     if(self == v) InitCtx.PrintGameMsg($"{uName}不能以自己为目标");
@@ -179,7 +186,7 @@ namespace InteractionGame
                 }
                 //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
                 SetTarget(uid, v);
-                InitCtx.PrintGameMsg($"{uName}选择{match.Groups[1].Value}方作为进攻目标");
+                InitCtx.PrintGameMsg($"{uName}选择{tar}方作为进攻目标");
                 m_MsgDispatcher.GetMsgParser().SendAllSquadAttack(v, uid);
                 return true;
             }
@@ -271,6 +278,7 @@ namespace InteractionGame
         where P : IDyMsgParser<IT>
     {
         void Init(P owner);
+        void Start();
         void Stop();
         bool Parse(DyMsgOrigin msg);
         void OnTick(float delat);
@@ -290,6 +298,11 @@ namespace InteractionGame
             m_MsgDispatcher = dispatcher;
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.Init(this);
+        }
+        public virtual void Start()
+        {
+            foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.Start();
         }
         public virtual void Stop()
         {
@@ -335,7 +348,7 @@ namespace InteractionGame
                 return data;
             return null;
         }
-        public void UpdateUserData(long id,int score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0,int fansLv = 0)
+        public void UpdateUserData(long id,double score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0,int fansLv = 0)
         {
             if (UserDataDict.ContainsKey(id))
             {
@@ -421,7 +434,7 @@ namespace InteractionGame
         [ProtoMember(3)]
         public string Icon;
         [ProtoMember(4)]
-        public long Score;
+        public double Score;
         [ProtoMember(5)]
         public int Soldier_num;
         [ProtoMember(6)]
@@ -446,6 +459,7 @@ namespace InteractionGame
             FansLevel = fansLevel;
             //JoinTime = DateTime.Now;
         }
+        public string NameColored => SettingMgr.GetColorWrap(Name, Group);
         public int HpMultiple => (Op1 >> 16) & 255;
         public int DamageMultiple => (Op1 >> 24) & 255;
         public int AddHpMultiple(int n)

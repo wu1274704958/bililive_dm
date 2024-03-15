@@ -3,101 +3,16 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BililiveDebugPlugin.DB.Model;
 using BililiveDebugPlugin.InteractionGameUtils;
+using conf.Squad;
+using InteractionGame;
 using Utils;
 using SettlementData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.InteractionGame.Data
 {
-    public enum ESquadType : uint
-    {
-        Normal = 0,
-        Villager = 1,
-        SiegeAttacker = 2,
-        BuildingAttacker = 3,
-    }
     public class Aoe4DataConfig
     {
         public const int VILLAGER_ID = 199;
-
-        public struct SquadData
-        {
-            public int Id;
-            public string Name;
-            public int QuickSuccessionNum;
-            public int Score => _mScore;
-            private int _mPrice;
-            public int Price => _mScore;
-            public ESquadType SquadType;
-            public float TrainTime;
-            private int _mScore;
-            public SquadData(string name, int score, ESquadType squadType = ESquadType.Normal)
-            {
-                Name = name;
-                QuickSuccessionNum = 1;
-                _mScore = score;
-                _mPrice = score;
-                SquadType = squadType;
-                TrainTime = score * 0.333333f;
-                Id = 0;
-            }
-            public bool Invaild => Score == 0;
-        }
-        //"长矛兵","长弓兵","中国武士","弩手","骑士","长剑武士","箭塔象","蜂窝炮","乌尔班巨炮","战象","火枪","诸葛弩","火长矛"
-        // 10,9, 7,9, 5, 8,3,2,1,1,5,9,5
-        public static readonly Dictionary<int, SquadData> SquadDatas = new Dictionary<int, SquadData>()
-        {
-            { 0, new SquadData ("长矛兵",        3         )},
-            { 1, new SquadData ("步弓手",        4         )},
-            { 2, new SquadData ("关刀",          6        )},
-            { 3, new SquadData ("弩手",          6        )},
-            { 4, new SquadData ("骑士",          9       )},
-            { 5, new SquadData ("长剑武士",      6          )},
-            { 6, new SquadData ("箭塔象",        26        )},
-            { 7, new SquadData ("蜂窝炮",        66        )},
-            { 8, new SquadData ("手推炮",        79        , ESquadType.BuildingAttacker)},
-            { 9, new SquadData ("枪塔象",        32        )},
-            { 10, new SquadData("教士",         15        )},
-            { 11, new SquadData("火枪",         18        )},
-            { 12, new SquadData("诸葛弩",        4         )},
-            { 13, new SquadData("火长矛",        7         , ESquadType.SiegeAttacker )},
-            { 14, new SquadData("弩车",          47       , ESquadType.SiegeAttacker  )},
-            { 15, new SquadData("古拉姆",        7         )},
-            { 16, new SquadData("拍车",          63       )},
-            { 17, new SquadData("掷弹兵",        8         )},
-            { 18, new SquadData("军乐队",        25        )},
-            { 19, new SquadData("战象",          27       )},
-            { 20, new SquadData("日本武士",      9          )},
-            { 21, new SquadData("怯薛",          13        )},
-            { 22, new SquadData("苏丹亲兵",      16         )},
-            { 23, new SquadData("骆驼骑兵",      6         )},
-            { 24, new SquadData("骑手",           5      , ESquadType.SiegeAttacker)},
-            { 25, new SquadData("冲车",           30      )},
-            { 26, new SquadData("旗本武士",       13      )},
-            { 27, new SquadData("旗本射手",       12      )},
-            { 28, new SquadData("旗本骑士",       11     , ESquadType.SiegeAttacker)},
-            { 29, new SquadData("旗本骑士",       23     , ESquadType.SiegeAttacker)},
-            { 30, new SquadData("武僧",           6      )},
-
-            { 100, new SquadData("风琴炮",       80         )},
-            { 101, new SquadData("国王",         100         )},
-            { 102, new SquadData("精锐古拉姆",     9          ) },
-
-            { 104, new SquadData("射击军",              19)},
-            { 105, new SquadData("教士",                10)},
-            { 106, new SquadData("乌尔班巨炮",           160 ,  ESquadType.BuildingAttacker)},
-
-            { 107, new SquadData("精锐掷弹兵",                   12)},
-            { 108, new SquadData("长管炮",                       120,  ESquadType.SiegeAttacker      )},
-            { 109, new SquadData("皇家长管炮",                   140,   ESquadType.SiegeAttacker       )},
-            { 110, new SquadData("精锐长弓兵",                   6       )},
-
-            { 111, new SquadData("精锐苏丹亲兵",              16)},
-            { 113, new SquadData("大筒兵",                     26)},
-            { 117, new SquadData("精锐旗本武士",              15)},
-            { 118, new SquadData("精锐旗本射手",              14)},
-            { 119, new SquadData("精锐旗本骑士",              15, ESquadType.SiegeAttacker    )},
-            { 122, new SquadData("沙漠掠夺者",              19)},
-        };
         public static readonly ConcurrentDictionary<int, SquadData> RandomSquad = new ConcurrentDictionary<int, SquadData>();
 
 
@@ -137,60 +52,60 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             {DaCall,        ItemData.Create(DaCall          ,EItemType.Gift,5)     },
             {KuaKua ,        ItemData.Create(KuaKua          ,EItemType.Gift,330)  },
             {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000)  },
-            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,100)  },
+            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,200)  },
         };
 
         public static readonly int[] RandomPool = { 100,102,104,106,107,109,110,111,113,117,118,122 };
-        public static SquadData GetSquadPure(int index)
+        public static SquadData GetSquadPure(int index,int level,int g)
         {
-            if (SquadDatas.TryGetValue(index, out var v))
+            SquadData sd = null;
+            if ((sd = SquadDataMgr.GetInstance().GetCountrySpecialSquad(index, level, g)) != null)
+                return sd;
+            sd = conf.Squad.SquadDataMgr.GetInstance().Get(level * 10_0000 + index);
+            if (sd != null && sd.GetOverload(g, out var v))
                 return v;
-            else
-                return new SquadData();
+            if(sd != null && sd.Type_e == conf.Squad.EType.Placeholder)
+            {
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{SettingMgr.GetCountry(g)}没有配置特殊单位{(char)index}");
+                return null;
+            }
+            return sd;
         }
-        public static SquadData GetSquad(int index,int group,out int sid)
+        public static SquadData GetSquadBySid(int sid,int g)
         {
-            sid = index;
-            SquadData v;
+            var index = sid % 10_0000;
+            var level = sid / 10_0000;
+            return GetSquadPure(index, level, g);
+        }
+        
+        public static SquadData GetSquad(int index,int group,int level)
+        {
             if(index == RandomIdx)
             {
                 var key = RandomIdx * 10 + group;
-                if (RandomSquad.TryGetValue(key, out v))
+                if (RandomSquad.TryGetValue(key, out var v))
                 {
-                    sid = v.Id;
                     return v;
                 }
                 else
                 {
-                    RandomSquad.TryAdd(key, v = ToRandomSquad());
-                    sid = v.Id;
+                    RandomSquad.TryAdd(key, v = conf.Squad.SquadDataMgr.GetInstance().RandomGiftSquad);
                     return v;
                 }
             }
-            if (SquadDatas.TryGetValue(index, out v))
-                return v;
-            else
-                return v;
+            return GetSquadPure(index, level,group);
         }
 
-        private static SquadData ToRandomSquad()
-        {
-            var id = RandomPool[new Random(DateTime.Now.Millisecond).Next(0, RandomPool.Length)];
-            var v = SquadDatas[id];
-            v.Id = id;
-            return v;
-        }
+        public static int SquadCount => conf.Squad.SquadDataMgr.GetInstance().NormalSquadDatas.Count;
 
-        public static int SquadCount => SquadDatas.Count - 16;
+        public static int RandomIdx { get; private set; } = 116;
 
-        public static int RandomIdx { get; private set; } = 29;
+        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(56);
 
-        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromHours(1);
-
-        public static readonly int OneTimesSpawnSquadCount = 300;
+        public static readonly int OneTimesSpawnSquadCount = 400;
 
         public static readonly int SquadLimit = 900;
-        public static readonly int AutoSquadLimit = SquadLimit - 160;
+        public static readonly int AutoSquadLimit = SquadLimit - 200;
 
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 4000;
@@ -231,6 +146,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static readonly float[] SettlementPlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
         public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
+        public static readonly float[] PlayerOriginResAddFactorArr = new float[] { 1.4f, 65.0f, 5.6f, 2.0f };
         public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 140, 10, 1 };
         internal static readonly string Aoe4WinTitle = "Age of Empires IV";
     }

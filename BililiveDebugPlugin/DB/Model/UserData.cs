@@ -17,7 +17,8 @@ namespace BililiveDebugPlugin.DB.Model
     {
         None,
         Gift,
-        Ticket
+        Ticket,
+        LimitedTime
     }
     [ProtoBuf.ProtoContract]
     public class UserData

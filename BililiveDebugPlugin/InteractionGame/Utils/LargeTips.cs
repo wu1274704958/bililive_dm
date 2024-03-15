@@ -22,7 +22,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public int BottomColor;
         [ProtoBuf.ProtoMember(7)] 
         public float ShowTime;
+
+        public void Show()
+        {
+            LargeTips.Show(this);
+        }
     }
+    
 
     public static class LargePopTipsDataBuilder
     {

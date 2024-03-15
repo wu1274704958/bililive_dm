@@ -12,6 +12,7 @@ using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGame.Resource;
 using BililiveDebugPlugin.InteractionGame.Settlement;
 using BililiveDebugPlugin.InteractionGameUtils;
+using conf;
 using Interaction;
 using InteractionGame;
 using Newtonsoft.Json;
@@ -36,7 +37,12 @@ namespace BililiveDebugPlugin
         [ProtoMember(1)]
         public List<GoldInfo> Items = new List<GoldInfo>();
     }
-
+    [ProtoBuf.ProtoContract]
+    public class EventCueData
+    {
+        [ProtoBuf.ProtoMember(1)] 
+        public string Msg;
+    }
     public enum EGameAction
     {
         GameStart,
@@ -50,7 +56,7 @@ namespace BililiveDebugPlugin
             MsgGiftParser<DebugPlugin>,
             DefAoe4Bridge<DebugPlugin>,
             Aoe4BaoBingResMgr<DebugPlugin>, DebugPlugin> messageDispatcher { get; private set; }
-        private PlugMgr<EGameAction> m_PlugMgr = new PlugMgr<EGameAction>();
+        public PlugMgr<EGameAction> m_PlugMgr { get;private set; } = new PlugMgr<EGameAction>();
         private MainPage mp;
         private Action<DyMsg> m_AppendMsgAction;
         private DateTime m_AutoAppendMsgTime;
@@ -102,12 +108,6 @@ namespace BililiveDebugPlugin
 
             GoldInfoArrPool = new Utils.ObjectPool<GoldInfoArr>(() => new GoldInfoArr(), OnRetGoldInfoArr);
         }
-        public static string GetSquadName(int id)
-        {
-            var sd = Aoe4DataConfig.GetSquadPure(id);
-            if (sd.Invaild) return "";
-            return sd.Name;
-        }
         public Aoe4StateData CheckState(EAoe4State state)
         {
             return m_GameState.CheckState(state);
@@ -145,13 +145,14 @@ namespace BililiveDebugPlugin
             base.Start();
             IsStart = true;
             var _ = DB.DBMgr.Instance;
-
+            ConfigMgr.Init();
             messageDispatcher = new MessageDispatcher<PlayerBirthdayParser<DebugPlugin>,
                 MsgGiftParser<DebugPlugin>, DefAoe4Bridge<DebugPlugin>,
                 Aoe4BaoBingResMgr<DebugPlugin>, DebugPlugin>();
             m_PlugMgr.Add(1000 * 30,new AutoForceStopPlug());
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60,new AutoDownLivePlug());
+            m_PlugMgr.Add(-1, new SyncSquadConfig());
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
@@ -208,11 +209,7 @@ namespace BililiveDebugPlugin
             if((now - CheckIsBlackPopTime).TotalSeconds >= 1)
             {
                 CheckIsBlackPopTime = now;
-                var c = m_GameState.CheckState(EAoe4State.VillagerState);
-                if(c.R < 250 && c.R > 10 && c.G == 0 && c.B == 0)
-                {
-                    messageDispatcher.GetBridge().ClickLeftMouse(1550, 835);
-                }
+                m_GameState.CloseDisconnectPopup();
             }
         }
         public void OnTick(float delta)
@@ -227,14 +224,7 @@ namespace BililiveDebugPlugin
                 case 0:
                     if (LastState != 2 && d.R == 2)
                     {
-                        GameSt = 1;
-                        Interlocked.Exchange(ref LastState, d.R);
-                        m_Settlement.ShowSettlement(this,d.G);
-                        m_PlugMgr.Notify(EGameAction.GameStop);
-                        Log("Game end send msg fulsh b");
-                        SendMsg.waitClean();
-                        Log("Game end send msg fulsh e");
-                        Thread.Sleep(EndDelay);
+                        DoSettlement(d.R,d.G);
                     }
                     else
                         Interlocked.Exchange(ref LastState, d.R);
@@ -270,6 +260,18 @@ namespace BililiveDebugPlugin
                 UpdatePlayerGoldTime = now;
             }
             SendMsg.waitClean();
+        }
+        
+        public void DoSettlement(int r = 2,int g = 0,bool sleep = true)
+        {
+            GameSt = 1;
+            Interlocked.Exchange(ref LastState, r);
+            m_Settlement.ShowSettlement(this,g);
+            m_PlugMgr.Notify(EGameAction.GameStop);
+            Log("Game end send msg fulsh b");
+            SendMsg.waitClean();
+            Log("Game end send msg fulsh e");
+            if(sleep)Thread.Sleep(EndDelay);
         }
 
         public static string GetColorById(int id)
@@ -314,7 +316,8 @@ namespace BililiveDebugPlugin
 
         public void PrintGameMsg(string text)
         {
-            messageDispatcher.Aoe4Bridge.ExecPrintMsg(text);
+            //messageDispatcher.Aoe4Bridge.ExecPrintMsg(text);
+            SendMsg.SendMsg((short)EMsgTy.EventCue, new EventCueData() { Msg = text });
         }
 
         public void SendTestDanMu(object sender, ReceivedDanmakuArgs e)
@@ -331,7 +334,7 @@ namespace BililiveDebugPlugin
             {
                 var it = GoldInfoPool.Get();
                 it.Id = id;
-                it.Gold = c;
+                it.Gold = (int)c;
                 it.Progress = autoSpawn.GetSpawnProgress(id);
                 if (it.Progress > 1.0) it.Progress = 1.0f;
                 arr.Items.Add(it);

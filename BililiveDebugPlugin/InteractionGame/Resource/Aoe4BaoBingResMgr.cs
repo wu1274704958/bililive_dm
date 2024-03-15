@@ -20,7 +20,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             v.AddFactor = addFactor;
         }
 
-        public override void AddResource(long id, int c)
+        public override void AddResource(long id, double c)
         {
             if(AutoAddMap.TryGetValue(id, out var v))
             {
@@ -53,7 +53,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override void Foreach(int ty, Action<long, int> action)
+        public override void Foreach(int ty, Action<long, double> action)
         {
             foreach(var it in AutoAddMap)
             {
@@ -64,7 +64,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override int GetResource(long id, int ty = 0)
+        public override double GetResource(long id, int ty = 0)
         {
             if(AutoAddMap.TryGetValue(id,out var v))
             {
@@ -100,7 +100,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             
         }
 
-        public override bool RemoveResource(long id, int r)
+        public override bool RemoveResource(long id, double r)
         {
             if(AutoAddMap.TryGetValue(id,out var v))
             {

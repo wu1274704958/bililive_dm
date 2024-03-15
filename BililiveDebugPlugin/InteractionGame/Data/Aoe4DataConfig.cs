@@ -34,6 +34,8 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         //public static readonly string PPJ = "泡泡机";
         //public static readonly string FriendShip = "友谊的小船";
         public static readonly string SignTicket = "签到券";
+        public static readonly string TiDu = "提督";
+        public static readonly string JianZhang = "舰长";
 
         public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
         {

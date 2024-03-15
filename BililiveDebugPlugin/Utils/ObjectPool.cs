@@ -53,16 +53,16 @@ namespace Utils
     {
         private ConcurrentDictionary<Type, object> _pools = new ConcurrentDictionary<Type, object>();
 
-        public Utils.ObjectPool<T> Get<T>(Func<T> objectGenerator = null, Action<T> objectResetor = null)
+        public ObjectPool<T> Get<T>(Func<T> objectGenerator = null, Action<T> objectResetor = null)
             where T : new()
         {
             if(_pools.TryGetValue(typeof(T), out object pool))
-                return pool as Utils.ObjectPool<T>;
+                return pool as ObjectPool<T>;
             else
             {
                 if(objectGenerator == null)
                     objectGenerator = () => new T();
-                var p = new Utils.ObjectPool<T>(objectGenerator, objectResetor);
+                var p = new ObjectPool<T>(objectGenerator, objectResetor);
                 _pools.TryAdd(typeof(T), p);
                 return p;
             }

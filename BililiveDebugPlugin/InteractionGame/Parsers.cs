@@ -24,6 +24,11 @@ namespace InteractionGame
         void OnChangeGroup(UserData userData,int old,int n);
         void OnClear();
     }
+    
+    public interface IPlayerPreJoinObserver
+    {
+        Msg OnPreJoin(Msg m);
+    }
 
     public abstract class IDyPlayerParser<IT>
         where IT : class,IContext
@@ -32,7 +37,8 @@ namespace InteractionGame
         private ConcurrentDictionary<long, int> GroupDict = new ConcurrentDictionary<long, int>();
         private ConcurrentDictionary<long, int> TargetDict = new ConcurrentDictionary<long, int>();
         private ConcurrentDictionary<int, int> GroupCount = new ConcurrentDictionary<int, int>();
-        private ConcurrentDictionary<Int64,IPlayerParserObserver> Observers = new ConcurrentDictionary<long, IPlayerParserObserver>();
+        private ConcurrentDictionary<Int64,IPlayerParserObserver> _observers = new ConcurrentDictionary<long, IPlayerParserObserver>();
+        private ConcurrentDictionary<Int64,IPlayerPreJoinObserver> _preJoinObservers = new ConcurrentDictionary<long, IPlayerPreJoinObserver>();
         private Regex mSelectGrouRegex;
         protected IT InitCtx;
         protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
@@ -61,7 +67,7 @@ namespace InteractionGame
             TargetDict.Clear();
             GroupCount.Clear();
             SetupGroupCount();
-            foreach (var it in Observers)
+            foreach (var it in _observers)
             {
                 it.Value.OnClear();
             }
@@ -142,6 +148,7 @@ namespace InteractionGame
             }
             if (g > -1)
             {
+                msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
                 m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.GuardLevel]);
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
             }
@@ -249,29 +256,46 @@ namespace InteractionGame
         public abstract bool Demand(Msg msg, MsgType barType);
         public void AddObserver(IPlayerParserObserver observer)
         {
-            Observers.TryAdd(observer.GetHashCode(), observer);
+            _observers.TryAdd(observer.GetHashCode(), observer);
         }
         public void RmObserver(IPlayerParserObserver observer)
         {
-            Observers.TryRemove(observer.GetHashCode(), out _);
+            _observers.TryRemove(observer.GetHashCode(), out _);
         }
        
         public void OnAddGroup(UserData userdata, int g)
         {
             m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel,userdata.FansLevel);
-            foreach(var it in Observers)
+            foreach(var it in _observers)
             {
                 it.Value.OnAddGroup(userdata, g);
             }
         }
         public void OnChangeGroup(UserData userdata,int old, int g)
         {
-            foreach (var it in Observers)
+            foreach (var it in _observers)
             {
                 it.Value.OnChangeGroup(userdata, old, g);
             }
         }
-
+        
+        public void AddPreJoinObserver(IPlayerPreJoinObserver observer)
+        {
+            _preJoinObservers.TryAdd(observer.GetHashCode(), observer);
+        }
+        public void RmPreJoinObserver(IPlayerPreJoinObserver observer)
+        {
+            _preJoinObservers.TryRemove(observer.GetHashCode(), out _);
+        }
+        
+        protected Msg OnPlayerPreJoin(Msg msg)
+        {
+            foreach(var it in _preJoinObservers)
+            {
+                msg = it.Value.OnPreJoin(msg);
+            }
+            return msg;
+        }
     }
     public interface ISubMsgParser<P,IT>
         where IT : class, IContext

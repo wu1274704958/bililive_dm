@@ -82,7 +82,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         var now = DateTime.Now;
                         var r = new Random((int)now.Ticks);
                         ActivityData activityData = GetNewYearActivityData(u.GuardLevel,global::InteractionGame.Utils.GetNewYearActivity());
-                        var probability = 160 - (msg.msg.GuardLevel > 0 ? (4 - msg.msg.GuardLevel) * 30 : 0) - u.FansLevel;
+                        var probability = 160 - (u.GuardLevel > 0 ? (4 - u.GuardLevel) * 30 : 0) - u.FansLevel;
                         if(activityData.GiftProbability > 0) probability = activityData.GiftProbability;
                         if(probability <= 20) probability = 1;
                         var giftCount = new Random((int)now.Ticks).Next(1,1 + activityData.AddGiftCount);
@@ -124,7 +124,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         }
                         else
                         {
-                            var c = r.Next(10 + msg.msg.FansMedalLevel , 51 + (msg.msg.GuardLevel > 0 ? (4 - msg.msg.GuardLevel) * 100 : 0) + u.FansLevel * 2);
+                            var c = r.Next(10 + msg.msg.FansMedalLevel , 51 + (u.GuardLevel > 0 ? (4 - u.GuardLevel) * 100 : 0) + u.FansLevel * 2);
                             c *= activityData.HonorMultiplier;
                             if (DB.DBMgr.Instance.AddHonor(u, c) > 0)
                             {

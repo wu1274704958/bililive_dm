@@ -23,6 +23,11 @@ namespace Utils
         }
 
         public abstract void Notify(M m);
+
+        public virtual void Start()
+        {
+            
+        }
     }
 
     public class PlugCxt<M>
@@ -51,6 +56,21 @@ namespace Utils
             foreach (var plug in _NotTickPlugs)
             {
                 plug.Value.Init();
+            }
+        }
+        
+        public virtual void Start()
+        {
+            foreach (var plug in _plugs)
+            {
+                foreach (var p in plug.Value.Plugs)
+                {
+                    p.Start();
+                }
+            }
+            foreach (var plug in _NotTickPlugs)
+            {
+                plug.Value.Start();
             }
         }
 

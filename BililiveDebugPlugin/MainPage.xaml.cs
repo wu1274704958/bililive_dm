@@ -4,9 +4,11 @@ using System.Windows;
 using System.Windows.Input;
 using BililiveDebugPlugin.InteractionGame.Data;
 using System.Text.RegularExpressions;
+using BilibiliDM_PluginFramework;
 using conf;
 using Utils;
 using BililiveDebugPlugin.InteractionGame.plugs;
+using UserData = BililiveDebugPlugin.DB.Model.UserData;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -82,6 +84,36 @@ namespace BililiveDebugPlugin
                     if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var count))
                     {
                         m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(id, Aoe4DataConfig.SignTicket, count)}");
+                    }
+                    return;
+                }
+                if ((match = new Regex("Vip ([0-9]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
+                {
+                    var c = 1;
+                    if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var lvl))
+                    {
+                        if (match.Groups.Count > 3 && int.TryParse(match.Groups[3].Value, out c))
+                            ;
+                        var ud = DB.DBMgr.Instance.GetUser(id);
+                        string name = null;
+                        switch (lvl)
+                        {
+                            case 2: name = Aoe4DataConfig.TiDu; break;
+                            case 3: name = Aoe4DataConfig.JianZhang; break;
+                        }
+                        if (ud == null || name == null)
+                        {
+                            m_Cxt.Log($"没有找到用户{match.Groups[1].Value}");
+                            return;
+                        }
+                        var r = DB.DBMgr.Instance.AddLimitedItem(id, name, lvl, 9999, TimeSpan.FromDays(30 * c));
+                        m_Cxt.Log($"AddLimitedItem {r}");
+                        if (r > 0)
+                        {
+                            var d = GetDmData(ud, MsgTypeEnum.GuardBuy);
+                            d.Danmaku.GuardLevel = d.Danmaku.UserGuardLevel = lvl;
+                            m_Cxt.SendTestDanMu(this,d);
+                        }
                     }
                     return;
                 }
@@ -165,6 +197,17 @@ namespace BililiveDebugPlugin
                 var c = d?.GetGameState().GetData(x, y,w.Hwnd);
                 Text.Content = c.ToString();
             }
+        }
+
+        private BilibiliDM_PluginFramework.ReceivedDanmakuArgs GetDmData(UserData ud,
+            BilibiliDM_PluginFramework.MsgTypeEnum type = BilibiliDM_PluginFramework.MsgTypeEnum.Comment
+            )
+        {
+            var m = new BilibiliDM_PluginFramework.DanmakuModel();
+            m.UserID_long = ud.Id;
+            m.UserName = ud.Name;
+            m.MsgType = type;
+            return new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m };
         }
 
         private void CloseClick(object sender, RoutedEventArgs e)

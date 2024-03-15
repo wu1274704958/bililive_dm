@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Utils;
+using UserData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.DB
 {
@@ -16,12 +17,22 @@ namespace BililiveDebugPlugin.DB
         {
             if(itemData == null)
                 return null;
-            if(itemData.Type == EItemType.LimitedTime && IsExpired(itemData))
+            if((itemData.Type & EItemType.LimitedTime) == EItemType.LimitedTime && IsExpired(itemData))
             {
                 m_fsql.Delete<ItemData>(itemData.Id).ExecuteAffrows();
                 return null;
             }
             return itemData;
+        }
+        protected List<ItemData> HandleLimitedItems(List<ItemData> itemDatas)
+        {
+            for (int i = itemDatas.Count - 1; i >= 0; i--)
+            {
+                itemDatas[i] = HandleLimitedItem(itemDatas[i]);
+                if(itemDatas[i] == null)
+                    itemDatas.RemoveAt(i);
+            }
+            return itemDatas;
         }
 
         private bool IsExpired(ItemData itemData)
@@ -98,10 +109,38 @@ namespace BililiveDebugPlugin.DB
             else
                 return -1;
         }
+        private int ChangeItemExt(ItemData data, int ext)
+        {
+            return m_fsql.Update<ItemData>(data.Id).Set(a => a.Ext, ext).ExecuteAffrows();
+        }
 
         public List<ItemData> GetUserItems(long id, int limit = 100)
         {
-            return m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id).Limit(limit).ToList();
+            return HandleLimitedItems(m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id).Limit(limit).ToList());
+        }
+        
+        public List<ItemData> GetUserItems(long id,EItemType type, int limit = 100)
+        {
+            var res = m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && (a.Type & type) == type).Limit(limit)
+                .ToList();
+            if((type & EItemType.LimitedTime) == EItemType.LimitedTime)
+                return HandleLimitedItems(res);
+            return res;
+        }
+
+        public int AddLimitedItem(long uid, string name, int num,int price, TimeSpan duration)
+        {
+            int ret = 0;
+            var itemData = GetItem(uid, name);
+            if (itemData == null)
+            {
+                var newItem = ItemData.Create(name, EItemType.LimitedTime, price, (DateTime.Now + duration).ToSecond(),
+                    num, uid);
+                ret += m_fsql.Insert(newItem).ExecuteAffrows();
+            }
+            else
+                ret += ChangeItemExt(itemData, itemData.Ext + (int)duration.TotalSeconds);
+            return ret;
         }
     }
 }

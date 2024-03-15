@@ -153,6 +153,8 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60,new AutoDownLivePlug());
             m_PlugMgr.Add(-1, new SyncSquadConfig());
+            m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
+            
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
@@ -164,6 +166,7 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Init();
             messageDispatcher.Init(this);
             messageDispatcher.Start();
+            m_PlugMgr.Start();
             Log("Start ...");
             SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
             messageDispatcher.GetPlayerParser().AddObserver(this);

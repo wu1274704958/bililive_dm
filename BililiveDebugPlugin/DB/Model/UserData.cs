@@ -13,12 +13,13 @@ namespace BililiveDebugPlugin.DB.Model
         User,
         Admin
     }
+    [Flags]
     public enum EItemType : uint
     {
-        None,
-        Gift,
-        Ticket,
-        LimitedTime
+        None = 0,
+        Gift = 1,
+        Ticket = 2,
+        LimitedTime = 4,
     }
     [ProtoBuf.ProtoContract]
     public class UserData
@@ -70,9 +71,9 @@ namespace BililiveDebugPlugin.DB.Model
         public int Price{ get;set;}
         public int Ext{ get;set;}
 
-        public static ItemData Create(string name, EItemType type, int price, int ext = 0)
+        public static ItemData Create(string name, EItemType type, int price, int ext = 0,int count = 0,long ownerId = 0)
         {
-            return new ItemData(){ Name = name, Type = type, Price = price, Ext = ext };
+            return new ItemData(){ Name = name, Type = type, Price = price, Ext = ext, Count = count , OwnerId = ownerId };
         }
         public static ItemData Create(ItemData data,int count,long ownerId)
         {

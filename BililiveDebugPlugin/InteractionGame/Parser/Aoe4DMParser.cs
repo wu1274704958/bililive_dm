@@ -10,11 +10,13 @@ using BililiveDebugPlugin.DB;
 using BililiveDebugPlugin.InteractionGame.Resource;
 using System.Threading;
 using System.Linq;
+using BililiveDebugPlugin.DB.Model;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf.Squad;
 using Utils;
 using static InteractionGame.Utils;
 using ProtoBuf.WellKnownTypes;
+using UserData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -321,7 +323,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private void PrintAllItems(long uid,string uName)
         {
             var sb = ObjPoolMgr.Instance.Get<StringBuilder>().Get();
-            var ls = DBMgr.Instance.GetUserItems(uid, 10);
+            var ls = DBMgr.Instance.GetUserItems(uid,EItemType.Gift, 10);
             for (int i = 0; i < ls.Count; i++)
             {
                 sb.Append($"{ls[i].Name}*{ls[i].Count}");

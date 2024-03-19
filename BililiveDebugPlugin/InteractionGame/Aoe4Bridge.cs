@@ -35,8 +35,8 @@ namespace Interaction
         void ExecSetCustomTarget(int self, int target);
         void ExecSpawnSquad(int self, string squadId,int num, long uid,int attackTy = 0, int op1 = 1);
         void ExecSpawnSquadWithTarget(int self, string squadId,int target,int num, long uid,int attackTy = 0, int op1 = 1);
-        void ExecSpawnGroup(int self, List<(string, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1);
-        void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1);
+        void ExecSpawnGroup(int self, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
+        void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
         void ExecPrintMsg(string msg);
         void ExecSpawnVillagers(int self, int vid, int num);
         void ExecTryRemoveVillagersCountNotify(int vid,int next);
@@ -47,6 +47,9 @@ namespace Interaction
         void ClickLeftMouse(int x, int y);
         void FlushAppend();
         void SendKeyEvent(int key);
+        bool NeedFlush();
+        void flush();
+        void FroceOverrideCurrentMsg(string msg);
 
     }
     public class DefAoe4BridgeUtil
@@ -189,7 +192,7 @@ namespace Interaction
             AppendExecCode($"SpawnAndAttackTargetEx2({self},'{squadId}',{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
-        public void ExecSpawnGroup(int self, List<(string, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
+        public void ExecSpawnGroup(int self, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
         {
             if (group.Count == 0) return;
             var groupStr = ToSpawnSquadTable(group,multiple);
@@ -197,7 +200,7 @@ namespace Interaction
             AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
-        public void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid,int multiple = 1, int attackTy = 0, int op1 = 1)
+        public void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
         {
             if (group.Count == 0) return;
             var groupStr = ToSpawnSquadTable(group,multiple);
@@ -206,7 +209,7 @@ namespace Interaction
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
 
-        private (string,int) ToSpawnSquadTable(List<(string, int)> group,int multiple = 1)
+        private (string,int) ToSpawnSquadTable(List<(string, int)> group,double multiple = 1)
         {
             var sb = sbPool.Get();
             //{{sbp = SBP.GAIA.GAIA_HERDABLE_SHEEP, numSquads = 2} ,{sbp = SBP.GAIA.GAIA_HUNTABLE_WOLF , numSquads = 3}}
@@ -216,7 +219,9 @@ namespace Interaction
             {
                 //var sd = Aoe4DataConfig.GetSquadPure(it.Item1);
                 //if (sd.SquadType_e == ESquadType.Villager || sd.SquadType_e == ESquadType.SiegeAttacker) continue;
-                int c = it.Item2 * multiple;
+                int c = (int)(it.Item2 * multiple);
+                if (c <= 0) 
+                    continue;
                 sb.Append($"{{sbp=BP_GetSquadBlueprint('{it.Item1}'),numSquads={c}}},");
                 num += c;
             }
@@ -405,11 +410,7 @@ namespace Interaction
             Interlocked.Exchange(ref CurrentWriteIdx, -1);
             Interlocked.Exchange(ref ExpectNextIdx, 0);
             SavedFileDict.Clear();
-            while (!MsgQueue.IsEmpty)
-            {
-                if(MsgQueue.TryDequeue(out var sb))
-                    sbPool.Return(sb);
-            }
+            ClearMsgQueue();
             m_TmpList.Clear();
             lock (m_ExecCodeLock)
             {
@@ -453,6 +454,26 @@ namespace Interaction
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0100, new IntPtr(key), IntPtr.Zero);
             Thread.Sleep(10);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0101, new IntPtr(key), IntPtr.Zero);
+        }
+
+        public void FroceOverrideCurrentMsg(string msg)
+        {
+            ClearMsgQueue();
+            var sb = sbPool.Get();
+            sb.Clear();
+            sb.Append(msg);
+            MsgQueue.Enqueue(sb);
+            while (NeedFlush())
+                flush();
+        }
+
+        private void ClearMsgQueue()
+        {
+            while (!MsgQueue.IsEmpty)
+            {
+                if (MsgQueue.TryDequeue(out var sb))
+                    sbPool.Return(sb);
+            }
         }
     }
 }

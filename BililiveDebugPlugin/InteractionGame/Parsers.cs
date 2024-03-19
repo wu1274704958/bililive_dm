@@ -149,7 +149,7 @@ namespace InteractionGame
             if (g > -1)
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
-                m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerResAddFactorArr[msgOrigin.msg.GuardLevel]);
+                m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
             }
             return g;

@@ -40,6 +40,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,messageDispatcher.PlayerParser.GetLeastGroupList());
             //todo show settlement
             SendSettlement(sendMsg, data, winGroup - 1);
+            //var bridge = messageDispatcher.GetBridge();
+            //bridge.FroceOverrideCurrentMsg("Mod_Restart()");
             Locator.Instance.Get<DebugPlugin>().Log("Wait Send Message clean");
             sendMsg?.waitClean();
             Locator.Instance.Get<DebugPlugin>().Log("messageDispatcher clean");

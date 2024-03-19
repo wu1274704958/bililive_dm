@@ -121,7 +121,7 @@ namespace BililiveDebugPlugin.DB
         
         public List<ItemData> GetUserItems(long id,EItemType type, int limit = 100)
         {
-            var res = m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && (a.Type & type) == type).Limit(limit)
+            var res = m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && (a.Type & type) == a.Type).Limit(limit)
                 .ToList();
             if((type & EItemType.LimitedTime) == EItemType.LimitedTime)
                 return HandleLimitedItems(res);

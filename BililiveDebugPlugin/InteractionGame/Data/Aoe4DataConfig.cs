@@ -62,7 +62,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         {
             SquadData sd = null;
             if ((sd = SquadDataMgr.GetInstance().GetCountrySpecialSquad(index, level, g)) != null)
-                return sd;
+                return HandleHide(sd);
             sd = conf.Squad.SquadDataMgr.GetInstance().Get(level * 10_0000 + index);
             if (sd != null && sd.GetOverload(g, out var v))
                 return v;
@@ -71,7 +71,22 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                 Locator.Instance.Get<IContext>().PrintGameMsg($"{SettingMgr.GetCountry(g)}没有配置特殊单位{(char)index}");
                 return null;
             }
-            return sd;
+            return HandleHide(sd);
+        }
+        public static SquadData GetMaxLevelSquad(int sid, int g)
+        {
+            var sd = GetSquadPure(sid, 1, g);
+            while(sd.NextLevelRef != null)
+                sd = sd.NextLevelRef;
+            if (sd != null)
+                return sd;
+            return null;
+        }
+        private static SquadData HandleHide(SquadData squad)
+        {
+            if (squad == null || squad.Type_e == EType.Hide)
+                return null;
+            return squad;
         }
         public static SquadData GetSquadBySid(int sid,int g)
         {
@@ -104,17 +119,17 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(56);
 
-        public static readonly int OneTimesSpawnSquadCount = 400;
+        public static readonly int OneTimesSpawnSquadCount = 100;
 
         public static readonly int SquadLimit = 900;
-        public static readonly int AutoSquadLimit = SquadLimit - 200;
+        public static readonly int AutoSquadLimit = SquadLimit - 170;
 
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 4000;
         public static readonly int OriginResource = 50;
         public static readonly int BaoBingOriginResource = 0;
         public static readonly int GroupCount = 2;
-        public static readonly int BaoBingAddResFactor = 1;
+        public static readonly int BaoBingAddResFactor = 2;
 
         public static int GetGroupExclude(int g)
         {
@@ -131,7 +146,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             RandomSquad.Clear();
             var minutes = (DateTime.Now - Locator.Instance.Get<AutoForceStopPlug>().StartTime).TotalMinutes;
             var f = (b ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
-                 + (i < 3 ? 0.0003 * (3 - i) : 0.0) + (minutes / 10 / 1000);
+                 + (i < 3 ? 0.0004 * (3 - i) : 0.0) + (minutes / 10 / 7000);
             if (user.FansLevel > 0) f += (user.FansLevel / 2000);
             if (user.GuardLevel > 0) f += f * SettlementPlayerResAddFactorArr[user.GuardLevel];
             var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
@@ -142,14 +157,16 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static long LoseSettlementHonorAdd = 3;
         public static long WinSettlementHonorAdd = 10;
-        public static double LoseSettlementHonorFactor = 0.0003;
-        public static double WinSettlementHonorFactor = 0.0010;
+        public static double LoseSettlementHonorFactor = 0.0004;
+        public static double WinSettlementHonorFactor = 0.0012;
         private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
 
         public static readonly float[] SettlementPlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
-        public static readonly float[] PlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
-        public static readonly float[] PlayerOriginResAddFactorArr = new float[] { 1.4f, 65.0f, 5.6f, 2.0f };
+        public static readonly float[] PlayerHonorResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
+        public static readonly float[] PlayerGoldResAddFactorArr = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
         public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 140, 10, 1 };
         internal static readonly string Aoe4WinTitle = "Age of Empires IV";
+
+        
     }
 }

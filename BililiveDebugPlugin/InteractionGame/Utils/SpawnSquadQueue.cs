@@ -52,29 +52,29 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             return Aoe4DataConfig.SquadLimit - GameState.GetSquadCount(group);
         }
 
-        public override void AppendAction(ISpawnSquadAction action)
-        {
-            var g = action.GetGroup();
-            GameState.CheckNewSquadCount(g, this, (count, g_) => base.AppendAction(action));
-        }
+        //public override void AppendAction(ISpawnSquadAction action)
+        //{
+        //    var g = action.GetGroup();
+        //    GameState.CheckNewSquadCount(g, this, (count, g_) => base.AppendAction(action));
+        //}
 
-        protected override void PeekQueueAndSpawn(int g, SpawnSquadActionBound action)
-        {
-            CheckSCCxt v = null;
-            if (_checkSCCxtMap.TryGetValue(g,out v))
-            {
-                if (!GameState.HasCheckSquadCountTask(g, v))
-                {
-                    v.action = action;
-                    GameState.CheckNewSquadCount(g, v, v.OnResult);
-                }
-            }
-            else
-            {
-                _checkSCCxtMap.TryAdd(g, v = new CheckSCCxt(g, action, base.PeekQueueAndSpawn));
-                GameState.CheckNewSquadCount(g, v, v.OnResult);
-            }
-        }
+        //protected override void PeekQueueAndSpawn(int g, SpawnSquadActionBound action)
+        //{
+        //    CheckSCCxt v = null;
+        //    if (_checkSCCxtMap.TryGetValue(g,out v))
+        //    {
+        //        if (!GameState.HasCheckSquadCountTask(g, v))
+        //        {
+        //            v.action = action;
+        //            GameState.CheckNewSquadCount(g, v, v.OnResult);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        _checkSCCxtMap.TryAdd(g, v = new CheckSCCxt(g, action, base.PeekQueueAndSpawn));
+        //        GameState.CheckNewSquadCount(g, v, v.OnResult);
+        //    }
+        //}
     }
 
     public enum EFallbackType:int
@@ -86,12 +86,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     public class HonorSpawnSquadFallback : ISpawnFallback
     {
         protected EFallbackType _type = EFallbackType.Honor;
+        protected int _origin = 0;
         protected int _honor = 0;
         protected UserData _user;
 
         public HonorSpawnSquadFallback(int honor, UserData user)
         {
-            _honor = honor;
+            _honor = _origin = honor;
             _user = user;
         }
 
@@ -100,7 +101,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (_honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, _honor);
-                Locator.Instance.Get<IContext>().Log($"{_user.Name}补偿了{_honor}荣誉");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{_honor}荣誉");
             }
         }
 
@@ -111,7 +112,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public void SetPercentage(double percentage)
         {
-            _honor = (int)Math.Floor(_honor * percentage);
+            _honor = (int)Math.Floor(_origin * percentage);
         }
     }
 
@@ -136,12 +137,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     {
         protected EFallbackType _type = EFallbackType.Gift;
         protected double _count = 0;
+        protected double _origin = 0;
         protected string Gift;
         protected UserData _user;
         protected int _price = 0;
         public GiftSpawnSquadFallback(int count, string gift, UserData user, int price)
         {
-            _count = count;
+            _count = _origin = count;
             Gift = gift;
             _user = user;
             _price = price;
@@ -153,14 +155,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (count > 0)
             {
                 DB.DBMgr.Instance.AddGiftItem(_user.Id, Gift, count);
-                Locator.Instance.Get<IContext>().Log($"{_user.Name}补偿了{count}个{Gift}");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{count}个{Gift}");
             }
 
-            int honor = (int)(Math.Floor(_count - count) * _price);
+            int honor = (int)((_count - count) * _price);
             if (honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, honor);
-                Locator.Instance.Get<IContext>().Log($"{_user.Name}补偿了{honor}荣誉");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{honor}荣誉");
             }
         }
 
@@ -171,7 +173,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public void SetPercentage(double percentage)
         {
-            _count = _count * percentage;
+            _count = _origin * percentage;
         }
     }
 
@@ -184,11 +186,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(m_MsgDispatcher == null) return;
             if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
             {
+                if(u.Id < 0) return;
                 m_MsgDispatcher.GetResourceMgr().SpawnVillager(u.Id, c);
                 return;
             }
-            var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var target = u.Id < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c, 5);
             var attackTy = sd.SquadType_e >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
@@ -200,18 +203,20 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
             }
-            Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
+            if(u.Id > 0)
+                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
             if (log)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
-        public static void SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(string,int)> group,double score,int squadNum,int multiple = 1,ushort attribute = 0,
+        public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(string,int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,
             bool log = false)
         {
-            if (group.Count == 0) return;
+            var rc = (int)(squadNum * multiple);
+            if (group.Count == 0 || rc <= 0) return 0;
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
-            var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, squadNum * multiple, 5);
+            var target = u.Id < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
@@ -221,9 +226,11 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
             }
-            Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,score * multiple ,squadNum * multiple);
+            if(u.Id > 0)
+                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple) ,rc);
             if (log)
-                Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {squadNum * multiple}");
+                Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
+            return rc;
         }
         
     }
@@ -254,7 +261,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         private void AddHonor(UserData u, long v)
         {
 
-            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerResAddFactorArr[u.GuardLevel]);
+            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.GuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u, v) > 0)
                 Locator.Instance.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }
@@ -387,12 +394,17 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
-                var c = sc / _Squad.specialCount;
-                if(c <= 0) break;
+                var c = (double)sc / _Squad.specialCount;                
+                if (c <= 0) break;
                 foreach (var it in _Squad.specialSquad)
-                    this.SendSpawnSquad(_user,c*it.Item2,it.Item1,_Squad.AddedAttr,true);
-                count -= c * _Squad.specialCount;
-                max -= c * _Squad.specialCount;
+                {
+                    var realCount = (int)(c * it.Item2);
+                    if (realCount <= 0) continue;
+                    this.SendSpawnSquad(_user, realCount, it.Item1, _Squad.AddedAttr, true);
+                }
+                var rc = (int)Math.Round(c * _Squad.specialCount);
+                count -= rc;
+                max -= rc;
             }
             return (double)(all - count) / all;
         }
@@ -403,11 +415,11 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
-                var c = sc / _Squad.normalCount;
+                var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
-                this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true);
-                count -= c * _Squad.normalCount;
-                max -= c * _Squad.normalCount;
+                var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true);
+                count -= rc;
+                max -= rc;
             }
             return (double)(all - count) / all;
         }

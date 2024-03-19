@@ -187,7 +187,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var canSign = DB.DBMgr.Instance.CanSign(uid);
                     InitCtx.PrintGameMsg($"{user?.NameColored ?? uName}金矿{(int)res},功勋{c}{(canSign ? ",可签到" : "")}");
                 }
-                else if ((con[0] == '防' || con[0] == '撤'))
+                else if (false && (con[0] == '防' || con[0] == '撤'))
                 {
                     var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(uid);
                     if (self > -1)
@@ -243,11 +243,17 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)
             {
+                if (user == null) return(0,0);
+                m_MsgDispatcher.GetResourceMgr().AddResource(uid, user.FansLevel + 15);
+                InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{user.FansLevel + 15}金");
+                return (0,0);
+
                 var r = new Random((int)DateTime.Now.Ticks);
                 var sd = SquadDataMgr.GetInstance().RandomNormalSquad;
                 var lvl = SquadUpLevelSubParser.GetSquadLevel(uid, sd.Sid);
                 sd = Aoe4DataConfig.GetSquad(sd.Sid,user.Group,lvl);
                 if (sd == null) return (0, 0);
+                
                 var c = 1;//r.Next(1, sd.QuickSuccessionNum + 1);
                 InitCtx.PrintGameMsg($"{user.NameColored}点赞随机出了{c}个{sd.Name}");
                 //UpdateUserData(msgOrigin.msg.UserID_long, c * sd.Score, c, msgOrigin.msg.UserName, msgOrigin.msg.UserFace);
@@ -270,7 +276,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
                     var activityAdd = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 0.8f : 0.0f;
                     m_MsgDispatcher.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,
-                        Aoe4DataConfig.PlayerOriginResAddFactorArr[ud.GuardLevel] + activityAdd);
+                        Aoe4DataConfig.PlayerGoldResAddFactorArr[ud.GuardLevel] + activityAdd);
                     AddInitAttr(ud);
                     AddInitUpgrade(ud);
                     if(msgOrigin.msg.UserGuardLevel <= 2)
@@ -323,7 +329,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private void PrintAllItems(long uid,string uName)
         {
             var sb = ObjPoolMgr.Instance.Get<StringBuilder>().Get();
-            var ls = DBMgr.Instance.GetUserItems(uid,EItemType.Gift, 10);
+            var ls = DBMgr.Instance.GetUserItems(uid,EItemType.Gift | EItemType.Ticket );
             for (int i = 0; i < ls.Count; i++)
             {
                 sb.Append($"{ls[i].Name}*{ls[i].Count}");
@@ -394,19 +400,19 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             switch (giftName)
             {
                 case "辣条": c *= 15; transHonorfactor = -0.01; break;
-                case "人气票": c *= 26; break;
+                case "人气票": c *= 60; transHonorfactor = -0.01; break;
                 case "PK票": c *= 20; transHonorfactor = -0.01; break;
-                // case "小花花": c *= 20; break;
+                case "小花花": c *= 30; transHonorfactor = -0.01; break;
                 // case "打call": c *= 110; break;
-                case "牛哇牛哇": id = 110001; t = 1; break;
-                case "干杯": id = 110005; t = 1; c *= 18; break;
-                case "棒棒糖": id = 110003; t = 1; c *= 2; break;
-                case "这个好诶": id = 110004; t = 1; c *= 12; break;
+                case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
+                case "干杯": id = 110005; t = 1; c *= 24; break;
+                case "棒棒糖": id = 110003; t = 1; c *= 5; break;
+                case "这个好诶": id = 110004; t = 1; c *= 16; break;
                 case "小蛋糕": id = 110006; t = 1; c *= 18; break;
                 //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
-                case "情书":id = 110007; t = 1;c *= 18; break;
+                case "情书":id = 110007; t = 1;c *= 20; break;
                 case "告白花束": Squad.Add((110011, 120)); Squad.Add((200050, 100)); SpecialSquad.Add((110007, 36)); t = 3; break;
-                case "水晶之恋": id = 110011; t = 1; c *= 17; break;
+                case "水晶之恋": id = 110011; t = 1; c *= 21; break;
                 case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); SpecialSquad.Add((300110, 100)); 
                     SpecialSquad.Add((100100, 100)); t = 3;
                     addedAttr = Merge(3, 1); break;
@@ -512,7 +518,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private void AddHonor(UserData u, long v,bool hasAddition = true)
         {
-            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerResAddFactorArr[u.GuardLevel]);
+            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.GuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u,v) > 0)
                 InitCtx.PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }
@@ -605,7 +611,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public void SpawnManySquadQueue(long uid, SquadGroup v, int c,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,
             double restGold = 0, double upLevelgold = 0, int giveHonor = 0,bool notRecycle = false)
         {
-            var u = GetUserData(uid);
+            var u = uid < 0 ? new UserData(-1,"-","-",(int)(Math.Abs(uid) - 1),0,0) : GetUserData(uid);
             ISpawnSquadAction action = null;
             if (price > 0 && giftName != null)
             {
@@ -649,6 +655,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             base.Clear();
             m_SpawnSquadQueue.OnClear();
+            (InitCtx as DebugPlugin)?.SendMsg.waitClean(); 
         }
     }
 

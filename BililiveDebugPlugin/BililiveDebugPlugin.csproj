@@ -51,11 +51,14 @@
     <Compile Include="BililiveDebugPlugin.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="DB\DBMgr.cs" />
+    <Compile Include="DB\DBMgrLimitedItem.cs" />
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
+    <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
+    <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SettingMgr.cs" />
     <Compile Include="InteractionGame\conf\Squad\SettingMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataEx.cs" />
@@ -73,6 +76,8 @@
     <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
     <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
+    <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
+    <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
@@ -91,6 +96,7 @@
     <Compile Include="Utils\Locator.cs" />
     <Compile Include="Utils\ObjectPool.cs" />
     <Compile Include="Utils\TimeLinerInteger.cs" />
+    <Compile Include="Utils\Utils.cs" />
     <Content Include="Main.cs.txt" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

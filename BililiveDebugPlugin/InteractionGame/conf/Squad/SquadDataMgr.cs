@@ -7,7 +7,7 @@ using System.IO;
             
 namespace conf.Squad
             {
-public enum ESquadType {Normal,Villager,SiegeAttacker,BuildingAttacker,}public enum EType {Normal = 0,Gift = 1,Special = 2,CountrySpec = 3,Placeholder = 4,}
+public enum ESquadType {Normal,Villager,SiegeAttacker,BuildingAttacker,}public enum EType {Normal = 0,Gift = 1,Special = 2,CountrySpec = 3,Placeholder = 4,Hide = 100,}
 [ProtoContract]
 public  partial class SquadData
             {

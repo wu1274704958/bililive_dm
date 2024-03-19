@@ -144,11 +144,11 @@ namespace BililiveDebugPlugin.DB
         
         public List<Model.UserData> GetSortedUsersByScore(int limit = 10)
         {
-            return m_fsql.Select<Model.UserData>().OrderByDescending((a) => a.Score).Limit(limit).ToList();
+            return m_fsql.Select<Model.UserData>().Where((a)=> a.Id > 100).OrderByDescending((a) => a.Score).Limit(limit).ToList();
         }
         public List<Model.UserData> GetSortedUsersByHonor(int limit = 10)
         {
-            return m_fsql.Select<Model.UserData>().OrderByDescending((a) => a.Honor).Limit(limit).ToList();
+            return m_fsql.Select<Model.UserData>().Where((a) => a.Id > 100).OrderByDescending((a) => a.Honor).Limit(limit).ToList();
         }
 
         public void ForeachUsers(Action<Model.UserData> action)

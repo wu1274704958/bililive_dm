@@ -41,6 +41,7 @@ namespace BililiveDebugPlugin.InteractionGame
         ShowLargeTips = 10,
         SyncSquadConfig = 11,
         EventCue = 12,
+        DefenseKeepHp = 13,
     }
     public class SM_SendMsg
     {

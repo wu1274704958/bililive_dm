@@ -108,7 +108,7 @@ namespace BililiveDebugPlugin.InteractionGame
         private ConcurrentQueue<(int,object,Action<int, int>)> _squadCountCheckQueue = new ConcurrentQueue<(int, object, Action<int, int>)> ();
         private int _lastSquadCountNid = -1;
         private int _lastCheckGroup = 0;
-        private int _squadCountNotifyFailedTimes = 0;
+        private int[] _squadCountNotifyFailedTimes = new int[8];
         private int Aoe4Width = 1920;
         private int Aoe4Height = 1080;
         private double _screenScalingFactorX => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
@@ -349,7 +349,8 @@ namespace BililiveDebugPlugin.InteractionGame
             _ckSquadCountDict.Clear();
             _lastUpdate = DateTime.Now;
             _squadCountChecking = 0;
-            Interlocked.Exchange(ref _squadCountNotifyFailedTimes, 0);
+            for(int i = 0;i <  _squadCountCheckQueue.Count;i++)
+                Interlocked.Exchange(ref _squadCountNotifyFailedTimes[i], 0);
             while (!_squadCountCheckQueue.IsEmpty)
                 _squadCountCheckQueue.TryDequeue(out _);
         }
@@ -379,7 +380,7 @@ namespace BililiveDebugPlugin.InteractionGame
                     {
                         Interlocked.Exchange(ref _squadCountChecking, 0);
                         Interlocked.Exchange(ref _lastSquadCountNid, nid);
-                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes, 0);
+                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
                         //Locator.Instance.Get<IContext>().Log($"Get squad count g = {g} nid = {nid} count = {count}");
                         if (!_squadCountByGroup.TryAdd(g, count))
                         {
@@ -392,8 +393,8 @@ namespace BililiveDebugPlugin.InteractionGame
                     }
                     else if(_squadCountChecking > 0)
                     {
-                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes, _squadCountNotifyFailedTimes + 1);
-                        if (_squadCountNotifyFailedTimes % 4 == 0)
+                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], _squadCountNotifyFailedTimes[g] + 1);
+                        if (_squadCountNotifyFailedTimes[g] % 4 == 0)
                         {
                             ExecGetSquadCount(_squadCountChecking - 1, _SquadCheckId);
                         }
@@ -444,16 +445,15 @@ namespace BililiveDebugPlugin.InteractionGame
                 old = 0;
             if (count < old && old - count >= 120)
             {
-                if(_squadCountNotifyFailedTimes >= 12)
+                if (_squadCountNotifyFailedTimes[g] >= 18)
                 {
                     _cxt.Log($"CheckNewSquadCountVaild 到失败次数上限放行 g={g} Big different old{old} new{count}");
-                    Interlocked.Exchange(ref _squadCountNotifyFailedTimes, 0);
+                    Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
                     return true;
                 }
                 _cxt.Log($"CheckNewSquadCountVaild g={g} Big different old{old} new{count}");
                 return false;
             }
-            Interlocked.Exchange(ref _squadCountNotifyFailedTimes, 0);
             return true;
         }
 
@@ -495,7 +495,7 @@ namespace BililiveDebugPlugin.InteractionGame
             var old = 0;
             var f = true;
             if (lockTime > 0)
-                LockSquadCount(group, lockTime);
+                LockSquadCount(group, 20);// lockTime);
             if (!_squadCountByGroup.TryAdd(group, count))
             {
                 old = _squadCountByGroup[group];

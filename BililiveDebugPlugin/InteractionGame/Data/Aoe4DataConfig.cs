@@ -146,8 +146,8 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             RandomSquad.Clear();
             var minutes = (DateTime.Now - Locator.Instance.Get<AutoForceStopPlug>().StartTime).TotalMinutes;
             var f = (b ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
-                 + (i < 3 ? 0.0004 * (3 - i) : 0.0) + (minutes / 10 / 7000);
-            if (user.FansLevel > 0) f += (user.FansLevel / 2000);
+                 + (i < 3 ? 0.0005 * (3 - i) : 0.0) + (minutes / 10 / 1000);
+            if (user.FansLevel > 0) f += (user.FansLevel / 1000);
             if (user.GuardLevel > 0) f += f * SettlementPlayerResAddFactorArr[user.GuardLevel];
             var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
             var activityMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
@@ -157,7 +157,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static long LoseSettlementHonorAdd = 3;
         public static long WinSettlementHonorAdd = 10;
-        public static double LoseSettlementHonorFactor = 0.0004;
+        public static double LoseSettlementHonorFactor = 0.0005;
         public static double WinSettlementHonorFactor = 0.0012;
         private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
 

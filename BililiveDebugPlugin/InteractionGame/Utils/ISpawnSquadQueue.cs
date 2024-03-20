@@ -36,7 +36,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var res = SpawnInternal(max);
             if(res > 0)OnSpawned(res);
             _Percentage -= res;
-            if (_Percentage < 0.005 || GetCount() <= 0)
+            if (_Percentage < 0.00001 || GetCount() <= 0)
             {
                 OnSpawnedAll();
                 return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 1, Fallback = null };

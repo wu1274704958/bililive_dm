@@ -537,7 +537,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            var attackTy = sd.SquadType_e >= ESquadType.SiegeAttacker ? ((int)sd.SquadType) : 0;
+            var attackTy = sd.GetAttackType();
             if (target < 0)
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,u?.Op1 ?? 0);
@@ -546,7 +546,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,u?.Op1 ?? 0);
             }
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c);
+            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
         }
         
         public void SendSpawnSquadQueue(UserData u, int sid, int c, SquadData sd,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,

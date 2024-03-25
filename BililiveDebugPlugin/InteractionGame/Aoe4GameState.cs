@@ -111,8 +111,8 @@ namespace BililiveDebugPlugin.InteractionGame
         private int[] _squadCountNotifyFailedTimes = new int[8];
         private int Aoe4Width = 1920;
         private int Aoe4Height = 1080;
-        private double _screenScalingFactorX => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
-        private double _screenScalingFactorY => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPVERTRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), VERTRES);
+        public double ScreenScalingFactorX => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
+        public double ScreenScalingFactorY => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPVERTRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), VERTRES);
 
         [DllImport("gdi32.dll", EntryPoint = "GetDeviceCaps", SetLastError = true)]
         public static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
@@ -139,8 +139,8 @@ namespace BililiveDebugPlugin.InteractionGame
         //}
         public Aoe4StateData CheckState(EAoe4State state)
         {
-            int x = ((int)state * (int)(12 * _screenScalingFactorX)) + (int)(6 * _screenScalingFactorX) + (Aoe4Width >= 2560 ? 0 : 1 );
-            int y = (int)(6 * _screenScalingFactorY) + +(Aoe4Width >= 2560 ? 0 : 31);
+            int x = ((int)state * (int)(12 * ScreenScalingFactorX)) + (int)(6 * ScreenScalingFactorX) + (Aoe4Width >= 2560 ? 0 : 1 );
+            int y = (int)(6 * ScreenScalingFactorY) + +(Aoe4Width >= 2560 ? 0 : 31);
             uint pixel = AGS_GetColor(x, y);
             return new Aoe4StateData()
             {
@@ -284,8 +284,8 @@ namespace BililiveDebugPlugin.InteractionGame
         private void ExecGetSquadCount(int g,int nid)
         {
             //Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().AppendExecCode($@"NSC_UpdateToColor(PLAYERS[{g + 1}],{nid})");
-            Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ClickLeftMouse(((int)EAoe4State.SquadGroupCount * (int)(12 * _screenScalingFactorX)) + (int)(6 * _screenScalingFactorX),
-            (int)( 15 * _screenScalingFactorY));
+            Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ClickLeftMouse(((int)EAoe4State.SquadGroupCount * (int)(12 * ScreenScalingFactorX)) + (int)(6 * ScreenScalingFactorX),
+            (int)( 15 * ScreenScalingFactorY));
         }
         public bool HasCheckSquadCountTask(int g,object who)
         {
@@ -394,7 +394,7 @@ namespace BililiveDebugPlugin.InteractionGame
                     else if(_squadCountChecking > 0)
                     {
                         Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], _squadCountNotifyFailedTimes[g] + 1);
-                        if (_squadCountNotifyFailedTimes[g] % 4 == 0)
+                        if (_squadCountNotifyFailedTimes[g] % 2 == 0)
                         {
                             ExecGetSquadCount(_squadCountChecking - 1, _SquadCheckId);
                         }
@@ -440,20 +440,21 @@ namespace BililiveDebugPlugin.InteractionGame
                     _cxt.Log($"CheckNewSquadCountVaild g={g} nid={nid} < last={_lastSquadCountNid}");
                 return false;
             }
-            var old = 0;
-            if (!_squadCountByGroup.TryGetValue(g, out old))
-                old = 0;
-            if (count < old && old - count >= 120)
-            {
-                if (_squadCountNotifyFailedTimes[g] >= 18)
-                {
-                    _cxt.Log($"CheckNewSquadCountVaild 到失败次数上限放行 g={g} Big different old{old} new{count}");
-                    Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
-                    return true;
-                }
-                _cxt.Log($"CheckNewSquadCountVaild g={g} Big different old{old} new{count}");
-                return false;
-            }
+            //var old = 0;
+            //if (!_squadCountByGroup.TryGetValue(g, out old))
+            //    old = 0;
+            //if (count < old && old - count > 100)
+            //{
+            //    if (_squadCountNotifyFailedTimes[g] >= 10)
+            //    {
+            //        _cxt.Log($"CheckNewSquadCountVaild 到失败次数上限放行 g={g} Big different old{old} new{count}");
+            //        Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
+            //        return true;
+            //    }
+            //    _cxt.Log($"CheckNewSquadCountVaild g={g} Big different old{old} new{count}");
+            //    return false;
+            //}
+            Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
             return true;
         }
 
@@ -495,7 +496,7 @@ namespace BililiveDebugPlugin.InteractionGame
             var old = 0;
             var f = true;
             if (lockTime > 0)
-                LockSquadCount(group, 20);// lockTime);
+                LockSquadCount(group, 16);// lockTime);
             if (!_squadCountByGroup.TryAdd(group, count))
             {
                 old = _squadCountByGroup[group];

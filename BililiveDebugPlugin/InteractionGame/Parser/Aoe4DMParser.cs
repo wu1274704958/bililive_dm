@@ -404,13 +404,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "PK票": c *= 20; transHonorfactor = -0.01; break;
                 case "小花花": c *= 30; transHonorfactor = -0.01; break;
                 // case "打call": c *= 110; break;
+                case "牛哇":
                 case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
-                case "干杯": id = 110005; t = 1; c *= 24; break;
+                case "干杯": id = 110005; t = 1; c *= 15; break;
                 case "棒棒糖": id = 110003; t = 1; c *= 5; break;
                 case "这个好诶": id = 110004; t = 1; c *= 16; break;
                 case "小蛋糕": id = 110006; t = 1; c *= 18; break;
                 //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
-                case "情书":id = 110007; t = 1;c *= 20; break;
+                case "情书":id = 110007; t = 1;c *= 12; break;
                 case "告白花束": Squad.Add((110011, 120)); Squad.Add((200050, 100)); SpecialSquad.Add((110007, 36)); t = 3; break;
                 case "水晶之恋": id = 110011; t = 1; c *= 21; break;
                 case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); SpecialSquad.Add((300110, 100)); 
@@ -844,9 +845,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 foreach (var it in m_Dict)
                 {
                     var gold = m_Owner.m_MsgDispatcher.GetResourceMgr().GetResource(it.Key);
-                    if(gold >= Aoe4DataConfig.AutoGoldLimit)
+                    if(gold >= 3000)
                     {
-                        var c = 2000 / it.Value.price;
+                        var c = 3000 / it.Value.price;
                         Boom(it.Key,(int)c);
                     }
                 }

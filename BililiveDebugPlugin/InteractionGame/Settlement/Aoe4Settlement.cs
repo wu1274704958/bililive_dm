@@ -8,6 +8,7 @@ using ProtoBuf;
 using Utils;
 using System.Security.Cryptography;
 using BililiveDebugPlugin.InteractionGame.Data;
+using System.Threading;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
@@ -28,6 +29,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
     public class Aoe4Settlement<IT> : ISettlement<IT>
         where IT : class, IContext
     {
+        public static readonly int Max = 20;
         public void ShowSettlement(IT it,int winGroup)
         {
             var messageDispatcher = (it as DebugPlugin)?.messageDispatcher; 
@@ -49,19 +51,31 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             Locator.Instance.Get<DebugPlugin>().Log("Aoe4GameState clean");
             Locator.Instance.Get<Aoe4GameState>().OnClear();
             Locator.Instance.Get<DebugPlugin>().Log("Settlement end");
+            ClickRestart();
+        }
+
+        public static void ClickRestart()
+        {
+            var gs = Locator.Instance.Get<Aoe4GameState>();
+            var bridge = Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge();
+            bridge.SendKeyEvent(0x1B);
+            Thread.Sleep(1000);
+            bridge.ClickLeftMouse(1920 / 2,(int)(1080 * 0.643f));
+            Thread.Sleep(1000);
+            bridge.ClickLeftMouse((int)(1920 * 0.492f) , (int)(1080 * 0.548f));
         }
         
         private void SendSettlement(SM_SendMsg sendMsg, List<UserData> data,int win)
         {
-            var scoreList = DB.DBMgr.Instance.GetSortedUsersByScore();
+            var scoreList = DB.DBMgr.Instance.GetSortedUsersByScore(Max);
             PretreatmentScore(scoreList);
             TrySettlementScore(scoreList);
-            var honorList = DB.DBMgr.Instance.GetSortedUsersByHonor();
+            var honorList = DB.DBMgr.Instance.GetSortedUsersByHonor(Max);
             PretreatmentScore(honorList);
             RankMsg rankMsg = new RankMsg()
             {
                 Title = win >= 0 ? $"{DebugPlugin.GetColorById(win + 1)}方获胜" : "平局",
-                Items = data.Take(10).ToList(),
+                Items = data.Take(Max).ToList(),
                 ScoreItems = scoreList,
                 HonorItems = honorList,
                 WinGroup = win

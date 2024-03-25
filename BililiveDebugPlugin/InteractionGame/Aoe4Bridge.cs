@@ -81,7 +81,7 @@ namespace Interaction
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
         private Object m_ExecCodeLock = new object();
-        private static readonly int MsgMaxLength = 120;
+        private static readonly int MsgMaxLength = 1000;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
@@ -371,8 +371,9 @@ namespace Interaction
         public void ClickLeftMouse(int x,int y)
         {
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x200, IntPtr.Zero, new IntPtr(x + (y << 16)));
-            Thread.Sleep(10);
+            Thread.Sleep(30);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x201, IntPtr.Zero, new IntPtr(x + (y << 16)));
+            Thread.Sleep(30);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x202, IntPtr.Zero, new IntPtr(x + (y << 16)));
         }
 

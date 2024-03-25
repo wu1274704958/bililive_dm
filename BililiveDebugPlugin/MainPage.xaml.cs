@@ -9,6 +9,10 @@ using conf;
 using Utils;
 using BililiveDebugPlugin.InteractionGame.plugs;
 using UserData = BililiveDebugPlugin.DB.Model.UserData;
+using conf.Squad;
+using BililiveDebugPlugin.InteractionGameUtils;
+using BililiveDebugPlugin.InteractionGame.Settlement;
+using BililiveDebugPlugin.InteractionGame;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -79,6 +83,11 @@ namespace BililiveDebugPlugin
             try
             {
                 Match match = null;
+                if(TestIn.Text == "TestRe")
+                {
+                    Aoe4Settlement<DebugPlugin>.ClickRestart();
+                    return;
+                }
                 if ((match = new Regex("AddSign ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
                 {
                     if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var count))
@@ -117,6 +126,22 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
+                if ((match = new Regex("Squad ([0-9]+) ([0-9]*) ([0-9]*)").Match(TestIn.Text)).Success)
+                {
+                    var sid = 0;
+                    var c = 1;
+                    var g = 0;
+                    if (int.TryParse(match.Groups[1].Value,out sid))
+                    {
+                        var _ = match.Groups.Count > 2 && int.TryParse(match.Groups[2].Value, out c);
+                        _ = match.Groups.Count > 3 && int.TryParse(match.Groups[3].Value, out g);
+                        var sd = SquadDataMgr.GetInstance().Get(sid);
+                        if (sd != null)
+                            SpawnSquad.SendSpawnSquad(null,GetTestUserByGroup(g), c, sd);
+                    }
+                    return;
+                }
+
 
                 if (TestIn.Text == "Reload")
                 {
@@ -185,6 +210,11 @@ namespace BililiveDebugPlugin
             {
                 MessageBox.Show(string.Format(ex.ToString()));
             }
+        }
+
+        private  global::InteractionGame.UserData GetTestUserByGroup(int g)
+        {
+            return new global::InteractionGame.UserData(-1, "", "", g, 0);
         }
 
         private void TestGetColor(object sender, RoutedEventArgs e)

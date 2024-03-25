@@ -63,7 +63,7 @@ namespace BililiveDebugPlugin
         private Random m_Rand;
         private int LastState = 0;
         public static readonly bool AutoAppendMsgOnIdle = false;
-        public static readonly int EndDelay = 9000;
+        public static readonly int EndDelay = 14000;
         public static readonly Dictionary<string, int> ColorMapIndex = new Dictionary<string, int>
         {
             { "蓝",0 },

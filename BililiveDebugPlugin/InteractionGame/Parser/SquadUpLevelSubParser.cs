@@ -67,16 +67,19 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 global::InteractionGame.Utils.StringToDictAndForeach(match.Groups[1].Value, v =>
                 {
-                    var lvl = GetSquadLevel(msg.msg.UserID_long, v.Key);
-                    var ud = _msgParser.GetUserData(msg.msg.UserID_long);
-                    var sd = Aoe4DataConfig.GetSquadPure(v.Key, lvl,ud.Group);
-                    if(sd == null ) return;
-                    if (!sd.RealHasNextLevel(ud.Group))
+                    for (int i = 0; i < v.Value; ++i)
                     {
-                        _cxt.PrintGameMsg($"{ud.NameColored}{sd.Name}已是最高级");
-                        return;
+                        var lvl = GetSquadLevel(msg.msg.UserID_long, v.Key);
+                        var ud = _msgParser.GetUserData(msg.msg.UserID_long);
+                        var sd = Aoe4DataConfig.GetSquadPure(v.Key, lvl, ud.Group);
+                        if (sd == null) return;
+                        if (!sd.RealHasNextLevel(ud.Group))
+                        {
+                            _cxt.PrintGameMsg($"{ud.NameColored}{sd.Name}已是最高级");
+                            return;
+                        }
+                        UpSquadLevel(ud, msg.msg.UserName, sd);
                     }
-                    UpSquadLevel(ud, msg.msg.UserName, sd);
                 });
             }
             return false;

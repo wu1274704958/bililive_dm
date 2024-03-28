@@ -79,6 +79,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     {
         protected ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>> Actions =
             new ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>>();
+        protected DateTime _tickSpawnTime = DateTime.Now;
+        protected static readonly TimeSpan TickSpawnInterval = TimeSpan.FromMilliseconds(1500);
 
         public virtual void AppendAction(ISpawnSquadAction action)
         {
@@ -128,9 +130,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         
         public virtual void Tick()
         {
-            if (IsGameEnd()) 
+            var now = DateTime.Now;
+            var canSpawn = (now - _tickSpawnTime) >= TickSpawnInterval;
+            
+            if (!canSpawn || IsGameEnd()) 
                 return;
             
+            _tickSpawnTime = now;
+
             foreach (var queue in Actions)
             {
                 if(queue.Value.TryPeek(out var action))

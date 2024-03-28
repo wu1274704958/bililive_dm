@@ -221,11 +221,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 }
                 else if ((match = BooHonorRegex.Match(con)).Success && match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out var c))
                 {
-                    if (user != null) BoomHonor(match.Groups[1].Value,user,c);
+                    if (user != null && Aoe4DataConfig.CanSpawnSquad(user.Id)) BoomHonor(match.Groups[1].Value,user,c);
                 }
                 else if ((match = BooHonorRegex2.Match(con)).Success && match.Groups.Count == 2)
                 {
-                    if (user != null) BoomHonor(match.Groups[1].Value,user);
+                    if (user != null && Aoe4DataConfig.CanSpawnSquad(user.Id)) BoomHonor(match.Groups[1].Value,user);
                 }else if ((match = SendBagGiftRegex.Match(con)).Success && match.Groups.Count == 3 &&
                           int.TryParse(match.Groups[2].Value, out c))
                 {
@@ -483,6 +483,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
                 SendSpawnSquadQueue(u, id, c, sd,battery,giftName,giftCount,giveHonor:giveHonor,upLevelgold:upLevelGold,attribute:addedAttr);
             };
+            if(t > 0 && !Aoe4DataConfig.CanSpawnSquad(u.Id))
+            {
+                AddGift(u, giftName, giftCount);
+                goto End;
+            }
             switch (t)
             {
                 case 0:
@@ -490,28 +495,29 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     m_MsgDispatcher.GetResourceMgr().AddResource(u.Id, c);
                     break;
                 case 1:
-                {
-                    spawnOneSquad();
-                    break;
-                }
+                    {
+                        spawnOneSquad();
+                        break;
+                    }
                 case 3:
-                {
-                    if (SpecialSquad.Count > 0 || Squad.Count > 0)
                     {
-                        SquadGroup squad = null;
-                        SpawnManySquadQueue(u.Id, squad = SquadGroup.FromData(Squad, SpecialSquad,u.Group).SetAddedAttr(addedAttrForGroup), c, battery, giftName,
-                            giftCount, giveHonor: giveHonor, upLevelgold: upLevelGold);
-                        InitCtx.PrintGameMsg($"{u.NameColored}出了{giftName}*{c}");
+                        if (SpecialSquad.Count > 0 || Squad.Count > 0)
+                        {
+                            SquadGroup squad = null;
+                            SpawnManySquadQueue(u.Id, squad = SquadGroup.FromData(Squad, SpecialSquad, u.Group).SetAddedAttr(addedAttrForGroup), c, battery, giftName,
+                                giftCount, giveHonor: giveHonor, upLevelgold: upLevelGold);
+                            InitCtx.PrintGameMsg($"{u.NameColored}出了{giftName}*{c}");
+                        }
+                        if (id >= 0)
+                        {
+                            var sd = Aoe4DataConfig.GetSquadBySid(id, u.Group);
+                            InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
+                            SendSpawnSquadQueue(u, id, c, sd, 0, null, 0, giveHonor: 0, upLevelgold: 0, attribute: addedAttr);
+                        }
+                        break;
                     }
-                    if(id >= 0)
-                    {
-                        var sd = Aoe4DataConfig.GetSquadBySid(id, u.Group);
-                        InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
-                        SendSpawnSquadQueue(u, id, c, sd, 0, null, 0, giveHonor: 0, upLevelgold: 0, attribute: addedAttr);
-                    }
-                }
-                    break;
             }
+            End:
             ObjPoolMgr.Instance.Get<List<(int,int)>>().Return(SpecialSquad);
             ObjPoolMgr.Instance.Get<List<(int,int)>>().Return(Squad);
             return (0, 0);
@@ -823,7 +829,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var gameState = Locator.Instance.Get<Aoe4GameState>();
             foreach (var it in m_Dict.Keys)
             {
-                if(m_Dict.TryGetValue(it,out var v))
+                if(Aoe4DataConfig.CanSpawnSquad(it) && m_Dict.TryGetValue(it,out var v))
                 {
                     var ud = m_Owner.GetUserData(it);
                     if (gameState.GetSquadCount(ud.Group) >= Aoe4DataConfig.AutoSquadLimit)
@@ -934,6 +940,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     return true;
                 }else if (lower.StartsWith("暴") || lower.StartsWith("爆"))
                 {
+                    if (!Aoe4DataConfig.CanSpawnSquad(uid))
+                        return true;
                     var maxCount = 5000;
                     if(!m_Dict.TryGetValue(uid,out var squad))
                     {

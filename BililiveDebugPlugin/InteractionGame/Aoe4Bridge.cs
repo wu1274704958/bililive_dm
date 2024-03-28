@@ -81,7 +81,7 @@ namespace Interaction
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
         private Object m_ExecCodeLock = new object();
-        private static readonly int MsgMaxLength = 1000;
+        private static readonly int MsgMaxLength = 800;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;

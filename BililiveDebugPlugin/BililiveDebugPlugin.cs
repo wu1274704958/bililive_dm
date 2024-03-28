@@ -155,7 +155,7 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(-1, new SyncSquadConfig());
             m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
             m_PlugMgr.Add(300,new DefineKeepDamagedSpawnSquadPlug());
-            
+            m_PlugMgr.Add(100,new EveryoneTowerPlug());
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);

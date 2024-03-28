@@ -18,7 +18,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         }
         public override void Tick()
         {
-            if (!NeedDown && DateTime.Now.Hour == DownHour && DateTime.Now.Minute >= DownMinute)
+            if (DateTime.Now.Hour == DownHour && DateTime.Now.Minute >= DownMinute)
             {
                 NeedDown = true;
                 LargeTips.Show(LargePopTipsDataBuilder.Create("本局结束","将会自动下播")

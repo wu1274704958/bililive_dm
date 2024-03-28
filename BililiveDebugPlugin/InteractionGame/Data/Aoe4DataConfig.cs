@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BililiveDebugPlugin.DB.Model;
+using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf.Squad;
 using InteractionGame;
@@ -111,6 +112,12 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                 }
             }
             return GetSquadPure(index, level,group);
+        }
+
+        public static bool CanSpawnSquad(long uid)
+        {
+            //return true;
+            return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
         }
 
         public static int SquadCount => conf.Squad.SquadDataMgr.GetInstance().NormalSquadDatas.Count;

@@ -20,7 +20,8 @@ namespace BililiveDebugPlugin.InteractionGame
         ExecExtern = 1,
         VillagerState = 2,
         SquadGroupCount = 3,
-        DefineKeepHp = 4
+        DefineKeepHp = 4,
+        TowerState = 5,
     }
 
     public struct Aoe4StateData
@@ -496,7 +497,7 @@ namespace BililiveDebugPlugin.InteractionGame
             var old = 0;
             var f = true;
             if (lockTime > 0)
-                LockSquadCount(group, 16);// lockTime);
+                LockSquadCount(group, 26);// lockTime);
             if (!_squadCountByGroup.TryAdd(group, count))
             {
                 old = _squadCountByGroup[group];

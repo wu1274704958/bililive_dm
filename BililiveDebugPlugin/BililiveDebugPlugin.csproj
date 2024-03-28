@@ -77,6 +77,7 @@
     <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
+    <Compile Include="InteractionGame\plugs\EveryoneTowerPlug.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />

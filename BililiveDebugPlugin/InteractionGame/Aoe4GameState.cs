@@ -103,15 +103,13 @@ namespace BililiveDebugPlugin.InteractionGame
             new ConcurrentDictionary<int, ISquadCountObserver>();
         private int[] _lockGroupSquadCount = new int[8];
         private int _SquadCheckId = 0;
-        private ConcurrentDictionary<int, ConcurrentBag<(int, Action<int,int>)>> _ckSquadCountDict = new ConcurrentDictionary<int, ConcurrentBag<(int, Action<int, int>)>>();
         private DateTime _lastUpdate = DateTime.Now;
         private int _squadCountChecking = 0;
-        private ConcurrentQueue<(int,object,Action<int, int>)> _squadCountCheckQueue = new ConcurrentQueue<(int, object, Action<int, int>)> ();
         private int _lastSquadCountNid = -1;
         private int _lastCheckGroup = 0;
-        private int[] _squadCountNotifyFailedTimes = new int[8];
         private int Aoe4Width = 1920;
         private int Aoe4Height = 1080;
+        private int[] _squadCountNotifyFailedTimes = new int[8];
         public double ScreenScalingFactorX => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPHORZRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), HORZRES);
         public double ScreenScalingFactorY => 1;// (float)GetDeviceCaps(GetDC(IntPtr.Zero), DESKTOPVERTRES) / (float)GetDeviceCaps(GetDC(IntPtr.Zero), VERTRES);
 
@@ -122,6 +120,8 @@ namespace BililiveDebugPlugin.InteractionGame
         private LPRECT _Aoe4ClientRECT;
         private int[] _CkSquadCountExecCallbackLock = new int[8];
         private IContext _cxt;
+        private IAoe4Bridge<DebugPlugin> _bridge;
+        private static readonly int OriginSquadCount = 16;
 
         //public Aoe4StateData CheckState(EAoe4State state)
         //{
@@ -169,8 +169,6 @@ namespace BililiveDebugPlugin.InteractionGame
 
         public void Init()
         {
-            ResetLockGroupSquadCount();
-            ResetSquadCountCheck();
             var ls = WindowEnumerator.FindAll((w) => w.Title.Contains(Aoe4DataConfig.Aoe4WinTitle));
             if (ls.Count > 0)
             {
@@ -183,7 +181,19 @@ namespace BililiveDebugPlugin.InteractionGame
                 Aoe4Height = _Aoe4ClientRECT.bottom;
             }
             _cxt = Locator.Instance.Get<IContext>();
+            _bridge = (_cxt as DebugPlugin)?.messageDispatcher?.GetBridge();
         }
+
+        public void Start()
+        {
+            for (int i = 0; i < Aoe4DataConfig.GroupCount; ++i)
+            {
+                _squadCountByGroup.TryAdd(i, OriginSquadCount);
+                NotifySquadCountChanged(i, OriginSquadCount, 0);
+            }
+        }
+
+
 
         private void ResetSquadCountCheck()
         {
@@ -203,7 +213,8 @@ namespace BililiveDebugPlugin.InteractionGame
         private void LockSquadCount(int g,int v = 5)
         {
             if (g < 0 || g >= _lockGroupSquadCount.Length) return;
-            Interlocked.Exchange(ref _lockGroupSquadCount[g], v);
+            if(_lockGroupSquadCount[g] <= 0)
+                Interlocked.Exchange(ref _lockGroupSquadCount[g], v);
         }
         private bool CheckIsLockedSquadCountAndMoveNext(int g)
         {
@@ -229,108 +240,11 @@ namespace BililiveDebugPlugin.InteractionGame
         {
             AGS_Stop();
         }
-
-        public void CheckNewSquadCount(int g,object who = null,Action<int,int> on = null)
-        {
-            if(!HasCheckSquadCountTask(g))
-            {
-                CheckNewSquadCountInter(g, who,on);
-            }
-            else
-            {
-                AddCheckSquadCountCallback(g, who,on);
-            }
-        }
-
-        protected void CheckNewSquadCountInter(int g, object who = null, Action<int, int> on = null)
-        {
-            if (_squadCountCheckQueue.Count >= 3)
-            {
-                Locator.Instance.Get<IContext>().Log($"WARN!!! _squadCountCheckQueue has {_squadCountCheckQueue.Count}");
-            }
-            if (_squadCountChecking > 0)
-            {
-                _squadCountCheckQueue.Enqueue((g, who, on));
-                return;
-            }
-            AddCheckSquadCountCallback(g, who, on);
-            ExecGetSquadCount(g, _SquadCheckId);
-            Interlocked.Exchange(ref _squadCountChecking, g + 1);
-        }
-
-        public bool AddCheckSquadCountCallback(int g,object who,Action<int,int> on)
-        {
-            while (_CkSquadCountExecCallbackLock[g] == 1) { }
-            if (_CkSquadCountExecCallbackLock[g] == 2)
-                return false;
-            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g],1);
-            if (_ckSquadCountDict.TryGetValue(g, out var v))
-            {
-                if (who != null)
-                    v.Add((who.GetHashCode(), on));
-            }
-            else
-            {
-                if (who != null)
-                {
-                    var list = new ConcurrentBag<(int, Action<int, int>)>();
-                    list.Add((who.GetHashCode(), on));
-                    _ckSquadCountDict.TryAdd(g, list);
-                }
-            }
-            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 0);
-            return true;
-        }
-
         private void ExecGetSquadCount(int g,int nid)
         {
             //Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().AppendExecCode($@"NSC_UpdateToColor(PLAYERS[{g + 1}],{nid})");
             Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ClickLeftMouse(((int)EAoe4State.SquadGroupCount * (int)(12 * ScreenScalingFactorX)) + (int)(6 * ScreenScalingFactorX),
             (int)( 15 * ScreenScalingFactorY));
-        }
-        public bool HasCheckSquadCountTask(int g,object who)
-        {
-            if (_ckSquadCountDict.TryGetValue(g, out var v))
-            {
-                foreach(var it in v)
-                {
-                    if(it.Item1 == who.GetHashCode())
-                        return true;
-                }
-            }
-            foreach (var c in _squadCountCheckQueue)
-            {
-                if (c.Item1 == g && c.Item2.GetHashCode() == who.GetHashCode())
-                    return true;
-            }
-            return false;
-        }
-        public bool HasCheckSquadCountTask(object who)
-        {
-            foreach(var v in _ckSquadCountDict)
-            {
-                foreach (var it in v.Value)
-                {
-                    if(it.Item1 == who.GetHashCode()) return true;
-                }
-            }
-            foreach(var c in _squadCountCheckQueue)
-            {
-                if(c.Item2.GetHashCode() == who.GetHashCode())
-                    return true;
-            }
-            return false;
-        }
-        public bool HasCheckSquadCountTask(int g)
-        {
-            if (_ckSquadCountDict.TryGetValue(g, out var v) && !v.IsEmpty)
-                return true;
-            foreach(var c in _squadCountCheckQueue)
-            {
-                if(c.Item1 == g)
-                    return true;
-            }
-            return false;
         }
 
         private int NextCkSquadCountNid(int g)
@@ -344,16 +258,13 @@ namespace BililiveDebugPlugin.InteractionGame
 
         public void OnClear()
         {
-            _squadCountByGroup.Clear();
-            ResetLockGroupSquadCount();
-            ResetSquadCountCheck();
-            _ckSquadCountDict.Clear();
-            _lastUpdate = DateTime.Now;
-            _squadCountChecking = 0;
-            for(int i = 0;i <  _squadCountCheckQueue.Count;i++)
-                Interlocked.Exchange(ref _squadCountNotifyFailedTimes[i], 0);
-            while (!_squadCountCheckQueue.IsEmpty)
-                _squadCountCheckQueue.TryDequeue(out _);
+            _lastCheckGroup = 0;
+            for (int i = 0; i < Aoe4DataConfig.GroupCount; ++i)
+            {
+                if(!_squadCountByGroup.TryAdd(i, OriginSquadCount))
+                    _squadCountByGroup[i] = OriginSquadCount;
+                NotifySquadCountChanged(i, OriginSquadCount, 0);
+            }
         }
 
         public void OnTick()
@@ -362,63 +273,19 @@ namespace BililiveDebugPlugin.InteractionGame
                 return;
 
             var c = CheckState(EAoe4State.SquadGroupCount);
-            if(c.R == 255 && c.B == 0 && c.G ==0)
+            if(c.R != _lastCheckGroup)
             {
-                ExecGetSquadCount(_squadCountChecking - 1, _SquadCheckId);
-                return;
-            }    
-            var g = (c.R & 0x7) - 1;
-            if (g < Aoe4DataConfig.GroupCount && g >= 0) 
-            //if (c.r != LastGroup)
-            {
-
-                if (!CheckIsLockedSquadCountAndMoveNext(g))
+                _lastCheckGroup = c.R;
+                var gb = (c.G << 8) | c.B;
+                var g = (gb >> 13) & 0x7;
+                var deadCount = gb & 0x1FFF;
+                lock (_squadCountByGroup)
                 {
-                    var nid = c.R >> 3;
-                    var old = 0;
-                    var count = ParseInt(c.G, c.B);
-                    if (CheckNewSquadCountVaild(g,count,nid))
-                    {
-                        Interlocked.Exchange(ref _squadCountChecking, 0);
-                        Interlocked.Exchange(ref _lastSquadCountNid, nid);
-                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], 0);
-                        //Locator.Instance.Get<IContext>().Log($"Get squad count g = {g} nid = {nid} count = {count}");
-                        if (!_squadCountByGroup.TryAdd(g, count))
-                        {
-                            old = _squadCountByGroup[g];
-                            _squadCountByGroup[g] = count;
-                        }
-                        NotifySquadCountChanged(g, count, old);
-                        NotifyCheckSquadCount(g, nid, count);
-                        NextCkSquadCountNid(g);
-                    }
-                    else if(_squadCountChecking > 0)
-                    {
-                        Interlocked.Exchange(ref _squadCountNotifyFailedTimes[g], _squadCountNotifyFailedTimes[g] + 1);
-                        if (_squadCountNotifyFailedTimes[g] % 2 == 0)
-                        {
-                            ExecGetSquadCount(_squadCountChecking - 1, _SquadCheckId);
-                        }
-                    }
+                    var old = _squadCountByGroup[g];
+                    _squadCountByGroup.TryUpdate(g, old - deadCount, old);
                 }
-                //else
-                //{
-                //    Locator.Instance.Get<IContext>().Log($"Squad Count Locked {g}");
-                //}
-            }
-            
-            if(_squadCountChecking == 0 && _squadCountCheckQueue.TryDequeue(out var msg))
-            {
-                CheckNewSquadCountInter(msg.Item1,msg.Item2,msg.Item3);
-            }
-            if ((DateTime.Now - _lastUpdate).TotalMilliseconds >= 1000)
-            {
-                _lastUpdate = DateTime.Now;
-                if(!HasCheckSquadCountTask(_lastCheckGroup))
-                    CheckNewSquadCountInter(_lastCheckGroup, this, null);
-                Interlocked.Exchange(ref _lastCheckGroup, _lastCheckGroup + 1);
-                if(_lastCheckGroup >= Aoe4DataConfig.GroupCount)
-                    Interlocked.Exchange(ref _lastCheckGroup, 0);
+                //_bridge.AppendExecCode($"SDN_OnNext({c.R})");
+                ExecGetSquadCount(0, 0);
             }
         }
 
@@ -426,7 +293,7 @@ namespace BililiveDebugPlugin.InteractionGame
         {
             if (a > b)
                 return true;
-            else if (a < b && a < range && b > 31 - range)
+            else if (a < b && a < range && b > 255 - range)
             {
                 return true;
             }
@@ -459,21 +326,6 @@ namespace BililiveDebugPlugin.InteractionGame
             return true;
         }
 
-        private bool NotifyCheckSquadCount(int g, int nid, int count)
-        {
-            while (_CkSquadCountExecCallbackLock[g] != 0) { }
-            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 2);
-            if (_ckSquadCountDict.TryGetValue(g, out var v))
-            {
-                while (v.TryTake(out var val))
-                {
-                    val.Item2?.Invoke(count,g);
-                }
-            }
-            Interlocked.Exchange(ref _CkSquadCountExecCallbackLock[g], 0);
-            return true;
-        }
-
         private int ParseInt(int h, int l)
         {
             return h << 8 | l;
@@ -497,8 +349,8 @@ namespace BililiveDebugPlugin.InteractionGame
             var old = 0;
             var f = true;
             if (lockTime > 0)
-                LockSquadCount(group, 26);// lockTime);
-            if (!_squadCountByGroup.TryAdd(group, count))
+                LockSquadCount(group, 16);// lockTime);
+            lock (_squadCountByGroup)
             {
                 old = _squadCountByGroup[group];
                 _squadCountByGroup[group] = old + count;

@@ -98,10 +98,10 @@ namespace conf.Squad
                             GiftSquadDatas.Add(data.Value);
                             break;
                         case EType.CountrySpec:
-                            if(data.Value.OverloadCountry != null && data.Value.OverloadCountry.Length > 0)
-                                CountrySpecialMap.Add($"{data.Value.OverloadCountry}_{data.Value.OverloadId}", data.Value);
                             break;
                     }
+                    if (data.Value.OverloadCountry != null && data.Value.OverloadCountry.Length > 0 && data.Value.OverloadId > 0)
+                        CountrySpecialMap.Add($"{data.Value.OverloadCountry}_{data.Value.OverloadId}", data.Value);
                 }
             }
         }

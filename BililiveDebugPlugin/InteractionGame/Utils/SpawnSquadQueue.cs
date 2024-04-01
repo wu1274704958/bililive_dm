@@ -217,6 +217,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         }
         public static int GetCountMulti(this SquadData self)
         {
+            return 1;
             if(self.SquadType_e == ESquadType.MultiSquad)
                 return self.SquadCount;
             return 1;
@@ -224,22 +225,24 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(string,int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,
             bool log = false)
         {
-            var rc = (int)(squadNum * multiple);
-            if (group.Count == 0 || rc <= 0) return 0;
+            var rc = 0;
+            if (group.Count == 0) return 0;
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             var target = u.Id < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
+            
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
+                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
+                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
             }
-            if(u.Id > 0)
+            if(rc > 0)
+                Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
+            if (u.Id > 0)
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple) ,rc);
             if (log)
                 Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
@@ -254,6 +257,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         protected double _upLevelgold;
         protected int _givHonor;
         protected bool _notRecycle = false;
+        protected bool _isGreedy = false;
+        public bool IsGreedy { get => _isGreedy; set => _isGreedy = value; }
 
         protected override void OnSpawned(double res)
         {
@@ -269,6 +274,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var v = Math.Ceiling(res * _upLevelgold);
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().GetSubMsgParse<GroupUpLevel<DebugPlugin>>().NotifyDepleteGold(user.Group, (int)v);
             }
+        }
+
+        public BaseSpawnSquadAction SetIsGreedy(bool isGreedy)
+        {
+            _isGreedy = isGreedy;
+            return this;
         }
 
         private void AddHonor(UserData u, long v)
@@ -320,14 +331,20 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             int @out = 0;
             while (count > 0 && max > 0)
             {
-                var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
-                if(sc > max) sc = max;
-                this.SendSpawnSquad(_user, sc, _squad,_attribute,true);
-                count -= sc;
-                max -= sc;
-                @out += sc;
+                SpawnInternalStep(ref count, ref max, ref @out);
+                if (!IsGreedy && @out >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                    break;
             }
             return (double)@out / (double)_count;
+        }
+        protected void SpawnInternalStep(ref int count,ref int max,ref int @out)
+        {
+            var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
+            if (sc > max) sc = max;
+            this.SendSpawnSquad(_user, sc, _squad, _attribute, true);
+            count -= sc;
+            max -= sc;
+            @out += sc;
         }
 
         protected override ISpawnFallback GenerateFallback()
@@ -392,17 +409,18 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var count = (int)(_Squad.specialCount * _specialPercentage * _count);
             var specialPercentage = 0.0;
             var normalPercentage = 0.0;
+            var sumOut = 0;
             if(count > 0)
-                specialPercentage = SpawnSpecialCount(ref max, ref count);
+                specialPercentage = SpawnSpecialCount(ref max, ref count,ref sumOut);
             count = (int)(_Squad.normalCount * _normalPercentage * _count);
-            if(count > 0 && max > 0)
-                normalPercentage = SpawnNormalCount(ref max, ref count);
+            if(count > 0 && max > 0 && (IsGreedy || sumOut < Aoe4DataConfig.OneTimesSpawnSquadCount))
+                normalPercentage = SpawnNormalCount(ref max, ref count,ref sumOut);
             _specialPercentage -= specialPercentage;
             _normalPercentage -= normalPercentage;
-            return specialPercentage * _constSpecialPercentage  + normalPercentage * (1 - _constSpecialPercentage);
+            return specialPercentage * _constSpecialPercentage  + normalPercentage * (1.0 - _constSpecialPercentage);
         }
 
-        private double SpawnSpecialCount(ref int max, ref int count)
+        private double SpawnSpecialCount(ref int max, ref int count,ref int sumOut)
         {
             var all = _Squad.specialCount * _count;
             var @out = 0;
@@ -412,20 +430,26 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.specialCount;                
                 if (c <= 0) break;
+                var rc = 0;
                 foreach (var it in _Squad.specialSquad)
                 {
-                    var realCount = (int)(c * it.Item2);
+                    var realCount = (int)Math.Round(c * it.Item2);
                     if (realCount <= 0) continue;
+                    rc += realCount;
                     this.SendSpawnSquad(_user, realCount, it.Item1, _Squad.AddedAttr, true);
                 }
-                var rc = (int)Math.Round(c * _Squad.specialCount);
+                if (rc <= 0)
+                    return _specialPercentage;
                 count -= rc;
                 max -= rc;
                 @out += rc;
+                sumOut += rc;
+                if (!IsGreedy && sumOut >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                    break;
             }
             return (double)@out / all;
         }
-        private double SpawnNormalCount(ref int max, ref int count)
+        private double SpawnNormalCount(ref int max, ref int count, ref int sumOut)
         {
             var all = _Squad.normalCount * _count;
             var @out = 0;
@@ -436,9 +460,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
                 var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true);
+                if (rc <= 0)
+                    return _normalPercentage;
                 count -= rc;
                 max -= rc;
                 @out += rc;
+                sumOut += rc;
+                if (!IsGreedy && sumOut >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                    break;
             }
             return (double)@out / all;
         }
@@ -455,7 +484,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         public override int GetCount()
         {
-            return (int)((_Squad.specialCount * _count) * _specialPercentage + (_Squad.normalCount * _count) * _normalPercentage);
+            return (int)((_Squad.specialCount * _count) * _specialPercentage) + (int)((_Squad.normalCount * _count) * _normalPercentage);
         }
 
         public override void OnDestroy()

@@ -14,6 +14,7 @@ namespace BililiveDebugPlugin.InteractionGame
     public interface IGameStateObserver<E,T>
     {
         void Init();
+        void Start();
         T CheckState(E state);
         T CheckState(EAoe4State state, IntPtr hwnd);
         T GetData(int x,int y, IntPtr hwnd);

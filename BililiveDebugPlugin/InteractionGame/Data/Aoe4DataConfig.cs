@@ -58,6 +58,15 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,200)  },
         };
 
+        public enum SpawnSquadType
+        {
+            Auto,
+            GoldBoom,
+            AutoGoldBoom,
+            HonorBoom,
+            Gift
+        }
+
         public static readonly int[] RandomPool = { 100,102,104,106,107,109,110,111,113,117,118,122 };
         public static SquadData GetSquadPure(int index,int level,int g)
         {
@@ -114,22 +123,31 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             return GetSquadPure(index, level,group);
         }
 
-        public static bool CanSpawnSquad(long uid)
+        public static bool CanSpawnSquad(long uid, SpawnSquadType type)
         {
-            //return true;
             return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
+            switch (type)
+            {
+                case SpawnSquadType.Auto: return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
+                case SpawnSquadType.GoldBoom:
+                case SpawnSquadType.HonorBoom:
+                case SpawnSquadType.AutoGoldBoom:
+                case SpawnSquadType.Gift:
+                    return true;
+            }
+            return true;
         }
 
         public static int SquadCount => conf.Squad.SquadDataMgr.GetInstance().NormalSquadDatas.Count;
 
         public static int RandomIdx { get; private set; } = 116;
 
-        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(56);
+        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(50);
 
-        public static readonly int OneTimesSpawnSquadCount = 100;
+        public static readonly int OneTimesSpawnSquadCount = 50;
 
-        public static readonly int SquadLimit = 900;
-        public static readonly int AutoSquadLimit = SquadLimit - 170;
+        public static readonly int SquadLimit = SettingMgr.GetInt(3,850);
+        public static readonly int AutoSquadLimit = SquadLimit - SettingMgr.GetInt(4, 120);
 
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 4000;

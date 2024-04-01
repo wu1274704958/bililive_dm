@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing.Design;
+using System.Text;
 using System.Windows.Documents;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGameUtils;
@@ -38,6 +39,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public int Price;
         public int AddHp;
         public int AddDamage;
+        private StringBuilder _descStringBuilder = new StringBuilder();
 
         public LevelConfig(int level,int price,List<string> technology, float goldAddFactor,int addHp,int addDamage)
         {
@@ -51,7 +53,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public string GetDesc(int goldMultiplier = 1, int damageMultiplier = 1, int hpMultiplier = 1)
         {
-            return $"{Level}攻{Level}防，+{AddDamage * damageMultiplier * 10}%攻击力，+{AddHp * hpMultiplier * 10}%血量，+{GoldAddFactor * goldMultiplier * 100}%金币产出";
+            _descStringBuilder.Clear();
+            _descStringBuilder.Append($"{Level}攻{Level}防，");
+            if (AddDamage > 0)
+                _descStringBuilder.Append($"+{AddDamage * damageMultiplier * 10}%攻击力，");
+            if(AddHp > 0)
+                _descStringBuilder.Append($"+{AddHp * hpMultiplier * 10}%血量，");
+            _descStringBuilder.Append($"+{GoldAddFactor * goldMultiplier * 100}%金币产出");
+            return _descStringBuilder.ToString();
         }
         public string GetDesc((int,int,int) multiplier)
         {
@@ -72,9 +81,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_MELEE_ARMOR_I",
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_I",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_I",
-                    "UPG.MALIAN.UPGRADE_ARCHER_POISON_ARROW_MAL_LANDMARKVARIANT"
                 }
-                , 0.64f,1,1 ),
+                , 0.64f,0,1 ),
             
             new LevelConfig(2,10000,new List<string>()
                 {
@@ -83,7 +91,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_II",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_II",
                 }
-                , 0.7f,2,2 ),
+                , 0.7f,0,2 ),
             new LevelConfig(3,18000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_III",
@@ -91,7 +99,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_III",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_III"
                 }
-                , 0.9f,3,3 ),
+                , 0.72f,0,3 ),
         };
         public void Init(IDyMsgParser<IT> owner)
         {

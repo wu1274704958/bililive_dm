@@ -24,5 +24,9 @@ namespace conf.Squad
         {
             return $"<color={GetColor(g)}>{s}</color>";
         }
+        public static int GetInt(int id,int def = 0)
+        {
+            return GetInstance()?.Get(id)?.IntVal ?? def;
+        }
     }
 }

@@ -13,8 +13,11 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Init()
         {
             base.Init();
-            //if(DateTime.Now.DayOfWeek == DayOfWeek.Friday || DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
-            //    DownHour = 1;
+            if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
+            {
+                DownHour = 1;
+                DownMinute = 10;
+            }
         }
         public override void Tick()
         {

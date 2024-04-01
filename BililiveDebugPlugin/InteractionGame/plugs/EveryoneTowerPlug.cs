@@ -1,19 +1,37 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using BilibiliDM_PluginFramework;
+using BililiveDebugPlugin.InteractionGame.Resource;
 using Interaction;
 using InteractionGame;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.plugs
 {
-    public class EveryoneTowerPlug : IPlug<EGameAction>,IPlayerParserObserver
+    public class EveryoneTowerPlug : IPlug<EGameAction>,IPlayerParserObserver,IPlayerPreJoinObserver
     {
-        private ConcurrentDictionary<long,int> _group = new ConcurrentDictionary<long, int>();
+        public struct TowerData
+        {
+            public int State;
+            public int Mid;
+
+            public TowerData(int state, int mid)
+            {
+                State = state;
+                Mid = mid;
+            }
+        }
+        private ConcurrentDictionary<long, TowerData> _group = new ConcurrentDictionary<long, TowerData>();
         private ConcurrentDictionary<int,long> _mapUid = new ConcurrentDictionary<int, long>();
+        private HashSet<long> _isStoneSet = new HashSet<long>();
         private IAoe4Bridge<DebugPlugin> _bridge;
+        private IResourceMgr<DebugPlugin> _resMgr;
         private Aoe4GameState _state;
         private int LastMsgId = 0;
-        public Action<long,int> OnTowerStateChange;
+        public Action<long, TowerData> OnTowerStateChange;
+        private DebugPlugin _cxt;
+
         public override void Tick()
         {
             var state = _state.CheckState(EAoe4State.TowerState);
@@ -22,11 +40,12 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
                 LastMsgId = state.R;
                 if(_mapUid.TryGetValue(state.G, out var uid))
                 {
-                    if (_group.TryGetValue(uid, out var oldSt) && oldSt != state.B)
+                    if (_group.TryGetValue(uid, out var d) && d.State != state.B)
                     {
-                        _group.TryUpdate(uid, state.B, oldSt);
+                        var @new = new TowerData(state.B, d.Mid);
+                        _group.TryUpdate(uid, @new, d);
                         _bridge.AppendExecCode($"TFE_OnResposon({state.R})");
-                        OnTowerStateChange?.Invoke(uid,state.B);
+                        OnTowerStateChange?.Invoke(uid,@new);
                     }
                 }
             }
@@ -35,10 +54,29 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            _bridge = Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge();
+            _bridge = (_cxt = Locator.Instance.Get<DebugPlugin>()).messageDispatcher.GetBridge();
+            _resMgr = _cxt.messageDispatcher.GetResourceMgr();
             _state = Locator.Instance.Get<Aoe4GameState>();
-            Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().AddObserver(this);
+            var playerParser = Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>();
+            playerParser.AddObserver(this);
+            playerParser.AddPreJoinObserver(this);
             Locator.Instance.Deposit(this);
+
+            OnTowerStateChange += _onTowerStateChange;
+        }
+
+        private void _onTowerStateChange(long id, TowerData st)
+        {
+            if(st.State == 2)
+            {
+                var u = _cxt.messageDispatcher.MsgParser.GetUserData(id);
+                if (u == null)
+                    return;
+                var gold = _resMgr.GetResource(id);
+                if (gold > 0) 
+                    _resMgr.RemoveResource(id, gold);
+                _cxt.PrintGameMsg($"{u.NameColored}哨塔被摧毁");
+            }
         }
 
         public override void Notify(EGameAction m)
@@ -50,6 +88,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
                 case EGameAction.GameStop:
                     _group.Clear();
                     _mapUid.Clear();
+                    _isStoneSet.Clear();
                     LastMsgId = 0;
                     break;
             }
@@ -57,15 +96,18 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         
         public bool IsTowerAlive(long uid)
         {
-            return _group.TryGetValue(uid,out var v) && v == 1;
+            return _group.TryGetValue(uid,out var v) && v.State == 1;
         }
 
         public void OnAddGroup(UserData userData, int g)
         {
             var mid = GenMid(userData);
-            _group.TryAdd(userData.Id, 1);
+            _group.TryAdd(userData.Id, new TowerData(1,mid));
             _mapUid.TryAdd(mid, userData.Id);
-            _bridge.AppendExecCode($"TFE_AddTower({userData.Id},{mid},{g + 1},'{userData.Name}',0)");
+            int op = userData.GuardLevel & 255;
+            if (_isStoneSet.Contains(userData.Id))
+                op |= (1 << 8);
+            _bridge.AppendExecCode($"TFE_AddTower({userData.Id},{mid},{g + 1},'{userData.Name}',{op})");
         }
 
         private int GenMid(UserData userData)
@@ -81,6 +123,29 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public void OnClear()
         {
             
+        }
+
+        public override void Dispose()
+        {
+            OnTowerStateChange -= _onTowerStateChange;
+            base.Dispose();
+        }
+
+        public DanmakuModel OnPreJoin(DanmakuModel m)
+        {
+            if(m.CommentText != null && m.CommentText.IndexOf("石") >= 0)
+            {
+                _isStoneSet.Add(m.UserID_long);
+            }
+            return m;
+        }
+
+        public void PopGoldTips(UserData u,int gold)
+        {
+            if(_group.TryGetValue(u.Id, out var d))
+            {
+                _bridge.AppendExecCode($"TFE_PopupTips({d.Mid},'{u.Name}有{gold}金')");
+            }
         }
     }
 }

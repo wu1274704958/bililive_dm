@@ -40,16 +40,16 @@ namespace Utils
                 if (ts.TotalSeconds > 0)
                 {
                     var old = Value;
-                    var add = (int)(ts.TotalSeconds * factor);
+                    var add = ts.TotalSeconds * factor;
                     Rest += AddFactor * add;
                     if(Rest > 1)
                     {
                         var v = Math.Truncate(Rest);
-                        add += (int)v;
+                        add += v;
                         Rest -= v;
                     }
                     var @new = Value + add;
-                    if (old != @new)
+                    if (@new - old > 0.000000001)
                     {
                         Value = @new;
                         UpdateTime = UpdateTime.AddSeconds(ts.TotalSeconds);

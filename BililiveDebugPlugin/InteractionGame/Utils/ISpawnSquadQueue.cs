@@ -80,7 +80,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         protected ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>> Actions =
             new ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>>();
         protected DateTime _tickSpawnTime = DateTime.Now;
-        protected static readonly TimeSpan TickSpawnInterval = TimeSpan.FromMilliseconds(1500);
+        protected static readonly TimeSpan TickSpawnInterval = TimeSpan.FromMilliseconds(1000);
 
         public virtual void AppendAction(ISpawnSquadAction action)
         {
@@ -108,8 +108,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         private ConcurrentQueue<SpawnSquadActionBound> GetQueue(int group)
         {
             if (!Actions.TryGetValue(group, out var queue))
-                if(!Actions.TryAdd(group,queue = new ConcurrentQueue<SpawnSquadActionBound>()))
-                    queue = Actions[group];
+                return Actions[group] = new ConcurrentQueue<SpawnSquadActionBound>();
             return queue;
         }
 
@@ -155,7 +154,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
             !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
             {
-                Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit}");
+                Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
                 SpawnInQueue(action, remaining);
             }
         }

@@ -35,8 +35,8 @@ namespace Interaction
         void ExecSetCustomTarget(int self, int target);
         void ExecSpawnSquad(int self, string squadId,int num, long uid,int attackTy = 0, int op1 = 1);
         void ExecSpawnSquadWithTarget(int self, string squadId,int target,int num, long uid,int attackTy = 0, int op1 = 1);
-        void ExecSpawnGroup(int self, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
-        void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
+        int ExecSpawnGroup(int self, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
+        int ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid,double multiple = 1, int attackTy = 0, int op1 = 1);
         void ExecPrintMsg(string msg);
         void ExecSpawnVillagers(int self, int vid, int num);
         void ExecTryRemoveVillagersCountNotify(int vid,int next);
@@ -81,7 +81,7 @@ namespace Interaction
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
         private Object m_ExecCodeLock = new object();
-        private static readonly int MsgMaxLength = 800;
+        private static readonly int MsgMaxLength = 500;
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
@@ -192,20 +192,22 @@ namespace Interaction
             AppendExecCode($"SpawnAndAttackTargetEx2({self},'{squadId}',{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
-        public void ExecSpawnGroup(int self, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
+        public int ExecSpawnGroup(int self, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
         {
-            if (group.Count == 0) return;
+            if (group.Count == 0) return 0;
             var groupStr = ToSpawnSquadTable(group,multiple);
-            if (groupStr.Item1.Length <= 2) return;
+            if (groupStr.Item1.Length <= 2) return 0;
             AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            return groupStr.Item2;
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
-        public void ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
+        public int ExecSpawnGroupWithTarget(int self, int target, List<(string, int)> group, long uid, double multiple = 1, int attackTy = 0, int op1 = 1)
         {
-            if (group.Count == 0) return;
+            if (group.Count == 0) return 0;
             var groupStr = ToSpawnSquadTable(group,multiple);
-            if (groupStr.Item1.Length <= 2) return;
+            if (groupStr.Item1.Length <= 2) return 0;
             AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            return groupStr.Item2;
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
 
@@ -219,7 +221,7 @@ namespace Interaction
             {
                 //var sd = Aoe4DataConfig.GetSquadPure(it.Item1);
                 //if (sd.SquadType_e == ESquadType.Villager || sd.SquadType_e == ESquadType.SiegeAttacker) continue;
-                int c = (int)(it.Item2 * multiple);
+                int c = (int)Math.Round(it.Item2 * multiple);
                 if (c <= 0) 
                     continue;
                 sb.Append($"{{sbp=BP_GetSquadBlueprint('{it.Item1}'),numSquads={c}}},");

@@ -278,7 +278,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
                     var activityAdd = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 0.8f : 0.0f;
                     m_MsgDispatcher.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,
-                        Aoe4DataConfig.PlayerGoldResAddFactorArr[ud.GuardLevel] + activityAdd);
+                        Aoe4DataConfig.PlayerGoldResAddFactorArr[ud.RealGuardLevel] + activityAdd);
                     AddInitAttr(ud);
                     AddInitUpgrade(ud);
                     if(msgOrigin.msg.UserGuardLevel <= 2)
@@ -527,7 +527,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private void AddHonor(UserData u, long v,bool hasAddition = true)
         {
-            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.GuardLevel]);
+            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.RealGuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u,v) > 0)
                 InitCtx.PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }

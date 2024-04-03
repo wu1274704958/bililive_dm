@@ -285,7 +285,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         private void AddHonor(UserData u, long v)
         {
 
-            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.GuardLevel]);
+            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.RealGuardLevel]);
             if (DB.DBMgr.Instance.AddHonor(u, v) > 0)
                 Locator.Instance.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }

@@ -470,6 +470,7 @@ namespace InteractionGame
         public int Op1Heigh = 0;
         [ProtoMember(9)]
         public int GuardLevel;
+        public int RealGuardLevel;
         public int FansLevel;
         //public DateTime JoinTime;
 
@@ -480,10 +481,24 @@ namespace InteractionGame
             Name = name;
             Icon = icon;
             Group = group;
-            GuardLevel = guardLvl;
+            SetGuardLevel(guardLvl);
             FansLevel = fansLevel;
             //JoinTime = DateTime.Now;
         }
+
+        private void SetGuardLevel(int guardLvl)
+        {
+            if(guardLvl >= 10)
+            {
+                GuardLevel = guardLvl / 10;
+                RealGuardLevel = guardLvl;
+            }
+            else
+            {
+                RealGuardLevel = GuardLevel = guardLvl;
+            }
+        }
+
         public string NameColored => SettingMgr.GetColorWrap(Name, Group);
         public int HpMultiple => (Op1 >> 16) & 255;
         public int DamageMultiple => (Op1 >> 24) & 255;

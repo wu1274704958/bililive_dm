@@ -187,8 +187,14 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
 
         public static readonly float[] SettlementPlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
-        public static readonly float[] PlayerHonorResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
-        public static readonly float[] PlayerGoldResAddFactorArr = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
+        public static readonly Dictionary<int, float> PlayerHonorResAddFactorArr = new Dictionary<int, float>() 
+        { 
+            {0,0.0f },{1,65.0f },{2,6.6f },{3,0.6f },{33,1.8f },
+        };// new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
+        public static readonly Dictionary<int, float> PlayerGoldResAddFactorArr = new Dictionary<int, float>()
+        {
+            {0,0.0f },{1,65.0f },{2,4.6f },{3,0.6f },{33,1.8f },
+        };// = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
         public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 140, 10, 1 };
         internal static readonly string Aoe4WinTitle = "Age of Empires IV";
 

@@ -131,7 +131,8 @@ namespace BililiveDebugPlugin
                         {
                             var d = GetDmData(ud, MsgTypeEnum.GuardBuy);
                             d.Danmaku.GuardLevel = d.Danmaku.UserGuardLevel = lvl;
-                            for(int i = 0; i < c;++i)
+                            var mult = lvl > 10 ? lvl % 10 : 1;
+                            for(int i = 0; i < c * mult;++i)
                                 m_Cxt.SendTestDanMu(this,d);
                         }
                     }

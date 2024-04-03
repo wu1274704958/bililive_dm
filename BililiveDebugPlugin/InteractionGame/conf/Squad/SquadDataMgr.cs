@@ -7,7 +7,7 @@ using System.IO;
             
 namespace conf.Squad
             {
-public enum ESquadType {Normal = 0,Villager = 1,SiegeAttacker = 2,BuildingAttacker = 3,Trebuchet = 4,HuiHuiPao = 5,MultiSquad = 6,}public enum EType {Normal = 0,Gift = 1,Special = 2,CountrySpec = 3,Placeholder = 4,Hide = 100,}
+public enum ESquadType {Normal = 0,Villager = 1,SiegeAttacker = 2,BuildingAttacker = 3,Trebuchet = 4,HuiHuiPao = 5,MultiSquad = 6,ConfigAttr = 7,}public enum EType {Normal = 0,Gift = 1,Special = 2,CountrySpec = 3,Placeholder = 4,Hide = 100,}
 [ProtoContract]
 public  partial class SquadData
             {
@@ -33,6 +33,8 @@ public Squad.SquadData NextLevelRef => Squad.SquadDataMgr.GetInstance().Get(Next
 [ProtoMember(17)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadPriceMult { get; private set; }
 [ProtoMember(18)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadUpPriceMult { get; private set; }
 [ProtoMember(19)] public System.Int16 SquadCount { get; private set; }
+[ProtoMember(20)] public System.Collections.Generic.Dictionary<System.String,System.Byte> AddHP { get; private set; }
+[ProtoMember(21)] public System.Collections.Generic.Dictionary<System.String,System.Byte> AddDamage { get; private set; }
 }
 
 [ProtoContract]

@@ -96,6 +96,16 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
+                if ((match = new Regex("AddUser ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[1].Value, out var count) && int.TryParse(match.Groups[2].Value,out var g))
+                    {
+                        var r = new Random();
+                        for(int i = 1;i <= count;i++)
+                            (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i,$"name{i}","",g,0), g);
+                    }
+                    return;
+                }
                 if ((match = new Regex("Vip ([0-9]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
                 {
                     var c = 1;

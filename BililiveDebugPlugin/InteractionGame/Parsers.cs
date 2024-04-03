@@ -467,6 +467,7 @@ namespace InteractionGame
         public long Honor;
         [ProtoMember(8)]
         public int Op1 = 0;
+        public int Op1Heigh = 0;
         [ProtoMember(9)]
         public int GuardLevel;
         public int FansLevel;
@@ -506,9 +507,15 @@ namespace InteractionGame
             Interlocked.Exchange(ref Op1, op);
             return high_h;
         }
-        public int AppendSquadAttribute(ushort attr)
+        public long AppendSquadAttribute(ushort attr)
         {
-            return Op1 | attr;
+            return ((long)Op1Heigh << 32) | (long)(Op1 | attr);
+        }
+        public long AppendSquadAttribute(ushort attr,byte configAddHp,byte configAddDamage)
+        {
+            var oph = Utils.AddByte(Op1Heigh, configAddHp,16);
+            oph |= Utils.AddByte(Op1Heigh, configAddDamage, 24);
+            return ((long)oph << 32) | (long)(Op1 | attr);
         }
     }
     

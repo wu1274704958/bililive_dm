@@ -194,7 +194,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti(), 5);
             var attackTy = sd.GetAttackType();
-            var op = u?.AppendSquadAttribute(attribute) ?? 0;
+            var op = u?.AppendSquadAttribute(attribute,sd.GetAddHp(self),sd.GetAddDamage(self)) ?? 0;
             if (target < 0)
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sd.GetBlueprint(u.Group), c, u.Id, attackTy,op);
@@ -222,7 +222,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 return self.SquadCount;
             return 1;
         }
-        public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(string,int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,
+        public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(SquadData, int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,
             bool log = false)
         {
             var rc = 0;

@@ -547,13 +547,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
             var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             var attackTy = sd.GetAttackType();
+            var op = u?.AppendSquadAttribute(0, sd.GetAddHp(self), sd.GetAddDamage(self)) ?? 0; 
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,u?.Op1 ?? 0);
+                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,op);
             }
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
         }
@@ -580,7 +581,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
 
 
-        public int SendSpawnSquad(UserData u, List<(string,int)> group,int groupCount,int multiple = 1,bool recovery = false)
+        public int SendSpawnSquad(UserData u, List<(SquadData,int)> group,int groupCount,int multiple = 1)
         {
             if (group.Count == 0) return 0;
             var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
@@ -594,7 +595,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 rc = m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
             }
-            if(recovery)SquadListPool.Return(group);
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc);
             return rc;
         }
@@ -670,9 +670,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
     }
 
-    public class SquadGroup : ICloneable
+    public class SquadGroup : ICloneable,IDisposable
     {
-        public List<(string, int)> squad;
+        public List<(SquadData, int)> squad;
         public List<(SquadData, int)> specialSquad;
         public double spawnTime;
         public DateTime lastSpawnTime;
@@ -716,7 +716,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             var squad = new SquadGroup();
             squad.StringTag = s;
-            squad.squad = ObjPoolMgr.Instance.Get<List<(string, int)>>(null, OnClearList).Get();
+            squad.squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             squad.specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             StringToDictAndForeach(s, (item) =>
             {
@@ -724,7 +724,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 var sd = Aoe4DataConfig.GetSquad(item.Key,g,lvl);
                 if (sd == null) return;
                 if(sd.SquadType_e == ESquadType.Normal)
-                    squad.squad.Add((sd.GetBlueprint(g), item.Value));
+                    squad.squad.Add((sd, item.Value));
                 else
                 {
                     squad.specialSquad.Add((sd, item.Value));
@@ -760,7 +760,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 }
                 else
                 {
-                    group.squad.Add((sd.GetBlueprint(g), item.Item2));
+                    group.squad.Add((sd, item.Item2));
                 }
             };
             foreach( var it in squad )
@@ -772,14 +772,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Init()
         {
-            squad = ObjPoolMgr.Instance.Get<List<(string, int)>>(null, OnClearList).Get();
+            squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
         }
 
         public static void Recycle(SquadGroup d)
         {
             if(d.squad != null)
-                ObjPoolMgr.Instance.Get<List<(string, int)>>().Return(d.squad);
+                ObjPoolMgr.Instance.Get<List<(SquadData, int)>>().Return(d.squad);
             if(d.specialSquad != null)
                 ObjPoolMgr.Instance.Get<List<(SquadData, int)>>().Return(d.specialSquad);
             d.squad = null; d.specialSquad = null;
@@ -806,6 +806,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 oth.specialSquad.Add(it);
             return oth;
         }
+
+        public void Dispose()
+        {
+            Recycle(this);
+        }
     }
 
     public class AutoSpawnSquadSubMsgParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT> , IPlayerParserObserver,ISquadUpLevelListener
@@ -814,10 +819,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
         private ConcurrentDictionary<long,SquadGroup> m_Dict = new ConcurrentDictionary<long,SquadGroup>();
         private IDyMsgParser<IT> m_Owner;
-        public Utils.ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(string, int)>>(
-            () => new List<(string, int)>(), DefObjectRecycle.OnListRecycle);
-        public Utils.ObjectPool<List<(SquadData, int)>> SpecialSquadListPool { get; private set; } = new Utils.ObjectPool<List<(SquadData, int)>>(
-            () => new List<(SquadData, int)>(), DefObjectRecycle.OnListRecycle);
         private DateTime m_AutoBoomCkTime = DateTime.Now;
         private readonly Regex Reg = new Regex("^([0-9a-wA-W]*)$");
         private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]*)[x,\\*]([0-9]*)$");
@@ -877,7 +878,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 owner.SendSpawnSquad(u,  it.Item2, it.Item1);
             }
-            int rc = owner.SendSpawnSquad(u, v.squad, v.normalCount,1,false);
+            int rc = owner.SendSpawnSquad(u, v.squad, v.normalCount,1);
             //m_Owner.InitCtx.PrintGameMsg($"{v.uName}自动出兵");
             m_Owner.UpdateUserData(uid, v.score, v.specialCount + rc, null, null);
         }
@@ -887,11 +888,10 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             var squad = new SquadGroup();
             squad.uName = data.NameColored;
-            squad.squad = SquadListPool.Get();
-            squad.specialSquad = SpecialSquadListPool.Get();
+            squad.Init();
             squad.lastSpawnTime = DateTime.Now;
             var sd = Aoe4DataConfig.GetSquad(sdId, data.Group, Locator.Instance.Get<SquadUpLevelSubParser<IT>>().GetSquadLevel(data.Id, sdId));
-            squad.squad.Add((sd.GetBlueprint(data.Group), c));
+            squad.specialSquad.Add((sd, c));
             squad.score = sd.RealScore(data.Group) * c;
             squad.price = sd.RealPrice(data.Group) * c;
             squad.spawnTime = sd.RealTrainTime(data.Group) * c;
@@ -936,8 +936,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     {
                         if (m_Dict.TryRemove(uid, out var squadData))
                         {
-                            SquadListPool.Return(squadData.squad);
-                            SpecialSquadListPool.Return(squadData.specialSquad);
+                            squadData.Dispose();
                             m_Owner.InitCtx.PrintGameMsg($"{user.NameColored}取消自动出兵");
                         }
                         return true;
@@ -996,7 +995,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var sd = Aoe4DataConfig.GetSquad(item.Key,u.Group, lvl);
                     if (sd == null) return;
                     if(sd.SquadType_e == ESquadType.Normal)
-                        squad.squad.Add((sd.GetBlueprint(u.Group), item.Value));
+                        squad.squad.Add((sd, item.Value));
                     else
                     {
                         squad.specialSquad.Add((sd, item.Value));
@@ -1080,7 +1079,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public void OnClear()
         {
             foreach (var it in m_Dict)
-                SquadListPool.Return(it.Value.squad);
+            {
+                it.Value.Dispose();
+            }
             m_Dict.Clear();
         }
 
@@ -1122,13 +1123,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             for (int i = 0; i < squadGroup.squad.Count; i++)
             {
-                if (squadGroup.squad[i].Item1 == old.GetBlueprint(ud.Group))
+                if (squadGroup.squad[i].Item1.RealId == old.RealId)
                     return true;
             }
 
             for (int i = 0; i < squadGroup.specialSquad.Count; i++)
             {
-                if(squadGroup.specialSquad[i].Item1.RealId == old.Id)
+                if(squadGroup.specialSquad[i].Item1.RealId == old.RealId)
                     return true;
             }
 

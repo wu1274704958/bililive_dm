@@ -171,7 +171,7 @@ namespace BililiveDebugPlugin
             m_GameState.Start();
             Log("Start ...");
             SendMsg.SendMessage((short)EMsgTy.ClearAllPlayer, null);
-            //messageDispatcher.GetPlayerParser().AddObserver(this);
+            messageDispatcher.GetPlayerParser().AddObserver(this);
         }
 
         public override void Stop()
@@ -259,11 +259,11 @@ namespace BililiveDebugPlugin
                 }
             }
 
-            //if((now - UpdatePlayerGoldTime) >= UpdatePlayerInterval)
-            //{
-            //    UpdatePlayerGold();
-            //    UpdatePlayerGoldTime = now;
-            //}
+            if((now - UpdatePlayerGoldTime) >= UpdatePlayerInterval)
+            {
+                UpdatePlayerGold();
+                UpdatePlayerGoldTime = now;
+            }
             SendMsg.waitClean();
         }
         

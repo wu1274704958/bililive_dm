@@ -70,6 +70,26 @@ namespace conf.Squad
         public int Level => RealId / 10_0000;
         public int Sid => RealId % 10_0000;
         public int RealId => OverloadId > 0 ? OverloadId : Id;
+        public byte GetAddHp(int g)
+        {
+            if (SquadType != 0 && AddHP != null)
+                return GetValByDict(AddHP, g, (byte)0);
+            return 0;
+        }
+        public byte GetAddDamage(int g)
+        {
+            if (SquadType != 0 && AddDamage != null)
+                return GetValByDict(AddDamage,g,(byte)0);
+            return 0;
+        }
+        protected T GetValByDict<T>(Dictionary<string,T> dict,int g,T def = default(T))
+        {
+            if (dict.TryGetValue(SettingMgr.GetCountry(g), out var v))
+                return v;
+            if (dict.TryGetValue("d", out v))
+                return v;
+            return def;
+        }
     }
 
     public partial class SquadDataMgr

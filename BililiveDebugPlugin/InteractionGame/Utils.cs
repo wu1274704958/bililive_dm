@@ -68,6 +68,15 @@ namespace InteractionGame
                 return doy;// 1 2 3
             return 0;
         }
+
+        public static int AddByte(int op,byte v,int pos)
+        {
+            var src = (op >> pos) & 255;
+            src += v;
+            var res = op | (255 << pos);
+            res &= ((src & 255) << pos);
+            return res;
+        }
     }
 }
 

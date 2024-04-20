@@ -123,7 +123,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             return GetSquadPure(index, level,group);
         }
 
-        public static bool CanSpawnSquad(long uid, SpawnSquadType type)
+        public static bool CanSpawnSquad(string uid, SpawnSquadType type)
         {
             return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
             switch (type)
@@ -142,9 +142,9 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static int RandomIdx { get; private set; } = 116;
 
-        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(50);
+        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(35);
 
-        public static readonly int OneTimesSpawnSquadCount = 50;
+        public static readonly int OneTimesSpawnSquadCount = SettingMgr.GetInt(5,50);
 
         public static readonly int SquadLimit = SettingMgr.GetInt(3,850);
         public static readonly int AutoSquadLimit = SquadLimit - SettingMgr.GetInt(4, 120);
@@ -180,13 +180,20 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             return r * activityMult;
         }
 
+        public static bool IsTestId(string id)
+        {
+            return int.TryParse(id,out var idNum) && idNum < 100;
+        }
+
         public static long LoseSettlementHonorAdd = 3;
         public static long WinSettlementHonorAdd = 10;
         public static double LoseSettlementHonorFactor = 0.0005;
         public static double WinSettlementHonorFactor = 0.0012;
         private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
 
-        public static readonly float[] SettlementPlayerResAddFactorArr = new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
+        public static readonly Dictionary<int, float> SettlementPlayerResAddFactorArr = new Dictionary<int, float>() {
+            {0,0.0f }, {1,65.0f }, {2, 6.6f },{3, 0.6f }, { 33, 1.8f } 
+        };
         public static readonly Dictionary<int, float> PlayerHonorResAddFactorArr = new Dictionary<int, float>() 
         { 
             {0,0.0f },{1,65.0f },{2,6.6f },{3,0.6f },{33,1.8f },
@@ -195,7 +202,10 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         {
             {0,0.0f },{1,65.0f },{2,4.6f },{3,0.6f },{33,1.8f },
         };// = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
-        public static readonly int[] PlayerAddAttributeArr = new int[] { 0, 140, 10, 1 };
+        public static readonly Dictionary<int,int> PlayerAddAttributeArr = new Dictionary<int, int>()
+        {
+            { 0,0 },{1, 140 }, {2,10 },{3, 1 },{33,3}
+        };
         internal static readonly string Aoe4WinTitle = "Age of Empires IV";
 
         

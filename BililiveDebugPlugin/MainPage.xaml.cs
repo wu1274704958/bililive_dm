@@ -90,9 +90,9 @@ namespace BililiveDebugPlugin
                 }
                 if ((match = new Regex("AddSign ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
                 {
-                    if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var count))
+                    if (int.TryParse(match.Groups[2].Value, out var count))
                     {
-                        m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(id, Aoe4DataConfig.SignTicket, count)}");
+                        m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(match.Groups[1].Value, Aoe4DataConfig.SignTicket, count)}");
                     }
                     return;
                 }
@@ -102,39 +102,25 @@ namespace BililiveDebugPlugin
                     {
                         var r = new Random();
                         for(int i = 1;i <= count;i++)
-                            (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i,$"name{i}","",g,0), g);
+                            (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i.ToString(),$"name{i}","",g,0), g);
                     }
                     return;
                 }
-                if ((match = new Regex("Vip ([0-9]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
+                if ((match = new Regex("Vip ([0-9a-z]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[2].Value, out var lvl))
+                    {
+                        AddVipAndGift(match, match.Groups[1].Value, lvl);
+                    }
+                    return;
+                }
+                if ((match = new Regex("Vipng ([0-9a-z]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
                 {
                     var c = 1;
-                    if (long.TryParse(match.Groups[1].Value, out var id) && int.TryParse(match.Groups[2].Value, out var lvl))
+                    if (int.TryParse(match.Groups[2].Value, out var lvl))
                     {
-                        if (match.Groups.Count > 3 && int.TryParse(match.Groups[3].Value, out c))
-                            ;
-                        var ud = DB.DBMgr.Instance.GetUser(id);
-                        string name = null;
-                        switch (lvl)
-                        {
-                            case 2: name = Aoe4DataConfig.TiDu; break;
-                            case 3: name = Aoe4DataConfig.JianZhang; break;
-                        }
-                        if (ud == null || name == null)
-                        {
-                            m_Cxt.Log($"没有找到用户{match.Groups[1].Value}");
-                            return;
-                        }
-                        var r = DB.DBMgr.Instance.AddLimitedItem(id, name, lvl, 9999, TimeSpan.FromDays(30 * c));
-                        m_Cxt.Log($"AddLimitedItem {r}");
-                        if (r > 0)
-                        {
-                            var d = GetDmData(ud, MsgTypeEnum.GuardBuy);
-                            d.Danmaku.GuardLevel = d.Danmaku.UserGuardLevel = lvl;
-                            var mult = lvl > 10 ? lvl % 10 : 1;
-                            for(int i = 0; i < c * mult;++i)
-                                m_Cxt.SendTestDanMu(this,d);
-                        }
+                        if (match.Groups.Count > 3 && int.TryParse(match.Groups[3].Value, out c)) { }
+                        AddVip(match, match.Groups[1].Value, lvl,c,out _);
                     }
                     return;
                 }
@@ -153,7 +139,23 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
-
+                if ((match = new Regex("援 ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
+                {
+                    int g = 0;
+                    if (match.Groups.Count >= 3 && int.TryParse(match.Groups[2].Value, out var _g)) 
+                        g = _g;
+                    if (int.TryParse(match.Groups[1].Value, out var lvl))
+                    {
+                        if(conf.Reinforcements.ReinforcementsDataMgr.GetInstance().Dict.TryGetValue(lvl, out var data))
+                            Locator.Instance.Get<DefineKeepDamagedSpawnSquadPlug>().DoSpawnSquad(g, data);
+                    }
+                    return;
+                }
+                if (TestIn.Text == "TransfarSys")
+                {
+                    TransfarSys();
+                    return;
+                }
 
                 if (TestIn.Text == "Reload")
                 {
@@ -171,12 +173,12 @@ namespace BililiveDebugPlugin
                 var ss = TestIn.Text.Split(' ');
                 if (ss.Length == 1)
                 {
-                    m.UserID_long = 1;
+                    m.OpenID = 1.ToString();
                     m.CommentText = TestIn.Text;
                 }
                 else
                 {
-                    m.UserID_long = long.Parse(ss[0]);
+                    m.OpenID = ss[0].Trim();
                     m.CommentText = ss[1];
                 }
                 m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
@@ -202,17 +204,17 @@ namespace BililiveDebugPlugin
                 {
                     if(m.CommentText.Length > 9)
                     {
-                        var id = int.Parse(m.CommentText.Substring(9));
-                        m_Cxt.Log($"ClearSign {DB.DBMgr.Instance.ClearSignInDate(id)}");
+                        var id = m.CommentText.Substring(9);
+                        m_Cxt.Log($"ClearSign {DB.DBMgr.Instance.ClearSignInDate(id.Trim())}");
                         return;
                     }
                     var c = 0;
-                    DB.DBMgr.Instance.ForeachUsers((u) => c += DB.DBMgr.Instance.ClearSignInDate(u.Id));
+                    //DB.DBMgr.Instance.ForeachUsers((u) => c += DB.DBMgr.Instance.ClearSignInDate(u.Id));
                     m_Cxt.Log($"ClearSign {c}");
                     return;
                 }
-                m.UserName = string.Format("name_{0}", m.UserID_long);
-                m.GuardLevel = m.UserGuardLevel = (int)(m.UserID_long <= 3 ? m.UserID_long : 0);
+                m.UserName = string.Format("name_{0}", m.OpenID);
+                //m.GuardLevel = m.UserGuardLevel = (int)(m.UserID_long <= 3 ? m.UserID_long : 0);
 
 
                 var a = new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m };
@@ -224,9 +226,56 @@ namespace BililiveDebugPlugin
             }
         }
 
+        private void TransfarSys()
+        {
+            var sys = DB.DBMgr2.Instance.Fsql.Select<DB.Model.SystemData>().ToList();
+            var c = 0;
+            foreach(var v in sys)
+            {
+                c += DB.DBMgr.Instance.Fsql.Insert(v).ExecuteAffrows();
+            }
+            m_Cxt.Log($"TransfarSys {c}");
+        }
+
+        private void AddVipAndGift(Match match, string id, int lvl)
+        {
+            var c = 1;
+            if (match.Groups.Count > 3 && int.TryParse(match.Groups[3].Value, out c))
+                ;
+            var r = AddVip(match, id, lvl,c,out var ud);
+            m_Cxt.Log($"AddLimitedItem {r}");
+            if (r > 0)
+            {
+                var d = GetDmData(ud, MsgTypeEnum.GuardBuy);
+                d.Danmaku.GuardLevel = d.Danmaku.UserGuardLevel = lvl;
+                var mult = lvl > 10 ? lvl % 10 : 1;
+                for (int i = 0; i < c * mult; ++i)
+                    m_Cxt.SendTestDanMu(this, d);
+            }
+        }
+
+        private int AddVip(Match match, string id, int lvl,int c,out UserData ud)
+        {
+            ud = DB.DBMgr.Instance.GetUser(id);
+            string name = null;
+            switch (lvl > 10 ? lvl / 10 : lvl)
+            {
+                case 2: name = Aoe4DataConfig.TiDu; break;
+                case 3: name = Aoe4DataConfig.JianZhang; break;
+            }
+            if (ud == null || name == null)
+            {
+                m_Cxt.Log($"没有找到用户{match.Groups[1].Value}");
+                return 0;
+            }
+            var r = DB.DBMgr.Instance.AddLimitedItem(id, name, lvl, 9999, c);
+            m_Cxt.Log($"AddLimitedItem {r}");
+            return r;
+        }
+
         private  global::InteractionGame.UserData GetTestUserByGroup(int g)
         {
-            return new global::InteractionGame.UserData(-1, "", "", g, 0);
+            return new global::InteractionGame.UserData("-1", "", "", g, 0);
         }
 
         private void TestGetColor(object sender, RoutedEventArgs e)
@@ -246,7 +295,7 @@ namespace BililiveDebugPlugin
             )
         {
             var m = new BilibiliDM_PluginFramework.DanmakuModel();
-            m.UserID_long = ud.Id;
+            m.OpenID = ud.Id;
             m.UserName = ud.Name;
             m.MsgType = type;
             return new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m };

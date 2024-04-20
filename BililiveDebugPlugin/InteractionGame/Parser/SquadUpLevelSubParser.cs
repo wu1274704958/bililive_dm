@@ -13,15 +13,15 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
     public interface ISquadUpLevelListener
     {
-        void OnSquadUpLevel(long uid, short sid, byte lvl,SquadData old,SquadData @new);
+        void OnSquadUpLevel(string uid, short sid, byte lvl,SquadData old,SquadData @new);
     }
     public class SquadUpLevelSubParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
         where IT : class, IContext
     {
         private IDyMsgParser<IT> m_Owner;
 
-        private ConcurrentDictionary<long, ConcurrentDictionary<short, byte>> UserSquadLevelDict =
-            new ConcurrentDictionary<long, ConcurrentDictionary<short, byte>>();
+        private ConcurrentDictionary<string, ConcurrentDictionary<short, byte>> UserSquadLevelDict =
+            new ConcurrentDictionary<string, ConcurrentDictionary<short, byte>>();
         private static readonly Regex _regex = new Regex("升([0-9a-wA-W]*)");
         private DebugPlugin _cxt;
         private IDyMsgParser<DebugPlugin> _msgParser;
@@ -51,7 +51,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             _listeners.TryRemove(listener.GetHashCode(),out _);
         }
         
-        public void NotifySquadUpLevel(long uid, short sid, byte lvl,SquadData old,SquadData @new)
+        public void NotifySquadUpLevel(string uid, short sid, byte lvl,SquadData old,SquadData @new)
         {
             foreach (var it in _listeners)
             {
@@ -69,8 +69,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     for (int i = 0; i < v.Value; ++i)
                     {
-                        var lvl = GetSquadLevel(msg.msg.UserID_long, v.Key);
-                        var ud = _msgParser.GetUserData(msg.msg.UserID_long);
+                        var lvl = GetSquadLevel(msg.msg.OpenID, v.Key);
+                        var ud = _msgParser.GetUserData(msg.msg.OpenID);
                         var sd = Aoe4DataConfig.GetSquadPure(v.Key, lvl, ud.Group);
                         if (sd == null) return;
                         if (!sd.RealHasNextLevel(ud.Group))
@@ -102,7 +102,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 _cxt.PrintGameMsg($"{ud.NameColored}升级{sd.Name}失败，资源不足");
         }
 
-        private void SetSquadLevel(long uid, int sid, int level)
+        private void SetSquadLevel(string uid, int sid, int level)
         {
             if (UserSquadLevelDict.TryGetValue(uid, out var dict))
             {
@@ -119,7 +119,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
         }
 
-        private bool Consume(long uid, double price,out int consumeHonor,out int consumeGold)
+        private bool Consume(string uid, double price,out int consumeHonor,out int consumeGold)
         {
             consumeHonor = 0;
             consumeGold = 0;
@@ -159,7 +159,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             
         }
         
-        public int GetSquadLevel(long uid, int squadId)
+        public int GetSquadLevel(string uid, int squadId)
         {
             if (!UserSquadLevelDict.ContainsKey(uid))
                 return 1;

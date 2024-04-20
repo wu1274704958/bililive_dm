@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BililiveDebugPlugin.DB;
+using conf.Squad;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
@@ -50,7 +52,11 @@ namespace InteractionGame
 
         public static int GetFansLevel(DyMsgOrigin msgOrigin)
         {
-            if(msgOrigin.msg.FansMedalName != null && msgOrigin.msg.FansMedalName.Equals("回回炮"))
+            var fans = "回回炮";
+            var d = SettingMgr.GetInstance().Get(6);
+            if (d != null && d.Country != null && d.Country.Count >= 1)
+                fans = d.Country[0];
+            if(msgOrigin.msg.FansMedalName != null && msgOrigin.msg.FansMedalName.Equals(fans))
                 return msgOrigin.msg.FansMedalLevel;
             return 0;
         }
@@ -76,6 +82,52 @@ namespace InteractionGame
             var res = op | (255 << pos);
             res &= ((src & 255) << pos);
             return res;
+        }
+
+        public static long TryTransfarUserData(string name,string openid)
+        {
+            var ud = DBMgr2.Instance.GetUserByName(name);
+            if(ud == null || ud.Ext == 1) return 0;
+            var ud2 = new BililiveDebugPlugin.DB.Model.UserData()
+            {
+                Id = openid,
+                Name = name,
+                Icon = ud.Icon,
+                Score = ud.Score,
+                Honor = ud.Honor,
+                WinTimes = ud.WinTimes,
+                SpawnSoldierNum = ud.SpawnSoldierNum,
+                UserType = ud.UserType,
+                Ext = ud.Ext,
+                SignTime = ud.SignTime,
+                UpdateTime = ud.UpdateTime,
+            };
+            DBMgr.Instance.Fsql.Insert(ud2).ExecuteAffrows();
+            DBMgr2.Instance.Fsql.Update<BililiveDebugPlugin.DB.Model2.UserData>(ud.Id)
+                .Set(a => a.Ext, 1).ExecuteAffrows();
+            return ud.Id;
+        }
+
+        public static int TryTransfarItems(long id,string openid)
+        {
+            var ls = DBMgr2.Instance.GetUserItems(id,999999);
+            int c = 0;
+            if(ls == null || ls.Count == 0) return 0;
+            foreach(var item in ls)
+            {
+                var it = new BililiveDebugPlugin.DB.Model.ItemData()
+                {
+                    Id = item.Id,
+                    OwnerId = openid,
+                    Name = item.Name,
+                    Count = item.Count,
+                    Type = item.Type,
+                    Price = item.Price,
+                    Ext = item.Ext,
+                };
+                c += DBMgr.Instance.Fsql.Insert(it).ExecuteAffrows();
+            }
+            return c;
         }
     }
 }

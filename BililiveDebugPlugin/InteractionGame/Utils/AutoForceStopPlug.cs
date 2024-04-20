@@ -12,6 +12,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public DateTime StartTime { get; set; }
         [ProtoBuf.ProtoMember(2)]
         public TimeSpan GameTime { get; set; }
+        [ProtoBuf.ProtoMember(3)]
+        public string MapName { get; set; }
     }
     public class AutoForceStopPlug : IPlug<EGameAction>
     {
@@ -36,7 +38,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 case EGameAction.GameStart:
                     _startTime = DateTime.Now;
-                    Locator.Instance.Get<DebugPlugin>().SendMsg.SendMsg((short)EMsgTy.StartGame,new StartGameData(){  StartTime = _startTime,GameTime = Aoe4DataConfig.OneTimesGameTime});
+                    Locator.Instance.Get<DebugPlugin>().SendMsg.SendMsg((short)EMsgTy.StartGame,new StartGameData()
+                    {  
+                        StartTime = _startTime,
+                        GameTime = Aoe4DataConfig.OneTimesGameTime,
+                        MapName = conf.Squad.SettingMgr.GetInstance().Get((int)conf.Squad.ESettingType.MapName).StrVal
+                    });
                     break;
                 case EGameAction.GameStop:
                     break;

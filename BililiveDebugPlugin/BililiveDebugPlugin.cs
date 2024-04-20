@@ -25,7 +25,7 @@ namespace BililiveDebugPlugin
     class GoldInfo
     {
         [ProtoMember(1)]
-        public long Id;
+        public string Id;
         [ProtoMember(2)]
         public int Gold;
         [ProtoMember(3)]
@@ -71,8 +71,8 @@ namespace BililiveDebugPlugin
             { "绿",2 },
             { "黄",3 },
 
-            { "蓝金",10 },
-            { "红金",11 },
+            { "上",10 },
+            { "下",11 },
             { "绿金",12 },
             { "黄金",13 },
         };
@@ -156,6 +156,7 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
             m_PlugMgr.Add(300,new DefineKeepDamagedSpawnSquadPlug());
             m_PlugMgr.Add(100,new EveryoneTowerPlug());
+            m_PlugMgr.Add(-1, new DbTransfarPlug());
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);

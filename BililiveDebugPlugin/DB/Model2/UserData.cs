@@ -2,31 +2,17 @@
 using FreeSql.DataAnnotations;
 using System;
 using ProtoBuf;
+using BililiveDebugPlugin.DB.Model;
 
 
-namespace BililiveDebugPlugin.DB.Model
+namespace BililiveDebugPlugin.DB.Model2
 {
-
-    public enum EUserType : uint
-    {
-        None,
-        User,
-        Admin
-    }
-    [Flags]
-    public enum EItemType : uint
-    {
-        None = 0,
-        Gift = 1,
-        Ticket = 2,
-        LimitedTime = 4,
-    }
     [ProtoBuf.ProtoContract]
     public class UserData
     {
         [ProtoMember(1)]
         [Column(IsPrimary = true)]
-        public string Id { get;set;}
+        public long Id { get;set;}
         [ProtoMember(2)]
         [Column(StringLength = 50)]
         public string Name{ get;set;}
@@ -62,7 +48,7 @@ namespace BililiveDebugPlugin.DB.Model
     {
         [Column(IsIdentity = true, IsPrimary = true)]
         public long Id { get;set;}
-        public string OwnerId { get;set;}
+        public long OwnerId { get;set;}
         [Column(StringLength = 50)]
         public string Name{ get;set;}
         public int Count{ get;set;}
@@ -71,11 +57,11 @@ namespace BililiveDebugPlugin.DB.Model
         public int Price{ get;set;}
         public int Ext{ get;set;}
 
-        public static ItemData Create(string name, EItemType type, int price, int ext = 0,int count = 0,string ownerId = "0")
+        public static ItemData Create(string name, EItemType type, int price, int ext = 0,int count = 0,long ownerId = 0)
         {
             return new ItemData(){ Name = name, Type = type, Price = price, Ext = ext, Count = count , OwnerId = ownerId };
         }
-        public static ItemData Create(ItemData data,int count,string ownerId)
+        public static ItemData Create(ItemData data,int count,long ownerId)
         {
             return new ItemData(){ Name = data.Name, Type = data.Type, Price = data.Price, Ext = data.Ext, Count = count , OwnerId = ownerId };
         }

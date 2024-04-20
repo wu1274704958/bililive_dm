@@ -13,12 +13,11 @@ public  partial class ReinforcementsData
             {
 [ProtoMember(1)] public System.Int32 Id { get; private set; }
 [ProtoMember(2)] public System.Collections.Generic.Dictionary<System.Int32,System.Double> SquadConf { get; private set; }
-[ProtoMember(3)] public System.Collections.Generic.Dictionary<System.Int32,System.Double> SpecialSquadConf { get; private set; }
-[ProtoMember(4)] public System.String Name { get; private set; }
-[ProtoMember(5)] public System.Int32 Type { get; private set; }
+[ProtoMember(3)] public System.String Name { get; private set; }
+[ProtoMember(4)] public System.Int32 Type { get; private set; }
 public EType Type_e => (EType)Type;
-[ProtoMember(6)] public System.Byte HpAdded { get; private set; }
-[ProtoMember(7)] public System.Byte DamageAdded { get; private set; }
+[ProtoMember(5)] public System.Byte HpAdded { get; private set; }
+[ProtoMember(6)] public System.Byte DamageAdded { get; private set; }
 }
 
 [ProtoContract]

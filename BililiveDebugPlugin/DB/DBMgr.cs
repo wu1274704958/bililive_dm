@@ -16,7 +16,7 @@ namespace BililiveDebugPlugin.DB
         public DBMgr()
         {
             m_fsql = new FreeSql.FreeSqlBuilder()
-                .UseConnectionString(FreeSql.DataType.Sqlite, @"Data Source=E:/Aoe4DB/live_game.db")
+                .UseConnectionString(FreeSql.DataType.Sqlite, @"Data Source=E:/Aoe4DB/live_game_openid.db")
                 .UseAutoSyncStructure(true) //自动同步实体结构到数据库，FreeSql不会扫描程序集，只有CRUD时才会生成表。
                 .Build();
         }
@@ -45,11 +45,11 @@ namespace BililiveDebugPlugin.DB
             return sb.ToString();
             
         }
-        public Model.UserData GetUser(long id)
+        public Model.UserData GetUser(string id)
         {
             return m_fsql.Select<Model.UserData>().Where((a) => a.Id == id).ToOne();
         }
-        public Model.UserData GetUserOrCreate(long id,string name,string icon,out bool isNew)
+        public Model.UserData GetUserOrCreate(string id,string name,string icon,out bool isNew)
         {
             var r = m_fsql.Select<Model.UserData>().Where((a) => a.Id == id).ToOne();
             isNew = r == null;
@@ -126,14 +126,14 @@ namespace BililiveDebugPlugin.DB
             else
                 return m_fsql.Update<Model.UserData>(data.Id).Set(a => a.Honor, d.Honor).ExecuteAffrows();
         }
-        public int AddHonor(long id,long honor)
+        public int AddHonor(string id,long honor)
         {
             var d = GetUser(id);
             if(d == null) return 0;
             d.Honor += honor;
             return m_fsql.Update<Model.UserData>(id).Set(a => a.Honor, d.Honor).ExecuteAffrows();
         }
-        public bool DepleteHonor(long id,long honor)
+        public bool DepleteHonor(string id,long honor)
         {
             var d = GetUser(id);
             if (d == null || d.Honor < honor)
@@ -144,11 +144,11 @@ namespace BililiveDebugPlugin.DB
         
         public List<Model.UserData> GetSortedUsersByScore(int limit = 10)
         {
-            return m_fsql.Select<Model.UserData>().Where((a)=> a.Id > 100).OrderByDescending((a) => a.Score).Limit(limit).ToList();
+            return m_fsql.Select<Model.UserData>().Where((a)=> a.Id.Length > 2).OrderByDescending((a) => a.Score).Limit(limit).ToList();
         }
         public List<Model.UserData> GetSortedUsersByHonor(int limit = 10)
         {
-            return m_fsql.Select<Model.UserData>().Where((a) => a.Id > 100).OrderByDescending((a) => a.Honor).Limit(limit).ToList();
+            return m_fsql.Select<Model.UserData>().Where((a) => a.Id.Length > 2).OrderByDescending((a) => a.Honor).Limit(limit).ToList();
         }
 
         public void ForeachUsers(Action<Model.UserData> action)
@@ -156,7 +156,15 @@ namespace BililiveDebugPlugin.DB
             m_fsql.Select<Model.UserData>().ToList().ForEach(action);
         }
 
-        public int ClearSignInDate(long id)
+        public int ClearAllUserScore()
+        {
+            return m_fsql.Update<Model.UserData>()
+              .SetDto(new { Score = 0 })
+              .Where(a => true)
+              .ExecuteAffrows();
+        }
+
+        public int ClearSignInDate(string id)
         {
             return m_fsql.Update<Model.UserData>(id).Set(a => a.SignTime, new DateTime(1997, 1, 1)).ExecuteAffrows();
         }
@@ -181,7 +189,7 @@ namespace BililiveDebugPlugin.DB
             }
         }
 
-        public bool CanSign(long id)
+        public bool CanSign(string id)
         {
             var d = GetUser(id);
             if (d == null)
@@ -239,6 +247,34 @@ namespace BililiveDebugPlugin.DB
                 return false;
             return m_fsql.Insert(d).ExecuteAffrows() == 1;
         }
-        
+        public List<T> GetListForSys<T>(long id)
+        {
+            var r = m_fsql.Select<Model.SystemData>().Where((a) => a.Id == id).ToOne();
+            if (r == null || string.IsNullOrEmpty(r.StrValue))
+                return null;
+            try
+            {
+                var ls = Newtonsoft.Json.JsonConvert.DeserializeObject<List<T>>(r.StrValue);
+                return ls;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+        public bool SetListForSys<T>(long id, List<T> ls)
+        {
+            string str = null;
+            try
+            {
+                str = Newtonsoft.Json.JsonConvert.SerializeObject(ls);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return SetSysValue(id, str, out _);
+        }
+
     }
 }

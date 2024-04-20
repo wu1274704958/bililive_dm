@@ -50,8 +50,11 @@
   <ItemGroup>
     <Compile Include="BililiveDebugPlugin.cs" />
     <Compile Include="DataContext.cs" />
+    <Compile Include="DB\DBMgr2.cs" />
     <Compile Include="DB\DBMgr.cs" />
+    <Compile Include="DB\DBMgrLimitedItem2.cs" />
     <Compile Include="DB\DBMgrLimitedItem.cs" />
+    <Compile Include="DB\Model2\UserData.cs" />
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
@@ -76,6 +79,7 @@
     <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
     <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
+    <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
     <Compile Include="InteractionGame\plugs\EveryoneTowerPlug.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />

@@ -34,15 +34,15 @@ namespace Interaction
         WindowInfo GetWindowInfo();
         void AppendExecCode(string code);
         void ExecSetCustomTarget(int self, int target);
-        void ExecSpawnSquad(int self, string squadId,int num, long uid,int attackTy = 0, long op1 = 1);
-        void ExecSpawnSquadWithTarget(int self, string squadId,int target,int num, long uid,int attackTy = 0, long op1 = 1);
-        int ExecSpawnGroup(int self, List<(SquadData, int)> group, long uid,double multiple = 1, int attackTy = 0, long op1 = 1);
-        int ExecSpawnGroupWithTarget(int self, int target, List<(SquadData, int)> group, long uid,double multiple = 1, int attackTy = 0, long op1 = 1);
+        void ExecSpawnSquad(int self, string squadId,int num, string uid,int attackTy = 0, long op1 = 1);
+        void ExecSpawnSquadWithTarget(int self, string squadId,int target,int num, string uid,int attackTy = 0, long op1 = 1);
+        int ExecSpawnGroup(int self, List<(SquadData, int)> group, string uid,double multiple = 1, int attackTy = 0, long op1 = 1);
+        int ExecSpawnGroupWithTarget(int self, int target, List<(SquadData, int)> group, string uid,double multiple = 1, int attackTy = 0, long op1 = 1);
         void ExecPrintMsg(string msg);
         void ExecSpawnVillagers(int self, int vid, int num);
         void ExecTryRemoveVillagersCountNotify(int vid,int next);
-        void ExecAllSquadMove(int self, long uid);
-        void ExecAllSquadMoveWithTarget(int self, int target, long uid,int attackTy = 0);
+        void ExecAllSquadMove(int self, string uid);
+        void ExecAllSquadMoveWithTarget(int self, int target, string uid,int attackTy = 0);
         void ExecCheckVillagerCount(int vid);
         void TryStartGame();
         void ClickLeftMouse(int x, int y);
@@ -183,39 +183,43 @@ namespace Interaction
         {
             AppendExecCode($"PLAYERS[{self}].custom_target = {target};");
         }
-        public void ExecSpawnSquad(int self, string squadId, int num,long uid, int attackTy = 0, long op1 = 1)
+        public void ExecSpawnSquad(int self, string squadId, int num,string uid, int attackTy = 0, long op1 = 1)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx({self},'{squadId}',{num},{uid},{attackTy},{{op1 = {op1}}});");
+            AppendExecCode($"SpawnAndAttackTargetEx({self},'{squadId}',{num},'{uid}',{attackTy},{{op1 = {op1}}});");
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
-        public void ExecSpawnSquadWithTarget(int self, string squadId, int target, int num,long uid, int attackTy = 0, long op1 = 1)
+        public void ExecSpawnSquadWithTarget(int self, string squadId, int target, int num,string uid, int attackTy = 0, long op1 = 1)
         {
-            AppendExecCode($"SpawnAndAttackTargetEx2({self},'{squadId}',{target},{num},{uid},{attackTy},{{op1 = {op1}}});");
+            AppendExecCode($"SpawnAndAttackTargetEx2({self},'{squadId}',{target},{num},'{uid}',{attackTy},{{op1 = {op1}}});");
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, num);
         }
-        public int ExecSpawnGroup(int self, List<(SquadData, int)> group, long uid, double multiple = 1, int attackTy = 0, long op1 = 1)
+        public int ExecSpawnGroup(int self, List<(SquadData, int)> group, string uid, double multiple = 1, int attackTy = 0, long op1 = 1)
         {
             if (group.Count == 0) return 0;
             var groupStr = ToSpawnSquadTable(group,uid,multiple);
             if (groupStr.Item1.Length <= 2) return 0;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            AppendExecCode($"SpawnGroupAndAttackTargetEx({self},{groupStr.Item1},'{uid}',{attackTy},{{op1 = {op1}}});");
             return groupStr.Item2;
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
-        public int ExecSpawnGroupWithTarget(int self, int target, List<(SquadData, int)> group, long uid, double multiple = 1, int attackTy = 0, long op1 = 1)
+        public int ExecSpawnGroupWithTarget(int self, int target, List<(SquadData, int)> group, string uid, double multiple = 1, int attackTy = 0, long op1 = 1)
         {
             if (group.Count == 0) return 0;
             var groupStr = ToSpawnSquadTable(group,uid,multiple);
             if (groupStr.Item1.Length <= 2) return 0;
-            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr.Item1},{uid},{attackTy},{{op1 = {op1}}});");
+            AppendExecCode($"SpawnGroupAndAttackTargetEx2({self},{target},{groupStr.Item1},'{uid}',{attackTy},{{op1 = {op1}}});");
             return groupStr.Item2;
             //Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self - 1, groupStr.Item2);
         }
 
-        private (string,int) ToSpawnSquadTable(List<(SquadData, int)> group,long uid,double multiple = 1)
+        private (string,int) ToSpawnSquadTable(List<(SquadData, int)> group,string uid,double multiple = 1)
         {
             var sb = sbPool.Get();
-            var g = Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().GetGroupById(uid);
+            var g = -1;
+            if (uid[0] == '-' && int.TryParse(uid,out var _g))
+                g = Math.Abs(_g) - 1;
+            else
+                g = Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().GetGroupById(uid);
             int num = 0;
             if (g == -1)
                 goto End;
@@ -238,13 +242,13 @@ namespace Interaction
             return (s,num);
         }
 
-        public void ExecAllSquadMove(int self,long uid)
+        public void ExecAllSquadMove(int self,string uid)
         {
-            AppendExecCode($"AllAttackTargetEx({self},{uid});");
+            AppendExecCode($"AllAttackTargetEx({self},'{uid}');");
         }
-        public void ExecAllSquadMoveWithTarget(int self, int target, long uid, int attackTy = 0)
+        public void ExecAllSquadMoveWithTarget(int self, int target, string uid, int attackTy = 0)
         {
-            AppendExecCode($"AllAttackTargetEx2({self},{target},{uid},{attackTy});");
+            AppendExecCode($"AllAttackTargetEx2({self},{target},'{uid}',{attackTy});");
         }
 
 

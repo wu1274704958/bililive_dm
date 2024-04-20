@@ -101,7 +101,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (_honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, _honor);
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{_honor}荣誉");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{_honor}功勋");
             }
         }
 
@@ -162,7 +162,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, honor);
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{honor}荣誉");
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{honor}功勋");
             }
         }
 
@@ -186,12 +186,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(m_MsgDispatcher == null) return;
             if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
             {
-                if(u.Id < 0) return;
+                if(u.Id_int < 0) return;
                 m_MsgDispatcher.GetResourceMgr().SpawnVillager(u.Id, c);
                 return;
             }
-            var target = u.Id < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var target = u.Id_int < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id_int < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti(), 5);
             var attackTy = sd.GetAttackType();
             var op = u?.AppendSquadAttribute(attribute,sd.GetAddHp(self),sd.GetAddDamage(self)) ?? 0;
@@ -203,7 +203,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
             }
-            if(u.Id > 0)
+            if(u.Id_int > 0)
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
             if (log)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
@@ -228,8 +228,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var rc = 0;
             if (group.Count == 0) return 0;
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
-            var target = u.Id < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = u.Id < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var target = u.Id_int < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id_int < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
             
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
@@ -242,7 +242,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             }
             if(rc > 0)
                 Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
-            if (u.Id > 0)
+            if (u.Id_int > 0)
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple) ,rc);
             if (log)
                 Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");

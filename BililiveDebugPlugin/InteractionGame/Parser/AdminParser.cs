@@ -21,18 +21,18 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public bool Parse(DyMsgOrigin msg)
         {
-            if(msg.barType == MsgTypeEnum.Comment && (DB.DBMgr.Instance.GetUser(msg.msg.UserID_long)?.UserType).GetValueOrDefault(EUserType.None) == EUserType.Admin)
+            if(msg.barType == MsgTypeEnum.Comment && (DB.DBMgr.Instance.GetUser(msg.msg.OpenID)?.UserType).GetValueOrDefault(EUserType.None) == EUserType.Admin)
             {
                 switch (msg.msg.CommentText)
                 {
                     case "[吃瓜]":
-                        DB.DBMgr.Instance.AddHonor(msg.msg.UserID_long, 100);return true;
+                        DB.DBMgr.Instance.AddHonor(msg.msg.OpenID, 100);return true;
                     case "[dog]":
-                        DB.DBMgr.Instance.AddGiftItem(msg.msg.UserID_long, Aoe4DataConfig.GanBao, 1);return true;
+                        DB.DBMgr.Instance.AddGiftItem(msg.msg.OpenID, Aoe4DataConfig.GanBao, 1);return true;
                     case "[手机]":
-                        DB.DBMgr.Instance.AddGiftItem(msg.msg.UserID_long, Aoe4DataConfig.QingShu, 1);return true;
+                        DB.DBMgr.Instance.AddGiftItem(msg.msg.OpenID, Aoe4DataConfig.QingShu, 1);return true;
                     case "妙啊":
-                        DB.DBMgr.Instance.AddGiftItem(msg.msg.UserID_long, Aoe4DataConfig.Gaobai, 1);return true;
+                        DB.DBMgr.Instance.AddGiftItem(msg.msg.OpenID, Aoe4DataConfig.Gaobai, 1);return true;
                 }
             }
             return false;

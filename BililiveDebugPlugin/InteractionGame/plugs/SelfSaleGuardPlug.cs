@@ -29,7 +29,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         {
             for (int i = 2; i <= 3; i++)
             {
-                var it = DBMgr.Instance.GetItem(m.UserID_long, GuardLevelName[i]);
+                var it = DBMgr.Instance.GetItem(m.OpenID, GuardLevelName[i]);
                 if(it != null)
                 {
                     m.UserGuardLevel = m.GuardLevel = it.Count;

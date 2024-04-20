@@ -76,8 +76,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 if (msg.msg.CommentText.Trim().StartsWith("签"))
                 {
-                    var u = m_Owner.m_MsgDispatcher.GetMsgParser().GetUserData(msg.msg.UserID_long);
-                    if (DB.DBMgr.Instance.SignIn(u) || DB.DBMgr.Instance.DepleteItem(msg.msg.UserID_long,Aoe4DataConfig.SignTicket,1,out _) > 0)
+                    var u = m_Owner.m_MsgDispatcher.GetMsgParser().GetUserData(msg.msg.OpenID);
+                    if (DB.DBMgr.Instance.SignIn(u) || DB.DBMgr.Instance.DepleteItem(msg.msg.OpenID,Aoe4DataConfig.SignTicket,1,out _) > 0)
                     {
                         var now = DateTime.Now;
                         var r = new Random((int)now.Ticks);

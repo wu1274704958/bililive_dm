@@ -38,6 +38,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             base.Start();
             _gameState = Locator.Instance.Get<Aoe4GameState>();
             _cxt = Locator.Instance.Get<IContext>();
+            Locator.Instance.Deposit(this);
         }
 
         private void InitDefineKeepHp()
@@ -93,10 +94,9 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             }
         }
 
-        private void DoSpawnSquad(int g, ReinforcementsData v)
+        public void DoSpawnSquad(int g, ReinforcementsData v)
         {
             List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
-            List<(int,int)> SpecialSquad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             ushort addedAttrForGroup = global::InteractionGame.Utils.Merge(v.DamageAdded, v.HpAdded);
             foreach (var it in v.SquadConf)
             {
@@ -104,19 +104,11 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
                 if(sd != null)
                     Squad.Add((sd.RealId, (int)(it.Value / sd.RealPrice(g))));
             }
-            if (v.SpecialSquadConf != null)
-            {
-                foreach (var it in v.SpecialSquadConf)
-                {
-                    var sd = Aoe4DataConfig.GetMaxLevelSquad(it.Key, g);
-                    if (sd != null)
-                        SpecialSquad.Add((sd.RealId, (int)(it.Value / sd.RealPrice(g))));
-                }
-            }
-            if (SpecialSquad.Count > 0 || Squad.Count > 0)
+            
+            if (Squad.Count > 0)
             {
                 SquadGroup squad = null;
-                Locator.Instance.Get<MsgGiftParser<DebugPlugin>>().SpawnManySquadQueue(-(g + 1), squad = SquadGroup.FromData(Squad, SpecialSquad,g).SetAddedAttr(addedAttrForGroup), 
+                Locator.Instance.Get<MsgGiftParser<DebugPlugin>>().SpawnManySquadQueue((-(g + 1)).ToString(), squad = SquadGroup.FromData(Squad,g).SetAddedAttr(addedAttrForGroup), 
                     1, 0, null, 0, giveHonor: 0, upLevelgold: 0);
                 LargeTips.Show(LargePopTipsDataBuilder.Create($"{DebugPlugin.GetColorById(g + 1)}方", $"{v.Name}抵达！")
                 .SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));

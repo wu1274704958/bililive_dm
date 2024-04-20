@@ -39,7 +39,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             return false;
         }
 
-        public void SendAllSquadAttack<IT>(IAoe4Bridge<IT> bridge, int self,int target, long uid, bool isMove = false)
+        public void SendAllSquadAttack<IT>(IAoe4Bridge<IT> bridge, int self,int target, string uid, bool isMove = false)
             where IT : class,IContext
         {
             if (target < 0)

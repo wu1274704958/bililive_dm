@@ -8,7 +8,7 @@ namespace BililiveDebugPlugin.InteractionGame
 {
     public class LiveGameUtils
     {
-        public static void ForeachUsersByGroup<IT>(IT cxt,int id,Action<long> a1, Action<UserData> a2)
+        public static void ForeachUsersByGroup<IT>(IT cxt,int id,Action<string> a1, Action<UserData> a2)
             where IT : class, IContext
         {
             var c = cxt as DebugPlugin;
@@ -25,7 +25,7 @@ namespace BililiveDebugPlugin.InteractionGame
                         a2(u);
                 }
             }
-            ObjPoolMgr.Instance.Get<List<long>>().Return(ls);
+            ObjPoolMgr.Instance.Get<List<string>>().Return(ls);
         }
     }
 

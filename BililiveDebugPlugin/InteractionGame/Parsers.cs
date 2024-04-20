@@ -34,8 +34,8 @@ namespace InteractionGame
         where IT : class,IContext
     {
         private Dictionary<string, int> PlayerGroupMap;
-        private ConcurrentDictionary<long, int> GroupDict = new ConcurrentDictionary<long, int>();
-        private ConcurrentDictionary<long, int> TargetDict = new ConcurrentDictionary<long, int>();
+        private ConcurrentDictionary<string, int> GroupDict = new ConcurrentDictionary<string, int>();
+        private ConcurrentDictionary<string, int> TargetDict = new ConcurrentDictionary<string, int>();
         private ConcurrentDictionary<int, int> GroupCount = new ConcurrentDictionary<int, int>();
         private ConcurrentDictionary<Int64,IPlayerParserObserver> _observers = new ConcurrentDictionary<long, IPlayerParserObserver>();
         private ConcurrentDictionary<Int64,IPlayerPreJoinObserver> _preJoinObservers = new ConcurrentDictionary<long, IPlayerPreJoinObserver>();
@@ -73,9 +73,9 @@ namespace InteractionGame
             }
         }
 
-        public List<long> GetUsersByGroup(int g)
+        public List<string> GetUsersByGroup(int g)
         {
-            var res = ObjPoolMgr.Instance.Get<List<long>>(null,a=>a?.Clear()).Get();
+            var res = ObjPoolMgr.Instance.Get<List<string>>(null,a=>a?.Clear()).Get();
             foreach (var it in GroupDict)
             {
                 if (it.Value == g)
@@ -100,7 +100,7 @@ namespace InteractionGame
             return res;
         }
         protected virtual Regex SelectGrouRegex => new Regex("(.+)");
-        protected virtual void ParseChooseGroup(long uid,string con,string uName)
+        protected virtual void ParseChooseGroup(string uid,string con,string uName)
         {
             var match = mSelectGrouRegex.Match(con);
             var oldGroup = GetGroupById(uid);
@@ -123,7 +123,7 @@ namespace InteractionGame
                 TryParseChangTarget(uid,con,uName);
             }
         }
-        protected virtual int ParseJoinGroup(long uid,string con, DyMsgOrigin msgOrigin)
+        protected virtual int ParseJoinGroup(string uid,string con, DyMsgOrigin msgOrigin)
         {
             if (con.StartsWith("加") || (msgOrigin.barType == MsgType.GiftSend ||
                 (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like) ||
@@ -134,7 +134,7 @@ namespace InteractionGame
             return -1;
         }
 
-        public int ChooseGroupSystem(long uid, DyMsgOrigin msgOrigin)
+        public int ChooseGroupSystem(string uid, DyMsgOrigin msgOrigin)
         {
             int g = -1;
             lock (m_LockChooseGroup)
@@ -172,7 +172,7 @@ namespace InteractionGame
 
         public abstract int GetGroupCount();
         public abstract int GetGroupExclude(int g);
-        protected bool TryParseChangTarget(long uid, string con, string uName,bool autoChangeGroup = true)
+        protected bool TryParseChangTarget(string uid, string con, string uName,bool autoChangeGroup = true)
         {
             var match = new Regex("攻(.+)").Match(con);
             if (match.Groups.Count == 2 && PlayerGroupMap.TryGetValue(match.Groups[1].Value, out var v))
@@ -194,12 +194,12 @@ namespace InteractionGame
                 //m_MsgDispatcher.GetBridge().ExecSetCustomTarget(self + 1, v + 1);
                 SetTarget(uid, v);
                 InitCtx.PrintGameMsg($"{uName}选择{tar}方作为进攻目标");
-                m_MsgDispatcher.GetMsgParser().SendAllSquadAttack(v, uid);
+                //m_MsgDispatcher.GetMsgParser().SendAllSquadAttack(v, uid);
                 return true;
             }
             return false;
         }
-        public virtual int GetGroupById(long id)
+        public virtual int GetGroupById(string id)
         {
             if(GroupDict.TryGetValue(id,out var r))
             {
@@ -207,7 +207,7 @@ namespace InteractionGame
             }
             return -1;
         }
-        public virtual void SetGroup(long id,int g)
+        public virtual void SetGroup(string id,int g)
         {
             if (!GroupDict.TryAdd(id, g))
             {
@@ -223,11 +223,11 @@ namespace InteractionGame
                 GroupCount[g] += 1;
             }
         }
-        public bool HasGroup(long id)
+        public bool HasGroup(string id)
         {
             return GroupDict.ContainsKey(id);
         }
-        public int GetTarget(long id)
+        public int GetTarget(string id)
         {
             if(TargetDict.TryGetValue(id, out var r))
             {  
@@ -235,7 +235,7 @@ namespace InteractionGame
             }
             return -1;
         }
-        public int SetTarget(long id,int t)
+        public int SetTarget(string id,int t)
         {
             if(t < 0)
             {
@@ -266,9 +266,10 @@ namespace InteractionGame
         public void OnAddGroup(UserData userdata, int g)
         {
             m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel,userdata.FansLevel);
-            foreach(var it in _observers)
+            var ud = m_MsgDispatcher.GetMsgParser().GetUserData(userdata.Id);
+            foreach (var it in _observers)
             {
-                it.Value.OnAddGroup(userdata, g);
+                it.Value.OnAddGroup(ud, g);
             }
         }
         public void OnChangeGroup(UserData userdata,int old, int g)
@@ -311,7 +312,7 @@ namespace InteractionGame
     public abstract class IDyMsgParser<IT>
         where IT : class,IContext
     {
-        protected ConcurrentDictionary<long,UserData> UserDataDict = new ConcurrentDictionary<long,UserData>();
+        protected ConcurrentDictionary<string,UserData> UserDataDict = new ConcurrentDictionary<string,UserData>();
         public IT InitCtx { get;protected set; }
         public ILocalMsgDispatcher<IT> m_MsgDispatcher { get; protected set; }
         protected List<ISubMsgParser<IDyMsgParser<IT>, IT>> subMsgParsers = new List<ISubMsgParser<IDyMsgParser<IT>, IT>>();
@@ -366,13 +367,13 @@ namespace InteractionGame
             ls.Sort((a,b) => b.Score.CompareTo(a.Score));
             return ls;
         }
-        public UserData GetUserData(long id)
+        public UserData GetUserData(string id)
         {
             if(UserDataDict.TryGetValue(id, out var data))
                 return data;
             return null;
         }
-        public void UpdateUserData(long id,double score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0,int fansLv = 0)
+        public void UpdateUserData(string id,double score,int soldier_num,string name = null,string icon = null,int group = -1,int guardLv = 0,int fansLv = 0)
         {
             if (UserDataDict.ContainsKey(id))
             {
@@ -402,7 +403,7 @@ namespace InteractionGame
                 }
             }
         }
-        public abstract void SendAllSquadAttack(int target, long uid, bool isMove = false);
+        public abstract void SendAllSquadAttack(int target, string uid, bool isMove = false);
         public virtual void OnTick(float delat) {
             lock (subMsgParsers)
             {
@@ -452,7 +453,8 @@ namespace InteractionGame
     public class UserData
     {
         [ProtoMember(1)]
-        public long Id;
+        public string Id;
+        public int Id_int => int.TryParse(Id,out var idNum) ? idNum : Int32.MaxValue;
         [ProtoMember(2)]
         public string Name;
         [ProtoMember(3)]
@@ -469,13 +471,13 @@ namespace InteractionGame
         public int Op1 = 0;
         public int Op1Heigh = 0;
         [ProtoMember(9)]
-        public int GuardLevel;
-        public int RealGuardLevel;
+        public int GuardLevel { get; protected set; } = 0;
+        public int RealGuardLevel { get; protected set; } = 0;
         public int FansLevel;
         //public DateTime JoinTime;
 
 
-        public UserData(long id, string name, string icon, int group, int guardLvl, int fansLevel = 0)
+        public UserData(string id, string name, string icon, int group, int guardLvl, int fansLevel = 0)
         {
             Id = id;
             Name = name;
@@ -486,7 +488,7 @@ namespace InteractionGame
             //JoinTime = DateTime.Now;
         }
 
-        private void SetGuardLevel(int guardLvl)
+        public void SetGuardLevel(int guardLvl)
         {
             if(guardLvl >= 10)
             {
@@ -504,6 +506,7 @@ namespace InteractionGame
         public int DamageMultiple => (Op1 >> 24) & 255;
         public int AddHpMultiple(int n)
         {
+            if (n == 0) return 0;
             var op = Op1;
             var high_l = (op >> 16) & 255;
             high_l += n;
@@ -514,6 +517,7 @@ namespace InteractionGame
         }
         public int AddDamageMultiple(int n)
         {
+            if (n == 0) return 0;
             var op = Op1;
             var high_h = (op >> 24) & 255;
             high_h += n;

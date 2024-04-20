@@ -16,7 +16,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
             {
                 DownHour = 1;
-                DownMinute = 10;
+                DownMinute = 30;
             }
         }
         public override void Tick()

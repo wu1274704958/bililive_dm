@@ -164,6 +164,8 @@ namespace BilibiliDM_PluginFramework
                                 FansMedalLevel = fans_medal_level.Value<int>();
                             if (((JObject)data).TryGetValue("fans_medal_name", out var fans_medal_name))
                                 FansMedalName = fans_medal_name.ToString();
+                            if (((JObject)data).TryGetValue("open_id", out var open_id))
+                                OpenID = open_id.ToString();
                         }
                         switch (cmd)
                         {
@@ -814,6 +816,7 @@ namespace BilibiliDM_PluginFramework
         ///     </para>
         /// </summary>
         public long UserID_long { get; set; }
+        public string OpenID { get; set; }
 
         /// <summary>
         ///     消息触发者用户ID

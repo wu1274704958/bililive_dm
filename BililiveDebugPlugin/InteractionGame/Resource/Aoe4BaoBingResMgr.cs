@@ -12,15 +12,15 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
     public class Aoe4BaoBingResMgr<C> : IResourceMgr<C>
         where C : class, IContext
     {
-        ConcurrentDictionary<long, Utils.TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<long, Utils.TimeLinerInteger>();
-        public override void AddAutoResourceById(long id, float addFactor = 1f)
+        ConcurrentDictionary<string, Utils.TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, Utils.TimeLinerInteger>();
+        public override void AddAutoResourceById(string id, float addFactor = 1f)
         {
             Utils.TimeLinerInteger v = null;
             AutoAddMap.TryAdd(id, v = new Utils.TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
             v.AddFactor = addFactor;
         }
 
-        public override void AddResource(long id, double c)
+        public override void AddResource(string id, double c)
         {
             if(AutoAddMap.TryGetValue(id, out var v))
             {
@@ -31,7 +31,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override void ChangeAutoResourceAddFactor(long id, float addFactor)
+        public override void ChangeAutoResourceAddFactor(string id, float addFactor)
         {
             if (AutoAddMap.TryGetValue(id, out var v))
             {
@@ -42,7 +42,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override void AddAutoResourceAddFactor(long id, float addFactor)
+        public override void AddAutoResourceAddFactor(string id, float addFactor)
         {
             if (AutoAddMap.TryGetValue(id, out var v))
             {
@@ -53,7 +53,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override void Foreach(int ty, Action<long, double> action)
+        public override void Foreach(int ty, Action<string, double> action)
         {
             foreach(var it in AutoAddMap)
             {
@@ -64,7 +64,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             }
         }
 
-        public override double GetResource(long id, int ty = 0)
+        public override double GetResource(string id, int ty = 0)
         {
             if(AutoAddMap.TryGetValue(id,out var v))
             {
@@ -75,7 +75,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return 0;
         }
 
-        public override int GetVillagerCount(long id)
+        public override int GetVillagerCount(string id)
         {
             return 0;
         }
@@ -95,12 +95,12 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return AutoAddMap.Count;
         }
 
-        public override void RemoveAllVillagers(long id)
+        public override void RemoveAllVillagers(string id)
         {
             
         }
 
-        public override bool RemoveResource(long id, double r)
+        public override bool RemoveResource(string id, double r)
         {
             if(AutoAddMap.TryGetValue(id,out var v))
             {
@@ -115,7 +115,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
             return false;
         }
 
-        public override bool SpawnVillager(long id, int num)
+        public override bool SpawnVillager(string id, int num)
         {
             return false;
         }

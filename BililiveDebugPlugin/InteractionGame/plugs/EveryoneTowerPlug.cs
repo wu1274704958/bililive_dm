@@ -22,14 +22,14 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
                 Mid = mid;
             }
         }
-        private ConcurrentDictionary<long, TowerData> _group = new ConcurrentDictionary<long, TowerData>();
-        private ConcurrentDictionary<int,long> _mapUid = new ConcurrentDictionary<int, long>();
-        private HashSet<long> _isStoneSet = new HashSet<long>();
+        private ConcurrentDictionary<string, TowerData> _group = new ConcurrentDictionary<string, TowerData>();
+        private ConcurrentDictionary<int,string> _mapUid = new ConcurrentDictionary<int, string>();
+        private HashSet<string> _isStoneSet = new HashSet<string>();
         private IAoe4Bridge<DebugPlugin> _bridge;
         private IResourceMgr<DebugPlugin> _resMgr;
         private Aoe4GameState _state;
         private int LastMsgId = 0;
-        public Action<long, TowerData> OnTowerStateChange;
+        public Action<string, TowerData> OnTowerStateChange;
         private DebugPlugin _cxt;
 
         public override void Tick()
@@ -65,7 +65,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             OnTowerStateChange += _onTowerStateChange;
         }
 
-        private void _onTowerStateChange(long id, TowerData st)
+        private void _onTowerStateChange(string id, TowerData st)
         {
             if(st.State == 2)
             {
@@ -94,7 +94,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             }
         }
         
-        public bool IsTowerAlive(long uid)
+        public bool IsTowerAlive(string uid)
         {
             return _group.TryGetValue(uid,out var v) && v.State == 1;
         }
@@ -107,7 +107,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             int op = userData.GuardLevel & 255;
             if (_isStoneSet.Contains(userData.Id))
                 op |= (1 << 8);
-            _bridge.AppendExecCode($"TFE_AddTower({userData.Id},{mid},{g + 1},'{userData.Name}',{op})");
+            _bridge.AppendExecCode($"TFE_AddTower('{userData.Id}',{mid},{g + 1},'{userData.Name}',{op})");
         }
 
         private int GenMid(UserData userData)
@@ -135,7 +135,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         {
             if(m.CommentText != null && m.CommentText.IndexOf("石") >= 0)
             {
-                _isStoneSet.Add(m.UserID_long);
+                _isStoneSet.Add(m.OpenID);
             }
             return m;
         }

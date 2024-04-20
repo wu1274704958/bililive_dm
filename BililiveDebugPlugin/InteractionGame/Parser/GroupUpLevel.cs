@@ -82,7 +82,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_I",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_I",
                 }
-                , 0.64f,0,1 ),
+                , 0.62f,0,1 ),
             
             new LevelConfig(2,10000,new List<string>()
                 {
@@ -91,7 +91,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_II",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_II",
                 }
-                , 0.7f,0,2 ),
+                , 0.63f,0,2 ),
             new LevelConfig(3,18000,new List<string>()
                 {
                     "UPG.COMMON.UPGRADE_MELEE_DAMAGE_III",
@@ -99,7 +99,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     "UPG.COMMON.UPGRADE_RANGED_DAMAGE_III",
                     "UPG.COMMON.UPGRADE_RANGED_ARMOR_III"
                 }
-                , 0.72f,0,3 ),
+                , 0.64f,0,3 ),
         };
         public void Init(IDyMsgParser<IT> owner)
         {

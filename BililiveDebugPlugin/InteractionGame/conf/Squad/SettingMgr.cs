@@ -7,13 +7,14 @@ using System.IO;
             
 namespace conf.Squad
             {
-
+public enum ESettingType {MapName = 7,FansCard = 6,}
 [ProtoContract]
 public  partial class Setting
             {
 [ProtoMember(1)] public System.Int32 Id { get; private set; }
 [ProtoMember(2)] public System.Collections.Generic.List<System.String> Country { get; private set; }
 [ProtoMember(3)] public System.Int32 IntVal { get; private set; }
+[ProtoMember(4)] public System.String StrVal { get; private set; }
 }
 
 [ProtoContract]

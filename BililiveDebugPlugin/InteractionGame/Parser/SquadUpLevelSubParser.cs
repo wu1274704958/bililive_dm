@@ -36,6 +36,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             _msgParser = _cxt.messageDispatcher.GetMsgParser();
         }
 
+        public void OnStartGame()
+        {
+            
+        }
+
         public void Stop()
         {
             

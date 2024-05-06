@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BililiveDebugPlugin.DB.Model;
+using BililiveDebugPlugin.InteractionGame.mode;
 using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf.Squad;
@@ -37,6 +38,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly string SignTicket = "签到券";
         public static readonly string TiDu = "提督";
         public static readonly string JianZhang = "舰长";
+        public static readonly string StrawberryCake = "草莓蛋糕";
 
         public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
         {
@@ -53,9 +55,10 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             //{PPJ ,           ItemData.Create(PPJ              ,EItemType.Gift,50) },
             //{FriendShip ,    ItemData.Create(FriendShip       ,EItemType.Gift,52) },
             {DaCall,        ItemData.Create(DaCall          ,EItemType.Gift,5)     },
-            {KuaKua ,        ItemData.Create(KuaKua          ,EItemType.Gift,330)  },
+            {KuaKua ,        ItemData.Create(KuaKua         ,EItemType.Gift,330)  },
             {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000)  },
             {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,200)  },
+            //{StrawberryCake ,ItemData.Create(StrawberryCake ,EItemType.Gift,200)  },
         };
 
         public enum SpawnSquadType
@@ -142,12 +145,12 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static int RandomIdx { get; private set; } = 116;
 
-        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(35);
+        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(SettingMgr.GetInt(9, 30));
 
-        public static readonly int OneTimesSpawnSquadCount = SettingMgr.GetInt(5,50);
+        public static int OneTimesSpawnSquadCount => SettingMgr.GetInt(5, 50);
 
-        public static readonly int SquadLimit = SettingMgr.GetInt(3,850);
-        public static readonly int AutoSquadLimit = SquadLimit - SettingMgr.GetInt(4, 120);
+        public static int SquadLimit => SettingMgr.GetInt(3,850);
+        public static int AutoSquadLimit => SquadLimit - SettingMgr.GetInt(4, 120);
 
         public static readonly long HonorGoldFactor = 20;
         public static readonly int AutoGoldLimit = 4000;
@@ -174,6 +177,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                  + (i < 3 ? 0.0005 * (3 - i) : 0.0) + (minutes / 10 / 1000);
             if (user.FansLevel > 0) f += (user.FansLevel / 1000);
             if (user.GuardLevel > 0) f += f * SettlementPlayerResAddFactorArr[user.GuardLevel];
+            f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, b);
             var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
             var activityMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
             

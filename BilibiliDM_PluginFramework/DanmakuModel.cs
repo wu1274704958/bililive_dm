@@ -156,6 +156,9 @@ namespace BilibiliDM_PluginFramework
 
                         if (obj.TryGetValue("data", out var data))
                         {
+                            JObject userInfo = null;
+                            if (((JObject)data).TryGetValue("user_info", out var user_info))
+                                userInfo = (JObject)user_info;
                             if (((JObject)data).TryGetValue("uface", out var uface))
                                 UserFace = uface.ToString();
                             if (((JObject)data).TryGetValue("guard_level", out var guard_level))
@@ -166,6 +169,15 @@ namespace BilibiliDM_PluginFramework
                                 FansMedalName = fans_medal_name.ToString();
                             if (((JObject)data).TryGetValue("open_id", out var open_id))
                                 OpenID = open_id.ToString();
+                           
+                            if(userInfo != null)
+                            {
+                                if (OpenID == null && userInfo.TryGetValue("open_id", out open_id))
+                                    OpenID = open_id.ToString();
+                                if (UserFace == null && userInfo.TryGetValue("uface", out uface))
+                                    UserFace = uface.ToString();
+                            }
+                            
                         }
                         switch (cmd)
                         {

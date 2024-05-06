@@ -156,7 +156,8 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
             m_PlugMgr.Add(300,new DefineKeepDamagedSpawnSquadPlug());
             m_PlugMgr.Add(100,new EveryoneTowerPlug());
-            m_PlugMgr.Add(-1, new DbTransfarPlug());
+            //m_PlugMgr.Add(-1, new DbTransfarPlug());
+            m_PlugMgr.Add(-1,new GameModeManager());
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
@@ -231,6 +232,7 @@ namespace BililiveDebugPlugin
                     if (LastState != 2 && d.R == 2)
                     {
                         DoSettlement(d.R,d.G);
+                        Interlocked.Exchange(ref LastState, -1);
                     }
                     else
                         Interlocked.Exchange(ref LastState, d.R);
@@ -243,6 +245,11 @@ namespace BililiveDebugPlugin
                     {
                         GameSt = 0;
                         m_PlugMgr.Notify(EGameAction.GameStart);
+                        messageDispatcher.OnStartGame();
+                    }else if(LastState == -1 && d.R == 2 && d.G == 0 && d.B == 0)
+                    {
+                        DoSettlement(2, 0,true);
+                        Interlocked.Exchange(ref LastState, -1);
                     }
                     else
                     {
@@ -340,6 +347,8 @@ namespace BililiveDebugPlugin
             {
                 var it = GoldInfoPool.Get();
                 it.Id = id;
+                if (!Aoe4DataConfig.CanSpawnSquad(id, Aoe4DataConfig.SpawnSquadType.Auto))
+                    c = 0;
                 it.Gold = (int)c;
                 it.Progress = autoSpawn.GetSpawnProgress(id);
                 if (it.Progress > 1.0) it.Progress = 1.0f;

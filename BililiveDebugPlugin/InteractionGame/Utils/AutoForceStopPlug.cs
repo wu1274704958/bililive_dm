@@ -28,7 +28,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             if(DateTime.Now - _startTime > Aoe4DataConfig.OneTimesGameTime)
             {
-                Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().AppendExecCode("ForceStopGame();");
+                Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ForceFinish();
+                _startTime = DateTime.Now;
             }
         }
 

@@ -106,6 +106,14 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
+                if ((match = new Regex("AddTest ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[1].Value, out var count))
+                    {
+                        AddTestUser(count);
+                    }
+                    return;
+                }
                 if ((match = new Regex("Vip ([0-9a-z]+) ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
                 {
                     if (int.TryParse(match.Groups[2].Value, out var lvl))
@@ -224,6 +232,20 @@ namespace BililiveDebugPlugin
             {
                 MessageBox.Show(string.Format(ex.ToString()));
             }
+        }
+
+        private void AddTestUser(int count)
+        {
+            for(int i = 1;i <= count; i++)
+            {
+                var m = new BilibiliDM_PluginFramework.DanmakuModel();
+                m.OpenID = i.ToString();
+                m.CommentText = "加塔";
+                m.UserName = $"name_{i}";
+                m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
+                m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
+            }
+            
         }
 
         private void TransfarSys()

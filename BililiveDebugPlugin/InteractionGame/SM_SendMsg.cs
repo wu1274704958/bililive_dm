@@ -12,6 +12,7 @@ using System.Windows.Interop;
 using ProtoBuf;
 using System.Reflection;
 using Utils;
+using InteractionGame;
 
 namespace BililiveDebugPlugin.InteractionGame
 {
@@ -200,8 +201,8 @@ namespace BililiveDebugPlugin.InteractionGame
         public void SendMsg<T>(short id, T obj)
             where T:class
         {
-            try
-            {
+            //try
+            //{
                 if(obj == null)
                 {
                     SendMessage(id, null);
@@ -210,10 +211,12 @@ namespace BililiveDebugPlugin.InteractionGame
                 m_TmpStream = new MemoryStream();
                 Serializer.SerializeWithLengthPrefix(m_TmpStream, obj,PrefixStyle.Fixed32BigEndian);
                 var msg = m_TmpStream.ToArray();
-                SendMessage(id, msg);
-            }catch (Exception e) { 
-                MessageBox.Show($"SendMsg error: {e.Message}");
-            }
+                var ret = SendMessage(id, msg);
+                System.Diagnostics.Debug.Assert(ret == 0 || ret == -2);
+            //}
+            //catch (Exception e) { 
+            //    Locator.Instance.Get<IContext>().Log($"SendMsg error: {e.Message}");
+            //}
         }
 
         private static int strlen(IntPtr init)

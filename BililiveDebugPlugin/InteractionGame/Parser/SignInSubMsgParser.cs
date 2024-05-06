@@ -151,6 +151,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             
         }
 
+        public void OnStartGame()
+        {
+            
+        }
+
         public void Stop()
         {
             m_Owner = null;

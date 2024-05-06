@@ -46,6 +46,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 msgOrigin.msg.CommentText = "";
             // 系统选择阵营
             var uid = msgOrigin.msg.OpenID;
+            if(uid == null)
+            {
+                InitCtx.Log($"uid == null raw = {msgOrigin.msg.RawData}");
+                return -1;
+            }
             var con = msgOrigin.msg.CommentText.Trim();
             var uName = msgOrigin.msg.UserName;
             int g = -1;
@@ -109,9 +114,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         public Utils.ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
-        private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)x([0-9]+)");
+        private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
         private Regex BooHonorRegex2 = new Regex("z([0-9a-wA-W]+)");
-        private Regex SendBagGiftRegex = new Regex("送(.+)x([0-9]+)");
+        private Regex SendBagGiftRegex = new Regex("送(.+)[x,\\*,×]([0-9]+)");
         private Regex SendBagGiftRegex2 = new Regex("送(.+)");
         private SpawnSquadQueue m_SpawnSquadQueue;
         public SquadUpLevelSubParser<IT> SquadUpLevelSubParser { get; private set; }
@@ -127,6 +132,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new SignInSubMsgParser<IT>());
             AddSubMsgParse(new GroupUpLevel<IT>());
             AddSubMsgParse(new AdminParser<IT>());
+            AddSubMsgParse(new BossGameModeParser<IT>());
             AddSubMsgParse(SquadUpLevelSubParser = new SquadUpLevelSubParser<IT>());
             base.Init(it, dispatcher);
             m_MsgDispatcher.GetPlayerParser().AddObserver(this);
@@ -417,7 +423,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "水晶之恋": id = 110011; t = 1; c *= 21; break;
                 case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); Squad.Add((300110, 100));
                     Squad.Add((100100, 100)); t = 3;
-                    addedAttr = Merge(3, 1); break;
+                    addedAttrForGroup = addedAttr = Merge(3, 2); break;
                 case "星愿水晶球": id = 110002; 
                     if(Aoe4DataConfig.GetSquadPure(52,2,u.Group) == null)
                         Squad.Add((100104, 45));
@@ -427,7 +433,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     addedAttr = global::InteractionGame.Utils.Merge(20, 100);
                     addedAttrForGroup = global::InteractionGame.Utils.Merge(6, 40);
                     break;
-                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = Merge(2, 5);break;
+                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = Merge(3, 5);break;
                 case "打call":
                     {
                         if(u.HpMultiple + c > 255)
@@ -827,8 +833,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private IDyMsgParser<IT> m_Owner;
         private DateTime m_AutoBoomCkTime = DateTime.Now;
         private readonly Regex Reg = new Regex("^([0-9a-wA-W]*)$");
-        private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]+)[x,\\*]([0-9]+)$");
-        private readonly Regex BoomOnlyCountReg = new Regex("^[x,\\*]([0-9]+)$");
+        private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]+)[x,\\*,×]([0-9]+)$");
+        private readonly Regex BoomOnlyCountReg = new Regex("^[x,\\*,×]([0-9]+)$");
 
         public void Init(IDyMsgParser<IT> owner)
         {
@@ -1076,6 +1082,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 m_Owner.InitCtx.PrintGameMsg($"{uName}需要先设置自动出兵才能暴兵");
             }
+        }
+
+        public void OnStartGame()
+        {
+            
         }
 
         public void Stop()

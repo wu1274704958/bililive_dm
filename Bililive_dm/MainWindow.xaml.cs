@@ -1789,6 +1789,10 @@ namespace Bililive_dm
                 OPMConnBtn.IsEnabled = true;
                 OPMDisconnBtn.IsEnabled = true;
                 DisableOPM.IsEnabled = true;
+                await Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    b_Disconnected(null, new DisconnectEvtArgs() { Error = exception });
+                }));
                 return;
             }
 

@@ -205,7 +205,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             }
             if(u.Id_int > 0)
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
-            if (log)
+            if (false)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
 
@@ -244,7 +244,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
             if (u.Id_int > 0)
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple) ,rc);
-            if (log)
+            if (false)
                 Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
             return rc;
         }

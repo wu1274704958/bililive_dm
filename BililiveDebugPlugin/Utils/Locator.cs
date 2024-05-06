@@ -83,5 +83,18 @@ namespace Utils
             }
             pool.TryAdd(typeof(T), t);
         }
+        
+        public T DepositOrExchange<T>(T t)
+        {
+            var ty = typeof(T);
+            if (_pools.TryGetValue(ty, out var v))
+            {
+                _pools[ty] = t;
+                return (T)v;
+            }else
+                _pools.TryAdd(ty, t);
+            return default(T);
+        }
+        
     }
 }

@@ -5,9 +5,11 @@ using System.Drawing.Design;
 using System.Text;
 using System.Windows.Documents;
 using BililiveDebugPlugin.InteractionGame.Data;
+using BililiveDebugPlugin.InteractionGame.mode;
 using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame;
 using ProtoBuf;
+using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -106,6 +108,16 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             m_Owner = owner;
         }
 
+        public void OnStartGame()
+        {
+            for (int i = 0; i < Aoe4DataConfig.GroupCount; ++i)
+            {
+                var level = Locator.Instance.Get<IGameMode>().StartGroupLevel(i);
+                GroupLevel.TryAdd(i, new LevelCxt(){ All = 0, NowLevel = level + 1, NowConf = level  });
+                SendGroupLevel(i, level + 1,"",0.0f);
+            }
+        }
+
         public void Stop()
         {
             
@@ -123,10 +135,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void OnClear()
         {
-            for (int i = 0; i < Aoe4DataConfig.GroupCount; ++i)
-            {
-                SendGroupLevel(i, 1,"",0.0f);
-            }
             GroupLevel.Clear();
         }
 

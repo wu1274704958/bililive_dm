@@ -92,7 +92,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var remaining = RemainingQuantity(group);
                 var count = action.GetCount();
                 bool limit = remaining <= 0 ? true : IsGroupLimit(count, remaining);
-                Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
+                //Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
                 if (limit)
                 {
                     ConcurrentQueue<SpawnSquadActionBound> queue = GetQueue(group);
@@ -154,7 +154,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
             !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
             {
-                Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
+                //Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
                 SpawnInQueue(action, remaining);
             }
         }

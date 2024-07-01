@@ -275,6 +275,7 @@ namespace BililiveDebugPlugin.InteractionGame
             var c = CheckState(EAoe4State.SquadGroupCount);
             if(c.R != _lastCheckGroup)
             {
+                _lastUpdate = DateTime.Now;
                 _lastCheckGroup = c.R;
                 var gb = (c.G << 8) | c.B;
                 var g = (gb >> 13) & 0x7;
@@ -284,8 +285,13 @@ namespace BililiveDebugPlugin.InteractionGame
                     var old = _squadCountByGroup[g];
                     _squadCountByGroup.TryUpdate(g, old - deadCount, old);
                 }
-                //_bridge.AppendExecCode($"SDN_OnNext({c.R})");
-                ExecGetSquadCount(0, 0);
+                _bridge.AppendExecCode($"SDN_OnNext({c.R})");
+                //ExecGetSquadCount(0, 0);
+            }
+            else if((DateTime.Now - _lastUpdate).TotalMilliseconds > 500)
+            {
+                _lastUpdate = DateTime.Now;
+                _bridge.AppendExecCode($"SDN_OnNext({c.R})");
             }
         }
 

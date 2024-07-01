@@ -489,8 +489,8 @@ namespace InteractionGame
         [ProtoMember(8)]
         public int Op1 = 0;
         public int Op1Heigh = 0;
-        [ProtoMember(9)]
         public int GuardLevel { get; protected set; } = 0;
+        [ProtoMember(9)]
         public int RealGuardLevel { get; protected set; } = 0;
         public int FansLevel;
         //public DateTime JoinTime;

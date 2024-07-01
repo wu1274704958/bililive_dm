@@ -18,7 +18,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     public class AutoForceStopPlug : IPlug<EGameAction>
     {
         private DateTime _startTime = DateTime.Now;
-        public DateTime StartTime => _startTime;
+        //Outter useful
+        private DateTime _safeStartTime = DateTime.Now;
+        public DateTime StartTime => _safeStartTime;
         public override void Init()
         {
             base.Init();
@@ -38,7 +40,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             switch (m)
             {
                 case EGameAction.GameStart:
-                    _startTime = DateTime.Now;
+                    _safeStartTime = _startTime = DateTime.Now;
                     Locator.Instance.Get<DebugPlugin>().SendMsg.SendMsg((short)EMsgTy.StartGame,new StartGameData()
                     {  
                         StartTime = _startTime,

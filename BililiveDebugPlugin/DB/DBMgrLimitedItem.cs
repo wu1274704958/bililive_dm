@@ -45,6 +45,10 @@ namespace BililiveDebugPlugin.DB
         {
             return HandleLimitedItem(m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && a.Name == name).ToOne());
         }
+        public ItemData GetItem(string id, string name,int count)
+        {
+            return HandleLimitedItem(m_fsql.Select<ItemData>().Where((a) => a.OwnerId == id && a.Name == name && a.Count == count).ToOne());
+        }
 
         public int AddGiftItem(SettlementData data, string name, int num)
         {
@@ -156,6 +160,37 @@ namespace BililiveDebugPlugin.DB
             }
             else
                 ret += ChangeItemExt(itemData, itemData.Ext + (int)(endTime - now).TotalSeconds);
+            return ret;
+        }
+        public int AddLimitedItemEx(string uid,string name, int numAsTag, int price,int month = 1)
+        {
+            int ret = 0;
+            var itemData = GetItem(uid, name,numAsTag);
+            var now = DateTime.Now;
+            var endTime = now.AddMonths(month);
+            if (itemData == null)
+            {
+                var newItem = ItemData.Create(name, EItemType.LimitedTime, price, endTime.ToSecond(),
+                    numAsTag, uid);
+                ret += m_fsql.Insert(newItem).ExecuteAffrows();
+            }
+            else
+                ret += ChangeItemExt(itemData, itemData.Ext + (int)(endTime - now).TotalSeconds);
+            return ret;
+        }
+
+        public int AddLimitedItemEx(string uid, string name, int numAsTag, int price, TimeSpan duration)
+        {
+            int ret = 0;
+            var itemData = GetItem(uid, name,numAsTag);
+            if (itemData == null)
+            {
+                var newItem = ItemData.Create(name, EItemType.LimitedTime, price, (DateTime.Now + duration).ToSecond(),
+                    numAsTag, uid);
+                ret += m_fsql.Insert(newItem).ExecuteAffrows();
+            }
+            else
+                ret += ChangeItemExt(itemData, itemData.Ext + (int)duration.TotalSeconds);
             return ret;
         }
     }

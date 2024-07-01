@@ -88,6 +88,14 @@ namespace InteractionGame
         {
             var ud = DBMgr2.Instance.GetUserByName(name);
             if(ud == null || ud.Ext == 1) return 0;
+            var newUd = DBMgr.Instance.GetUser(openid);
+            if (newUd != null)
+            {
+                DBMgr.Instance.AddHonor(openid,ud.Honor);
+                DBMgr2.Instance.Fsql.Update<BililiveDebugPlugin.DB.Model2.UserData>(ud.Id)
+                    .Set(a => a.Ext, 1).ExecuteAffrows();
+                return ud.Id;
+            }
             var ud2 = new BililiveDebugPlugin.DB.Model.UserData()
             {
                 Id = openid,

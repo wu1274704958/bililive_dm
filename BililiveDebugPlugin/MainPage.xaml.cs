@@ -88,7 +88,7 @@ namespace BililiveDebugPlugin
                     Aoe4Settlement<DebugPlugin>.ClickRestart();
                     return;
                 }
-                if ((match = new Regex("AddSign ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
+                if ((match = new Regex("AddSign (.+) ([0-9]+)").Match(TestIn.Text)).Success)
                 {
                     if (int.TryParse(match.Groups[2].Value, out var count))
                     {
@@ -103,6 +103,15 @@ namespace BililiveDebugPlugin
                         var r = new Random();
                         for(int i = 1;i <= count;i++)
                             (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i.ToString(),$"name{i}","",g,0), g);
+                    }
+                    return;
+                }
+                if ((match = new Regex("AddGift (.+) (.+) ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[3].Value, out var count))
+                    {
+                        if (DB.DBMgr.Instance.AddGiftItem(match.Groups[1].Value, match.Groups[2].Value, count) > 0)
+                            m_Cxt.Log($"AddGift {match.Groups[2].Value}*{count}");
                     }
                     return;
                 }
@@ -290,7 +299,7 @@ namespace BililiveDebugPlugin
                 m_Cxt.Log($"没有找到用户{match.Groups[1].Value}");
                 return 0;
             }
-            var r = DB.DBMgr.Instance.AddLimitedItem(id, name, lvl, 9999, c);
+            var r = DB.DBMgr.Instance.AddLimitedItemEx(id, name, lvl, 9999, c);
             m_Cxt.Log($"AddLimitedItem {r}");
             return r;
         }

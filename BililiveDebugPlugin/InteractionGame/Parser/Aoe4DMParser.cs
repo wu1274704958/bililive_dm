@@ -358,11 +358,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if (DB.DBMgr.Instance.DepleteItem(ud.Id, item.Name, c, out var rest) > 0)
                     {
-                        SendGift(it.Key, c, item.Price, ud);
+                        SendGift(it.Key, c, item.Price, ud,isRealGift:false);
                         InitCtx.PrintGameMsg($"{ud.NameColored}使用了{c}个{it.Key}，剩余{rest}个");
                     }
                     else
                         InitCtx.PrintGameMsg($"{ud.NameColored}{it.Key}数量不足");
+                    break;
                 }
             }
         }
@@ -396,13 +397,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             //SquadData.Recycle(squad);
         }
-        private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5)
+        private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5,bool isRealGift = true)
         {
             int c = giftCount;
             int t = 0;
             int id = -1;
-            ushort addedAttr = 1;
-            ushort addedAttrForGroup = 1;
+            ushort addedAttr = Merge(1, 1);
+            ushort addedAttrForGroup = Merge(1, 1);
             List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             switch (giftName)
             {
@@ -414,7 +415,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "牛哇":
                 case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
                 case "干杯": id = 110005; t = 1; c *= 15; break;
-                case "棒棒糖": id = 110003; t = 1; c *= 5; break;
+                case "棒棒糖": id = 110003; t = 1; c *= 5; addedAttr = Merge(2, 3); break;
                 case "这个好诶": id = 110004; t = 1; c *= 16; break;
                 case "小蛋糕": id = 110016; t = 1; c *= 7; break;
                 //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
@@ -464,6 +465,26 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                             var v = u.AddDamageMultiple(1 * c);
                             InitCtx.PrintGameMsg($"{u.NameColored}后续部队增加{v * 10}%伤害");
                         }
+                        break;
+                    }
+                case "为你打call":
+                    {
+                        int count = c;
+                        id = 100098; t = 1; c *= 160;
+                        if (isRealGift)
+                        {
+                            var r = DB.DBMgr.Instance.AddLimitedItemEx(u.Id, Aoe4DataConfig.JianZhang, 33, 9999, TimeSpan.FromDays(1 * count));
+                            if (r > 0)
+                                InitCtx.PrintGameMsg($"{u.NameColored}获得{1 * count}天舰长3倍体验卡,下局生效");
+                            AddGift(u, Aoe4DataConfig.NiuWa, 30 * count);
+                        }
+                        break;
+                    }
+                case "泡泡机":
+                    {
+                        AddGift(u, Aoe4DataConfig.XiaoFuDie, 9 * c);
+                        transHonorfactor = -1.0f;
+                        t = -1;
                         break;
                     }
                 default:
@@ -830,6 +851,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         
         private ConcurrentDictionary<string,SquadGroup> m_Dict = new ConcurrentDictionary<string,SquadGroup>();
+        private ConcurrentDictionary<string,DateTime> m_SendGiftTimeDict = new ConcurrentDictionary<string, DateTime>();
         private IDyMsgParser<IT> m_Owner;
         private DateTime m_AutoBoomCkTime = DateTime.Now;
         private readonly Regex Reg = new Regex("^([0-9a-wA-W]*)$");
@@ -871,15 +893,32 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if(!Aoe4DataConfig.CanSpawnSquad(it.Key, Aoe4DataConfig.SpawnSquadType.AutoGoldBoom))
                         continue;
+                    var lastSendGiftTime = GetSendGiftTime(it.Key);
+                    if ((DateTime.Now - lastSendGiftTime).TotalMinutes < 1.5)
+                        continue;
                     var gold = m_Owner.m_MsgDispatcher.GetResourceMgr().GetResource(it.Key);
                     if(gold >= 3000)
                     {
-                        var c = 3000 / it.Value.price;
-                        Boom(it.Key,(int)c);
+                        AutoBoom(it.Key,it.Value);
                     }
                 }
                 m_AutoBoomCkTime = DateTime.Now;
             }
+        }
+
+        private void AutoBoom(string id, SquadGroup value)
+        {
+            var ud = m_Owner.GetUserData(id);
+            Boom(id, value,ud.NameColored,999999,true,tag:"自动");
+        }
+
+        private DateTime GetSendGiftTime(string id)
+        {
+            if(m_SendGiftTimeDict.TryGetValue(id,out var v))
+            {
+                return v;
+            }
+            return global::Utils.Utils.MinDateTime;
         }
 
         private void SpawnSquad(string uid,SquadGroup v)
@@ -903,7 +942,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void AddDefaultAutoSquad(UserData data,int sdId,int c)
         {
-            var squad = SquadGroup.FromString("000", data.Group, data.Id);
+            var squad = SquadGroup.FromString("h", data.Group, data.Id);
             squad.lastSpawnTime = DateTime.Now;
             squad.uName = data.NameColored;
             m_Dict.TryAdd(data.Id, squad);
@@ -911,6 +950,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public bool Parse(DyMsgOrigin msg)
         {
+            if(msg.barType == MsgType.GiftSend)
+            {
+                m_SendGiftTimeDict[msg.msg.OpenID] = DateTime.Now;
+                return false;
+            }
             if(msg.barType == MsgType.Comment)
             {
                 var uid = msg.msg.OpenID;
@@ -1055,7 +1099,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
         }
 
-        private void Boom(string uid, SquadGroup squad, string uName = null,int maxCount = 5000,bool needClone = false)
+        private void Boom(string uid, SquadGroup squad, string uName = null,int maxCount = 5000,bool needClone = false,string tag = null)
         {
             if (squad != null && !squad.IsEmpty )
             {
@@ -1071,7 +1115,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if (resMgr.RemoveResource(uid, c * squad.price))
                     {
-                        m_Owner.InitCtx.PrintGameMsg($"{squad.uName}暴兵{squad.StringTag}x{c}组");
+                        m_Owner.InitCtx.PrintGameMsg($"{squad.uName}{(tag != null ? tag : "")}暴兵{squad.StringTag}x{c}组");
                         (m_Owner as MsgGiftParser<IT>).SpawnManySquadQueue(uid, needClone ? squad.Clone() as SquadGroup : squad, c, upLevelgold: c * squad.price, notRecycle: false);
                         //m_Owner.GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(
                         //    m_Owner.m_MsgDispatcher.GetPlayerParser().GetGroupById(uid),c * squad.price);

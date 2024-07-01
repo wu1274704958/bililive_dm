@@ -30,16 +30,24 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public double _Percentage { get;protected set; } = 1;
         protected abstract double SpawnInternal(int max);
         protected ISpawnFallback _fallback;
+#if DEBUG
+        private IContext _context;
+        private IContext context => _context == null ? (_context = Locator.Instance.Get<IContext>()) : _context;
+#endif
 
         public virtual SpawnResult Spawn(int max)
         {
             var res = SpawnInternal(max);
-            if(res > 0)OnSpawned(res);
+#if DEBUG
+            var ud = GetUser() as global::InteractionGame.UserData;
+            context.Log($"{ud.Name}[Count = {GetCount()}] [Percentage = {_Percentage}] [Curr = {res}]");
+#endif
+            if (res > 0)OnSpawned(res);
             _Percentage -= res;
-            if (_Percentage < 0.00001 || GetCount() <= 0)
+            if (GetCount() <= 0)
             {
                 OnSpawnedAll();
-                return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 1, Fallback = null };
+                return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 0, Fallback = null };
             }
             else
                 return new SpawnResult() { Result = ESpawnResult.SpawnedSome, Percentage = _Percentage, Fallback = GetFallback() };

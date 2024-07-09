@@ -1776,31 +1776,16 @@ namespace Bililive_dm
                 _bopm.LogMessage -= b_LogMessage;
                 _bopm.Dispose();
             }
-            OPMConnBtn.IsEnabled = false;
-            OPMDisconnBtn.IsEnabled = true;
-            DisableOPM.IsEnabled = false;
+          
+           
             var roomcode = this.OPCode.Password?.Trim();
-            RoomInfoData info;
-            try
+            var getinforesult = await GetBopenInfo(roomcode, sender==null);
+            if (getinforesult == null)
             {
-                info = await BOpen.GetRoomInfoByCode(roomcode + "");
-            }
-            catch (Exception exception)
-            {
-                this.logging(exception.Message);
-                this.logging(exception + "");
-                //MessageBox.Show(exception.Message);
-                OPMConnBtn.IsEnabled = true;
-                OPMDisconnBtn.IsEnabled = true;
-                DisableOPM.IsEnabled = true;
-                await Task.Delay(1500);
-                await Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    b_Disconnected(null, new DisconnectEvtArgs() { Error = exception });
-                }));
                 return;
             }
 
+            var info = getinforesult.Value;
             try
             {
              
@@ -1867,6 +1852,50 @@ namespace Bililive_dm
 
             }
             
+        }
+
+        private async Task<RoomInfoData?> GetBopenInfo(string roomcode,bool autoreconnect=false)
+        {
+            var first = true;
+            while (autoreconnect||first)
+            {
+                first = false;
+                OPMConnBtn.IsEnabled = false;
+                OPMDisconnBtn.IsEnabled = true;
+                DisableOPM.IsEnabled = false;
+                try
+                {
+                    return  await BOpen.GetRoomInfoByCode(roomcode + "");
+                }
+                catch (Exception exception)
+                {
+                
+                    this.logging(exception.Message);
+                    this.logging(exception+"");
+                    if (!autoreconnect)
+                    {
+                        MessageBox.Show(exception.Message);
+                    }
+                    else
+                    {
+                        Errorlogging(Properties.Resources.MainWindow_b_Disconnected_正在自动重连___);
+                        AddDMText(Properties.Resources.MainWindow_connbtn_Click_彈幕姬本身,
+                            Properties.Resources.MainWindow_b_Disconnected_正在自动重连___, true);
+                    }
+                        
+                 
+                    OPMConnBtn.IsEnabled = true;
+                    OPMDisconnBtn.IsEnabled = true;
+                    DisableOPM.IsEnabled = true;
+                    if (autoreconnect)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                    }
+                }
+            }
+           
+            return null;
+         
         }
 
         private void SaveRoomCode(string roomcode)

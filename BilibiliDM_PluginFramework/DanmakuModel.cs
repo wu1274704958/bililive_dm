@@ -74,7 +74,13 @@ namespace BilibiliDM_PluginFramework
         /// <summary>
         ///     观看人数, 可能是人次?
         /// </summary>
-        WatchedChange
+        WatchedChange,
+        /// <summary>
+        /// 开放平台关闭通知 
+        /// </summary>
+        OPConnectionEnd
+        
+        
     }
 
     /// <summary>

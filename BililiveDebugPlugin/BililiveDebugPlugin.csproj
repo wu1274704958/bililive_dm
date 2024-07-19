@@ -98,6 +98,7 @@
     <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />
+    <Compile Include="Utils\LocalMemComm.cs" />
     <Compile Include="Utils\Locator.cs" />
     <Compile Include="Utils\ObjectPool.cs" />
     <Compile Include="Utils\TimeLinerInteger.cs" />

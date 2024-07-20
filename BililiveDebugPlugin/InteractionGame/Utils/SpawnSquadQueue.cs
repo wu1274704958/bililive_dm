@@ -258,6 +258,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         protected int _givHonor;
         protected bool _notRecycle = false;
         protected bool _isGreedy = false;
+        protected int _priority = 0;
         public bool IsGreedy { get => _isGreedy; set => _isGreedy = value; }
 
         protected override void OnSpawned(double res)
@@ -281,6 +282,11 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             _isGreedy = isGreedy;
             return this;
         }
+        public BaseSpawnSquadAction SetPriority(int priority)
+        {
+            _priority = priority;
+            return this;
+        }
 
         private void AddHonor(UserData u, long v)
         {
@@ -298,6 +304,11 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 if (user == null) return;
                 Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddResource(user.Id, _restGold);
             }
+        }
+
+        public override int GetPriority()
+        {
+            return _priority;
         }
     }
 

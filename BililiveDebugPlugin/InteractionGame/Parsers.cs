@@ -130,7 +130,10 @@ namespace InteractionGame
                 (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like) ||
                 msgOrigin.barType == MsgType.GuardBuy))
             {
-                return ChooseGroupSystem(uid,msgOrigin);
+                lock (this)
+                {
+                    return ChooseGroupSystem(uid, msgOrigin);
+                }
             }
             return -1;
         }
@@ -167,14 +170,23 @@ namespace InteractionGame
         {
             int v = Int32.MaxValue; 
             int g = 0;
+            bool allSame = false;
             foreach (var it in GroupCount)
             {
                 var realVal = Locator.Instance.Get<IGameMode>().OverrideGetPlayerCount(it.Key, it.Value);
                 if (realVal < v)
                 {
+                    allSame = v == Int32.MaxValue;
                     g = it.Key;
                     v = realVal;
+                }else if(realVal > v)
+                {
+                    allSame = false;
                 }
+            }
+            if(allSame)
+            {
+                return new Random().Next(0,Aoe4DataConfig.GroupCount);
             }
             return g;
         }

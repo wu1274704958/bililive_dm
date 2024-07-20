@@ -84,6 +84,7 @@ namespace BililiveDebugPlugin
         private DateTime UpdatePlayerGoldTime = DateTime.Now;
         private TimeSpan UpdatePlayerInterval = TimeSpan.FromSeconds(1);
         private DateTime CheckIsBlackPopTime = DateTime.Now;
+        private DateTime CheckAfterSettlementNeedReClickStart = DateTime.Now;
         private Utils.ObjectPool<GoldInfo> GoldInfoPool = new Utils.ObjectPool<GoldInfo>(()=>new GoldInfo());
         private Utils.ObjectPool<GoldInfoArr> GoldInfoArrPool;
         private Aoe4Settlement<DebugPlugin> m_Settlement = new Aoe4Settlement<DebugPlugin>();
@@ -232,13 +233,17 @@ namespace BililiveDebugPlugin
                     if (LastState != 2 && d.R == 2)
                     {
                         DoSettlement(d.R,d.G);
+                        CheckAfterSettlementNeedReClickStart = DateTime.Now;
                         Interlocked.Exchange(ref LastState, -1);
                     }
                     else
                         Interlocked.Exchange(ref LastState, d.R);
                     Interlocked.Exchange(ref IsDispatch, d.B);
-                    m_GameState.OnTick();
-                    m_PlugMgr.Tick(0.1f);
+                    if (GameSt == 0)
+                    {
+                        m_GameState.OnTick();
+                        m_PlugMgr.Tick(0.1f);
+                    }
                     break;
                 case 1:
                     if (d.R == 1 && d.G == 0 && d.B == 0)
@@ -254,6 +259,11 @@ namespace BililiveDebugPlugin
                     else
                     {
                         messageDispatcher.GetBridge().TryStartGame();
+                        if((DateTime.Now - CheckAfterSettlementNeedReClickStart).TotalSeconds > 10.0f)
+                        {
+                            m_Settlement.Restart();
+                            CheckAfterSettlementNeedReClickStart = DateTime.Now;
+                        }
                     }
                     break;
             }

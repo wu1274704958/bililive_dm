@@ -47,7 +47,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
         {
             {NiuWa,         ItemData.Create(NiuWa         ,EItemType.Gift,1) },
-            {GanBao  ,      ItemData.Create(GanBao        ,EItemType.Gift,66) },
+            {GanBao  ,      ItemData.Create(GanBao        ,EItemType.Gift,299) },
             {BbTang ,       ItemData.Create(BbTang         ,EItemType.Gift,2) },
             {ZheGe    ,     ItemData.Create(ZheGe          ,EItemType.Gift,10) },
             {XiaoCake ,     ItemData.Create(XiaoCake      ,EItemType.Gift,15) },

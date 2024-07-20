@@ -37,12 +37,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
         private static readonly List<(string,int)> SpecialGifts24 = new List<(string,int)>()
         {
-            (Aoe4DataConfig.QingShu, 4),(Aoe4DataConfig.Gaobai,5),(Aoe4DataConfig.GanBao,5),(Aoe4DataConfig.Xinghe,4),(Aoe4DataConfig.NiuWa,100),
+            (Aoe4DataConfig.QingShu, 4),(Aoe4DataConfig.Gaobai,5),(Aoe4DataConfig.GanBao,1),(Aoe4DataConfig.Xinghe,4),(Aoe4DataConfig.NiuWa,100),
             (Aoe4DataConfig.DaCall,40),(Aoe4DataConfig.XiaoFuDie,40),(Aoe4DataConfig.KuaKua,3),(Aoe4DataConfig.ShuiJingBall,2)
         };
         private static readonly List<(string,int)> SpecialGifts34 = new List<(string,int)>()
         {
-            (Aoe4DataConfig.QingShu, 3),(Aoe4DataConfig.Gaobai,2),(Aoe4DataConfig.GanBao,3),(Aoe4DataConfig.Xinghe,1),(Aoe4DataConfig.NiuWa,20),
+            (Aoe4DataConfig.QingShu, 3),(Aoe4DataConfig.Gaobai,2),(Aoe4DataConfig.GanBao,1),(Aoe4DataConfig.Xinghe,1),(Aoe4DataConfig.NiuWa,20),
             (Aoe4DataConfig.DaCall,20),(Aoe4DataConfig.XiaoFuDie,20),(Aoe4DataConfig.KuaKua,2),(Aoe4DataConfig.ZheGe,15),(Aoe4DataConfig.BbTang,26),
             (Aoe4DataConfig.ShuiJingBall,1)
         };
@@ -124,9 +124,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         }
                         else
                         {
-                            var c = r.Next(10 + msg.msg.FansMedalLevel , 51 + (u.GuardLevel > 0 ? (4 - u.GuardLevel) * 100 : 0) + u.FansLevel * 2);
+                            var c = r.Next(130 + msg.msg.FansMedalLevel , 250 + (u.GuardLevel > 0 ? (4 - u.GuardLevel) * 50 : 0) + u.FansLevel * 2);
                             c *= activityData.HonorMultiplier;
-                            if (DB.DBMgr.Instance.AddHonor(u, c) > 0)
+                            if (c > 0 && DB.DBMgr.Instance.AddHonor(u, c) > 0)
                             {
                                 if(c > 100)
                                     LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{u.Name}", "签到成功")

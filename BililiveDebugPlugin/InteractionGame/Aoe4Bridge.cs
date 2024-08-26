@@ -48,9 +48,7 @@ namespace Interaction
         void ClickLeftMouse(int x, int y);
         void FlushAppend();
         void SendKeyEvent(int key);
-        bool NeedFlush();
-        void flush();
-        void FroceOverrideCurrentMsg(string msg);
+        void ForceFinish();
 
     }
     public class DefAoe4BridgeUtil
@@ -82,7 +80,7 @@ namespace Interaction
         private ConcurrentQueue<StringBuilder> MsgQueue = new ConcurrentQueue<StringBuilder>();
         private StringBuilder m_ExecCode = null;
         private Object m_ExecCodeLock = new object();
-        private static readonly int MsgMaxLength = 500;
+        private static int MsgMaxLength => SettingMgr.GetInt((int)ESettingType.BridgeMsgSize,800);
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
@@ -466,6 +464,11 @@ namespace Interaction
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0100, new IntPtr(key), IntPtr.Zero);
             Thread.Sleep(10);
             DefAoe4BridgeUtil.SendMessage(_windowInfo.Hwnd, 0x0101, new IntPtr(key), IntPtr.Zero);
+        }
+
+        public void ForceFinish()
+        {
+            AppendExecCode("ForceStopGame();");
         }
 
         public void FroceOverrideCurrentMsg(string msg)

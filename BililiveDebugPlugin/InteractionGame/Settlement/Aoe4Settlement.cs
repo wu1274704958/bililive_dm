@@ -253,5 +253,10 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
                 it.Ext = 0;
             }
         }
+
+        public void Restart()
+        {
+            ClickRestart();
+        }
     }
 }

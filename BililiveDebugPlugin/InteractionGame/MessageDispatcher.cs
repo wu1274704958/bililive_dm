@@ -54,6 +54,7 @@ namespace InteractionGame
         where IT:class,IContext
     {
         void Start();
+        void OnStartGame();
         bool Demand(Msg msg, MsgType barType);
         void Dispatch(Msg msg, MsgType barType);
         void Stop();
@@ -105,6 +106,11 @@ namespace InteractionGame
             thread.Start();
 
             mp.Start();
+        }
+
+        public void OnStartGame()
+        {
+            mp.OnStartGame();
         }
 
         private void SetupGlobalKeyMapListener()

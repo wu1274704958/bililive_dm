@@ -88,7 +88,7 @@ namespace BililiveDebugPlugin
                     Aoe4Settlement<DebugPlugin>.ClickRestart();
                     return;
                 }
-                if ((match = new Regex("AddSign ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
+                if ((match = new Regex("AddSign (.+) ([0-9]+)").Match(TestIn.Text)).Success)
                 {
                     if (int.TryParse(match.Groups[2].Value, out var count))
                     {
@@ -103,6 +103,23 @@ namespace BililiveDebugPlugin
                         var r = new Random();
                         for(int i = 1;i <= count;i++)
                             (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i.ToString(),$"name{i}","",g,0), g);
+                    }
+                    return;
+                }
+                if ((match = new Regex("AddGift (.+) (.+) ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[3].Value, out var count))
+                    {
+                        if (DB.DBMgr.Instance.AddGiftItem(match.Groups[1].Value, match.Groups[2].Value, count) > 0)
+                            m_Cxt.Log($"AddGift {match.Groups[2].Value}*{count}");
+                    }
+                    return;
+                }
+                if ((match = new Regex("AddTest ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    if (int.TryParse(match.Groups[1].Value, out var count))
+                    {
+                        AddTestUser(count);
                     }
                     return;
                 }
@@ -226,6 +243,20 @@ namespace BililiveDebugPlugin
             }
         }
 
+        private void AddTestUser(int count)
+        {
+            for(int i = 1;i <= count; i++)
+            {
+                var m = new BilibiliDM_PluginFramework.DanmakuModel();
+                m.OpenID = i.ToString();
+                m.CommentText = "加塔";
+                m.UserName = $"name_{i}";
+                m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
+                m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
+            }
+            
+        }
+
         private void TransfarSys()
         {
             var sys = DB.DBMgr2.Instance.Fsql.Select<DB.Model.SystemData>().ToList();
@@ -268,7 +299,7 @@ namespace BililiveDebugPlugin
                 m_Cxt.Log($"没有找到用户{match.Groups[1].Value}");
                 return 0;
             }
-            var r = DB.DBMgr.Instance.AddLimitedItem(id, name, lvl, 9999, c);
+            var r = DB.DBMgr.Instance.AddLimitedItemEx(id, name, lvl, 9999, c);
             m_Cxt.Log($"AddLimitedItem {r}");
             return r;
         }

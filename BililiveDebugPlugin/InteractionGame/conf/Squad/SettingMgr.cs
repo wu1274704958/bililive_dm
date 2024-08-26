@@ -7,7 +7,7 @@ using System.IO;
             
 namespace conf.Squad
             {
-public enum ESettingType {MapName = 7,FansCard = 6,}
+public enum ESettingType {MapName = 7,FansCard = 6,BridgeMsgSize = 8,}
 [ProtoContract]
 public  partial class Setting
             {

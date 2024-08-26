@@ -84,6 +84,7 @@ namespace BililiveDebugPlugin
         private DateTime UpdatePlayerGoldTime = DateTime.Now;
         private TimeSpan UpdatePlayerInterval = TimeSpan.FromSeconds(1);
         private DateTime CheckIsBlackPopTime = DateTime.Now;
+        private DateTime CheckAfterSettlementNeedReClickStart = DateTime.Now;
         private ObjectPool<GoldInfo> GoldInfoPool = new ObjectPool<GoldInfo>(()=>new GoldInfo());
         private ObjectPool<GoldInfoArr> GoldInfoArrPool;
         private Aoe4Settlement<DebugPlugin> m_Settlement = new Aoe4Settlement<DebugPlugin>();
@@ -156,7 +157,8 @@ namespace BililiveDebugPlugin
             m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
             m_PlugMgr.Add(300,new DefineKeepDamagedSpawnSquadPlug());
             m_PlugMgr.Add(100,new EveryoneTowerPlug());
-            m_PlugMgr.Add(-1, new DbTransfarPlug());
+            //m_PlugMgr.Add(-1, new DbTransfarPlug());
+            m_PlugMgr.Add(-1,new GameModeManager());
             //m_PlugMgr.Add(2300, new Aoe4AutoAttack());
             Locator.Instance.Deposit(m_GameState);
             Locator.Instance.Deposit(this);
@@ -231,22 +233,37 @@ namespace BililiveDebugPlugin
                     if (LastState != 2 && d.R == 2)
                     {
                         DoSettlement(d.R,d.G);
+                        CheckAfterSettlementNeedReClickStart = DateTime.Now;
+                        Interlocked.Exchange(ref LastState, -1);
                     }
                     else
                         Interlocked.Exchange(ref LastState, d.R);
                     Interlocked.Exchange(ref IsDispatch, d.B);
-                    m_GameState.OnTick();
-                    m_PlugMgr.Tick(0.1f);
+                    if (GameSt == 0)
+                    {
+                        m_GameState.OnTick();
+                        m_PlugMgr.Tick(0.1f);
+                    }
                     break;
                 case 1:
                     if (d.R == 1 && d.G == 0 && d.B == 0)
                     {
                         GameSt = 0;
                         m_PlugMgr.Notify(EGameAction.GameStart);
+                        messageDispatcher.OnStartGame();
+                    }else if(LastState == -1 && d.R == 2 && d.G == 0 && d.B == 0)
+                    {
+                        DoSettlement(2, 0,true);
+                        Interlocked.Exchange(ref LastState, -1);
                     }
                     else
                     {
                         messageDispatcher.GetBridge().TryStartGame();
+                        if((DateTime.Now - CheckAfterSettlementNeedReClickStart).TotalSeconds > 10.0f)
+                        {
+                            m_Settlement.Restart();
+                            CheckAfterSettlementNeedReClickStart = DateTime.Now;
+                        }
                     }
                     break;
             }
@@ -340,6 +357,8 @@ namespace BililiveDebugPlugin
             {
                 var it = GoldInfoPool.Get();
                 it.Id = id;
+                if (!Aoe4DataConfig.CanSpawnSquad(id, Aoe4DataConfig.SpawnSquadType.Auto))
+                    c = 0;
                 it.Gold = (int)c;
                 it.Progress = autoSpawn.GetSpawnProgress(id);
                 if (it.Progress > 1.0) it.Progress = 1.0f;

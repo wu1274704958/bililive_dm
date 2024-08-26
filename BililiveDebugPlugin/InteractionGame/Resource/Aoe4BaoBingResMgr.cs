@@ -6,17 +6,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BililiveDebugPlugin.InteractionGame.Data;
+using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Resource
 {
     public class Aoe4BaoBingResMgr<C> : IResourceMgr<C>
         where C : class, IContext
     {
-        ConcurrentDictionary<string, Utils.TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, Utils.TimeLinerInteger>();
+        ConcurrentDictionary<string, TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, TimeLinerInteger>();
         public override void AddAutoResourceById(string id, float addFactor = 1f)
         {
-            Utils.TimeLinerInteger v = null;
-            AutoAddMap.TryAdd(id, v = new Utils.TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
+            TimeLinerInteger v = null;
+            AutoAddMap.TryAdd(id, v = new TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
             v.AddFactor = addFactor;
         }
 

@@ -10,7 +10,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     public interface ISpawnFallback
     {
         void Fallback();
-        int GetType();
+        int Type();
         void SetPercentage(double percentage);
     }
     
@@ -30,16 +30,24 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public double _Percentage { get;protected set; } = 1;
         protected abstract double SpawnInternal(int max);
         protected ISpawnFallback _fallback;
+#if DEBUG
+        private IContext _context;
+        private IContext context => _context == null ? (_context = Locator.Instance.Get<IContext>()) : _context;
+#endif
 
         public virtual SpawnResult Spawn(int max)
         {
             var res = SpawnInternal(max);
-            if(res > 0)OnSpawned(res);
+#if DEBUG
+            var ud = GetUser() as global::InteractionGame.UserData;
+            context.Log($"{ud.Name}[Count = {GetCount()}] [Percentage = {_Percentage}] [Curr = {res}]");
+#endif
+            if (res > 0)OnSpawned(res);
             _Percentage -= res;
-            if (_Percentage < 0.00001 || GetCount() <= 0)
+            if (GetCount() <= 0)
             {
                 OnSpawnedAll();
-                return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 1, Fallback = null };
+                return new SpawnResult() { Result = ESpawnResult.SpawnedAll, Percentage = 0, Fallback = null };
             }
             else
                 return new SpawnResult() { Result = ESpawnResult.SpawnedSome, Percentage = _Percentage, Fallback = GetFallback() };
@@ -62,6 +70,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public abstract int GetCount();
         public abstract void OnDestroy();
         public abstract object GetUser();
+        public abstract int GetPriority();
+        public abstract ISpawnSquadAction Merge(int multiple);
     }
     public class SpawnSquadActionBound
     {
@@ -77,13 +87,15 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     
     public abstract class ISpawnSquadQueue
     {
-        protected ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>> Actions =
-            new ConcurrentDictionary<int, ConcurrentQueue<SpawnSquadActionBound>>();
+        protected ConcurrentDictionary<int, LinkedList<SpawnSquadActionBound>> Actions =
+            new ConcurrentDictionary<int, LinkedList<SpawnSquadActionBound>>();
         protected DateTime _tickSpawnTime = DateTime.Now;
         protected static readonly TimeSpan TickSpawnInterval = TimeSpan.FromMilliseconds(1000);
 
         public virtual void AppendAction(ISpawnSquadAction action)
         {
+            
+            var a = new LinkedList<int>();
             //var gs = Locator.Instance.Get<Aoe4GameState>();
             var group = action.GetGroup();
             //if (gs.HasCheckSquadCountTask(group, this))
@@ -92,11 +104,10 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var remaining = RemainingQuantity(group);
                 var count = action.GetCount();
                 bool limit = remaining <= 0 ? true : IsGroupLimit(count, remaining);
-                Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
+                //Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
                 if (limit)
                 {
-                    ConcurrentQueue<SpawnSquadActionBound> queue = GetQueue(group);
-                    queue.Enqueue(new SpawnSquadActionBound(action, action.GetFallback()));
+                    AppendActionByPriority(action, action.GetPriority());
                 }
                 else
                 {
@@ -104,11 +115,40 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 }
             
         }
-        
-        private ConcurrentQueue<SpawnSquadActionBound> GetQueue(int group)
+
+        private void AppendActionByPriority(ISpawnSquadAction action, int priority,ISpawnFallback fallback = null)
+        {
+            if(fallback == null)
+                fallback = action.GetFallback();
+            var obj = new SpawnSquadActionBound(action, fallback);
+            LinkedList<SpawnSquadActionBound> queue = GetQueue(action.GetGroup());
+            lock (queue)
+            {
+                if(queue.Count == 0)
+                {
+                    queue.AddLast(obj);
+                    return;
+                }
+                var curr = queue.First;
+                for(;;)
+                {
+                    if (curr == null || priority > curr.Value.Action.GetPriority())
+                        break;
+                    curr = curr.Next;
+                }
+                if(curr == null)
+                    queue.AddLast(obj);
+                else
+                {
+                    queue.AddBefore(curr, obj);
+                }
+            }
+        }
+
+        private LinkedList<SpawnSquadActionBound> GetQueue(int group)
         {
             if (!Actions.TryGetValue(group, out var queue))
-                return Actions[group] = new ConcurrentQueue<SpawnSquadActionBound>();
+                return Actions[group] = new LinkedList<SpawnSquadActionBound>();
             return queue;
         }
 
@@ -117,7 +157,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var res = action.Spawn(remaining);
             if (res.Result == ESpawnResult.SpawnedSome)
             {
-                GetQueue(action.GetGroup()).Enqueue(new SpawnSquadActionBound(action, res.Fallback));
+                AppendActionByPriority(action,action.GetPriority(),res.Fallback);
             }
             else
             {
@@ -139,9 +179,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
             foreach (var queue in Actions)
             {
-                if(queue.Value.TryPeek(out var action))
+                lock (queue.Value)
                 {
-                    PeekQueueAndSpawn(queue.Key,action);
+                    if (queue.Value.First != null)
+                    {
+                        PeekQueueAndSpawn(queue.Key, queue.Value.First.Value);
+                    }
                 }
             }
         }
@@ -154,7 +197,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
             !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
             {
-                Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
+                //Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
                 SpawnInQueue(action, remaining);
             }
         }
@@ -169,7 +212,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var group = action.Action.GetGroup();
                 action.Action.OnDestroy();
-                GetQueue(group).TryDequeue(out _);
+                var queue = GetQueue(group);
+                lock(queue) { queue.Remove(action); };
                 return true;
             }
             return false;
@@ -182,9 +226,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             foreach (var queue in Actions)
             {
-                while (queue.Value.TryDequeue(out var action))
+                lock (queue.Value)
                 {
-                    action.Fallback?.Fallback();
+                    foreach(var action  in queue.Value)
+                    {
+                        action.Fallback?.Fallback();
+                        action.Action?.OnDestroy();
+                    }
+                    queue.Value.Clear();
                 }
             }
         }

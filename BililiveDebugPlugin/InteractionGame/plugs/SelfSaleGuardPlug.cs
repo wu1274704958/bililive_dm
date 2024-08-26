@@ -27,9 +27,9 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public Msg OnPreJoin(Msg m)
         {
-            for (int i = 2; i <= 3; i++)
+            foreach(var i in Aoe4DataConfig.GuardLevelListSorted)
             {
-                var it = DBMgr.Instance.GetItem(m.OpenID, GuardLevelName[i]);
+                var it = DBMgr.Instance.GetItem(m.OpenID, i.Value,i.Key);
                 if(it != null)
                 {
                     m.UserGuardLevel = m.GuardLevel = it.Count;

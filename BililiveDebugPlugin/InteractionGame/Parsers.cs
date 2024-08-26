@@ -10,6 +10,7 @@ using ProtoBuf;
 using Utils;
 using Interaction;
 using BililiveDebugPlugin.InteractionGame.Data;
+using BililiveDebugPlugin.InteractionGame.mode;
 using conf.Squad;
 
 namespace InteractionGame 
@@ -129,17 +130,27 @@ namespace InteractionGame
                 (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like) ||
                 msgOrigin.barType == MsgType.GuardBuy))
             {
-                return ChooseGroupSystem(uid,msgOrigin);
+                lock (this)
+                {
+                    return ChooseGroupSystem(uid, msgOrigin);
+                }
             }
             return -1;
         }
 
         public int ChooseGroupSystem(string uid, DyMsgOrigin msgOrigin)
         {
-            int g = -1;
-            lock (m_LockChooseGroup)
+            int g = Locator.Instance.Get<IGameMode>().GetPlayerGroup(uid);
+            if (g == -1)
             {
-                g = GetLeastGroup();
+                lock (m_LockChooseGroup)
+                {
+                    g = GetLeastGroup();
+                    SetGroup(uid, g);
+                }
+            }
+            else
+            {
                 SetGroup(uid, g);
             }
             if (g == GetTarget(uid))
@@ -159,13 +170,23 @@ namespace InteractionGame
         {
             int v = Int32.MaxValue; 
             int g = 0;
+            bool allSame = false;
             foreach (var it in GroupCount)
             {
-                if (it.Value < v)
+                var realVal = Locator.Instance.Get<IGameMode>().OverrideGetPlayerCount(it.Key, it.Value);
+                if (realVal < v)
                 {
+                    allSame = v == Int32.MaxValue;
                     g = it.Key;
-                    v = it.Value;
+                    v = realVal;
+                }else if(realVal > v)
+                {
+                    allSame = false;
                 }
+            }
+            if(allSame)
+            {
+                return new Random().Next(0,Aoe4DataConfig.GroupCount);
             }
             return g;
         }
@@ -209,18 +230,19 @@ namespace InteractionGame
         }
         public virtual void SetGroup(string id,int g)
         {
+            var c = Locator.Instance.Get<IGameMode>().GetSeatCountOfPlayer(id,g);
             if (!GroupDict.TryAdd(id, g))
             {
                 if(GroupDict[id] == g) return;
                 if(GroupDict[id] >= 0 && GroupCount.ContainsKey(g))
                 {
-                    GroupCount[g] -= 1;
+                    GroupCount[g] -= c;
                 }
                 GroupDict[id] = g;
             }
-            if (!GroupCount.TryAdd(g, 1))
+            if (!GroupCount.TryAdd(g, c))
             {
-                GroupCount[g] += 1;
+                GroupCount[g] += c;
             }
         }
         public bool HasGroup(string id)
@@ -265,11 +287,10 @@ namespace InteractionGame
        
         public void OnAddGroup(UserData userdata, int g)
         {
-            m_MsgDispatcher.GetMsgParser().UpdateUserData(userdata.Id, 0, 0, userdata.Name, userdata.Icon,g,userdata.GuardLevel,userdata.FansLevel);
-            var ud = m_MsgDispatcher.GetMsgParser().GetUserData(userdata.Id);
+            m_MsgDispatcher.GetMsgParser().TryAddUser(userdata);
             foreach (var it in _observers)
             {
-                it.Value.OnAddGroup(ud, g);
+                it.Value.OnAddGroup(userdata, g);
             }
         }
         public void OnChangeGroup(UserData userdata,int old, int g)
@@ -304,6 +325,7 @@ namespace InteractionGame
     {
         void Init(P owner);
         void Start();
+        void OnStartGame();
         void Stop();
         bool Parse(DyMsgOrigin msg);
         void OnTick(float delat);
@@ -328,6 +350,12 @@ namespace InteractionGame
         {
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.Start();
+        }
+
+        public virtual void OnStartGame()
+        {
+            foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.OnStartGame();
         }
         public virtual void Stop()
         {
@@ -392,6 +420,9 @@ namespace InteractionGame
             }
         }
 
+        public void TryAddUser(UserData userData) {
+            UserDataDict.TryAdd (userData.Id, userData);
+        }
         public void AddWinScore(int g, int score)
         {
             foreach (var key in UserDataDict)
@@ -470,8 +501,8 @@ namespace InteractionGame
         [ProtoMember(8)]
         public int Op1 = 0;
         public int Op1Heigh = 0;
-        [ProtoMember(9)]
         public int GuardLevel { get; protected set; } = 0;
+        [ProtoMember(9)]
         public int RealGuardLevel { get; protected set; } = 0;
         public int FansLevel;
         //public DateTime JoinTime;

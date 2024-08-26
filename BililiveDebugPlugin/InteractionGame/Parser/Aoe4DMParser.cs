@@ -46,6 +46,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 msgOrigin.msg.CommentText = "";
             // 系统选择阵营
             var uid = msgOrigin.msg.OpenID;
+            if(uid == null)
+            {
+                InitCtx.Log($"uid == null raw = {msgOrigin.msg.RawData}");
+                return -1;
+            }
             var con = msgOrigin.msg.CommentText.Trim();
             var uName = msgOrigin.msg.UserName;
             int g = -1;
@@ -107,11 +112,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     public class MsgGiftParser<IT> : IDyMsgParser<IT>, IPlayerParserObserver
         where IT : class, IContext
     {
-        public Utils.ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(string, int)>>(
+        public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
-        private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)x([0-9]+)");
+        private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
         private Regex BooHonorRegex2 = new Regex("z([0-9a-wA-W]+)");
-        private Regex SendBagGiftRegex = new Regex("送(.+)x([0-9]+)");
+        private Regex SendBagGiftRegex = new Regex("送(.+)[x,\\*,×]([0-9]+)");
         private Regex SendBagGiftRegex2 = new Regex("送(.+)");
         private SpawnSquadQueue m_SpawnSquadQueue;
         public SquadUpLevelSubParser<IT> SquadUpLevelSubParser { get; private set; }
@@ -127,6 +132,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new SignInSubMsgParser<IT>());
             AddSubMsgParse(new GroupUpLevel<IT>());
             AddSubMsgParse(new AdminParser<IT>());
+            AddSubMsgParse(new BossGameModeParser<IT>());
             AddSubMsgParse(SquadUpLevelSubParser = new SquadUpLevelSubParser<IT>());
             base.Init(it, dispatcher);
             m_MsgDispatcher.GetPlayerParser().AddObserver(this);
@@ -271,7 +277,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     ud.SetGuardLevel(msgOrigin.msg.UserGuardLevel);
                     var c = 4 - ud.GuardLevel;
                     AddGift(ud, Aoe4DataConfig.Gaobai, 5 * c);
-                    AddGift(ud, Aoe4DataConfig.GanBao, 20 * c);
+                    AddGift(ud, Aoe4DataConfig.GanBao, 5 * c);
                     AddGift(ud, Aoe4DataConfig.QingShu, 20 * c);
                     AddGift(ud, Aoe4DataConfig.ZheGe, 30 * c);
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
@@ -352,11 +358,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if (DB.DBMgr.Instance.DepleteItem(ud.Id, item.Name, c, out var rest) > 0)
                     {
-                        SendGift(it.Key, c, item.Price, ud);
+                        SendGift(it.Key, c, item.Price, ud,isRealGift:false);
                         InitCtx.PrintGameMsg($"{ud.NameColored}使用了{c}个{it.Key}，剩余{rest}个");
                     }
                     else
                         InitCtx.PrintGameMsg($"{ud.NameColored}{it.Key}数量不足");
+                    break;
                 }
             }
         }
@@ -390,13 +397,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             //SquadData.Recycle(squad);
         }
-        private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5)
+        private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5,bool isRealGift = true)
         {
             int c = giftCount;
             int t = 0;
             int id = -1;
-            ushort addedAttr = 1;
-            ushort addedAttrForGroup = 1;
+            ushort addedAttr = MergeByte(1, 1);
+            ushort addedAttrForGroup = MergeByte(1, 1);
             List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             switch (giftName)
             {
@@ -407,8 +414,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 // case "打call": c *= 110; break;
                 case "牛哇":
                 case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
-                case "干杯": id = 110005; t = 1; c *= 15; break;
-                case "棒棒糖": id = 110003; t = 1; c *= 5; break;
+                case "干杯": id = 110005; t = 1; c *= 68; break;
+                case "棒棒糖": id = 110003; t = 1; c *= 5; addedAttr = MergeByte(2, 3); break;
                 case "这个好诶": id = 110004; t = 1; c *= 16; break;
                 case "小蛋糕": id = 110016; t = 1; c *= 7; break;
                 //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
@@ -417,17 +424,17 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "水晶之恋": id = 110011; t = 1; c *= 21; break;
                 case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); Squad.Add((300110, 100));
                     Squad.Add((100100, 100)); t = 3;
-                    addedAttr = Merge(3, 1); break;
+                    addedAttrForGroup = addedAttr = MergeByte(3, 2); break;
                 case "星愿水晶球": id = 110002; 
                     if(Aoe4DataConfig.GetSquadPure(52,2,u.Group) == null)
                         Squad.Add((100104, 45));
                     else
                         Squad.Add((200052, 100));
                     Squad.Add((200050, 100)); Squad.Add((300049, 100)); Squad.Add((200053, 100)); t = 3;
-                    addedAttr = global::InteractionGame.Utils.Merge(20, 100);
-                    addedAttrForGroup = global::InteractionGame.Utils.Merge(6, 40);
+                    addedAttr = global::InteractionGame.Utils.MergeByte(20, 100);
+                    addedAttrForGroup = global::InteractionGame.Utils.MergeByte(6, 40);
                     break;
-                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = Merge(2, 5);break;
+                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = MergeByte(3, 5);break;
                 case "打call":
                     {
                         if(u.HpMultiple + c > 255)
@@ -460,6 +467,26 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         }
                         break;
                     }
+                case "为你打call":
+                    {
+                        int count = c;
+                        id = 100098; t = 1; c *= 160;
+                        if (isRealGift)
+                        {
+                            var r = DB.DBMgr.Instance.AddLimitedItemEx(u.Id, Aoe4DataConfig.JianZhang, 33, 9999, TimeSpan.FromDays(1 * count));
+                            if (r > 0)
+                                InitCtx.PrintGameMsg($"{u.NameColored}获得{1 * count}天舰长3倍体验卡,下局生效");
+                            AddGift(u, Aoe4DataConfig.NiuWa, 30 * count);
+                        }
+                        break;
+                    }
+                case "泡泡机":
+                    {
+                        AddGift(u, Aoe4DataConfig.XiaoFuDie, 9 * c);
+                        transHonorfactor = -1.0f;
+                        t = -1;
+                        break;
+                    }
                 default:
                     if (transHonorfactor < 0.0)
                         return (0,0);
@@ -476,7 +503,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 if (t > 0)
                 {
                     upLevelGold = (int)(battery * giftCount * Aoe4DataConfig.HonorGoldFactor);
-                    giveHonor = (int)Math.Ceiling(transHonorfactor * battery * giftCount * giveHonorMult);
+                    giveHonor = 0;// (int)Math.Ceiling(transHonorfactor * battery * giftCount * giveHonorMult);
                 }
                 else {
                     //GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(u.Group, (int)(battery * giftCount * Aoe4DataConfig.HonorGoldFactor));
@@ -488,7 +515,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 var sd = Aoe4DataConfig.GetSquadBySid(id,u.Group);
                 InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
-                SendSpawnSquadQueue(u, id, c, sd,battery,giftName,giftCount,giveHonor:giveHonor,upLevelgold:upLevelGold,attribute:addedAttr);
+                SendSpawnSquadQueue(u, id, c, sd,battery,giftName,giftCount,giveHonor:giveHonor,upLevelgold:upLevelGold,attribute: addedAttr,priority:10);
             };
             if(t > 0 && !Aoe4DataConfig.CanSpawnSquad(u.Id,Aoe4DataConfig.SpawnSquadType.Gift))
             {
@@ -512,14 +539,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                         {
                             SquadGroup squad = null;
                             SpawnManySquadQueue(u.Id, squad = SquadGroup.FromData(Squad, u.Group).SetAddedAttr(addedAttrForGroup), c, battery, giftName,
-                                giftCount, giveHonor: giveHonor, upLevelgold: upLevelGold);
+                                giftCount, giveHonor: giveHonor, upLevelgold: upLevelGold,priority:10);
                             InitCtx.PrintGameMsg($"{u.NameColored}出了{giftName}*{c}");
                         }
                         if (id >= 0)
                         {
                             var sd = Aoe4DataConfig.GetSquadBySid(id, u.Group);
                             InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
-                            SendSpawnSquadQueue(u, id, c, sd, 0, null, 0, giveHonor: 0, upLevelgold: 0, attribute: addedAttr);
+                            SendSpawnSquadQueue(u, id, c, sd, 0, null, 0, giveHonor: 0, upLevelgold: 0, attribute: addedAttr, priority: 10);
                         }
                         break;
                     }
@@ -564,22 +591,22 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
         
         public void SendSpawnSquadQueue(UserData u, int sid, int c, SquadData sd,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,
-            int restGold = 0, int upLevelgold = 0, int giveHonor = 0,ushort attribute = 0)
+            int restGold = 0, int upLevelgold = 0, int giveHonor = 0,ushort attribute = 0, int priority = 0)
         {
             ISpawnSquadAction action = null;
             if (price > 0 && giftName != null)
             {
                 action = new SpawnSingleSquadAction<GiftSpawnSquadFallback>(u,c,sd,new GiftSpawnSquadFallback(giftCount,giftName,u,price),
-                    restGold,upLevelgold,giveHonor,attribute:attribute);
+                    restGold,upLevelgold,giveHonor,attribute:attribute).SetPriority(priority);
             }else if (honor > 0)
             {
-                action = new SpawnSingleSquadAction<HonorSpawnSquadFallback>(u,c,sd,new HonorSpawnSquadFallback(honor,u),
-                    restGold, upLevelgold, giveHonor, attribute: attribute);
+                action = new SpawnSingleSquadAction<HonorSpawnSquadFallback>(u, c, sd, new HonorSpawnSquadFallback(honor, u),
+                    restGold, upLevelgold, giveHonor, attribute: attribute).SetPriority(priority);
             }
             else
             {
                 action = new SpawnSingleSquadAction<EmptySpawnSquadFallback>(u,c,sd,null, restGold, upLevelgold, giveHonor,
-                    attribute: attribute);
+                    attribute: attribute).SetPriority(priority);
             }
             Locator.Instance.Get<ISpawnSquadQueue>(this).AppendAction(action);
         }
@@ -624,21 +651,24 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
 
         public void SpawnManySquadQueue(string uid, SquadGroup v, int c,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,
-            double restGold = 0, double upLevelgold = 0, int giveHonor = 0,bool notRecycle = false)
+            double restGold = 0, double upLevelgold = 0, int giveHonor = 0,bool notRecycle = false,int priority = 0)
         {
             var id = 0;
             var u = int.TryParse(uid, out id) && id < 0 ? new UserData(uid,"-","-",(int)(Math.Abs(id) - 1),0,0) : GetUserData(uid);
             ISpawnSquadAction action = null;
             if (price > 0 && giftName != null)
             {
-                action = new SpawnGroupSquadAction<GiftSpawnSquadFallback>(u,v,c,new GiftSpawnSquadFallback(giftCount,giftName,u,price), restGold, upLevelgold, giveHonor,notRecycle);
+                action = new SpawnGroupSquadAction<GiftSpawnSquadFallback>(u,v,c,
+                    new GiftSpawnSquadFallback(giftCount,giftName,u,price), restGold, upLevelgold, giveHonor,notRecycle).SetPriority(priority);
             }else if (honor > 0)
             {
-                action = new SpawnGroupSquadAction<HonorSpawnSquadFallback>(u,v,c,new HonorSpawnSquadFallback(honor,u), restGold, upLevelgold, giveHonor, notRecycle);
+                action = new SpawnGroupSquadAction<HonorSpawnSquadFallback>(u,v,c,
+                    new HonorSpawnSquadFallback(honor,u), restGold, upLevelgold, giveHonor, notRecycle).SetPriority(priority);
             }
             else
             {
-                action = new SpawnGroupSquadAction<EmptySpawnSquadFallback>(u,v,c,null, restGold, upLevelgold, giveHonor, notRecycle);
+                action = new SpawnGroupSquadAction<EmptySpawnSquadFallback>(u,v,c,null, restGold, upLevelgold, giveHonor, notRecycle)
+                    .SetPriority(priority);
             }
             Locator.Instance.Get<ISpawnSquadQueue>(this).AppendAction(action);
             //UpdateUserData(uid, v.score * c, v.num * c, null, null);
@@ -824,11 +854,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         
         private ConcurrentDictionary<string,SquadGroup> m_Dict = new ConcurrentDictionary<string,SquadGroup>();
+        private ConcurrentDictionary<string,DateTime> m_SendGiftTimeDict = new ConcurrentDictionary<string, DateTime>();
         private IDyMsgParser<IT> m_Owner;
         private DateTime m_AutoBoomCkTime = DateTime.Now;
         private readonly Regex Reg = new Regex("^([0-9a-wA-W]*)$");
-        private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]+)[x,\\*]([0-9]+)$");
-        private readonly Regex BoomOnlyCountReg = new Regex("^[x,\\*]([0-9]+)$");
+        private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]+)[x,\\*,×]([0-9]+)$");
+        private readonly Regex BoomOnlyCountReg = new Regex("^[x,\\*,×]([0-9]+)$");
 
         public void Init(IDyMsgParser<IT> owner)
         {
@@ -865,15 +896,32 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if(!Aoe4DataConfig.CanSpawnSquad(it.Key, Aoe4DataConfig.SpawnSquadType.AutoGoldBoom))
                         continue;
+                    var lastSendGiftTime = GetSendGiftTime(it.Key);
+                    if ((DateTime.Now - lastSendGiftTime).TotalMinutes < 1.5)
+                        continue;
                     var gold = m_Owner.m_MsgDispatcher.GetResourceMgr().GetResource(it.Key);
                     if(gold >= 3000)
                     {
-                        var c = 3000 / it.Value.price;
-                        Boom(it.Key,(int)c);
+                        AutoBoom(it.Key,it.Value);
                     }
                 }
                 m_AutoBoomCkTime = DateTime.Now;
             }
+        }
+
+        private void AutoBoom(string id, SquadGroup value)
+        {
+            var ud = m_Owner.GetUserData(id);
+            Boom(id, value,ud.NameColored,999999,true,tag:"自动");
+        }
+
+        private DateTime GetSendGiftTime(string id)
+        {
+            if(m_SendGiftTimeDict.TryGetValue(id,out var v))
+            {
+                return v;
+            }
+            return Common.MinDateTime;
         }
 
         private void SpawnSquad(string uid,SquadGroup v)
@@ -897,7 +945,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void AddDefaultAutoSquad(UserData data,int sdId,int c)
         {
-            var squad = SquadGroup.FromString("000", data.Group, data.Id);
+            var squad = SquadGroup.FromString("h", data.Group, data.Id);
             squad.lastSpawnTime = DateTime.Now;
             squad.uName = data.NameColored;
             m_Dict.TryAdd(data.Id, squad);
@@ -905,6 +953,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public bool Parse(DyMsgOrigin msg)
         {
+            if(msg.barType == MsgType.GiftSend)
+            {
+                m_SendGiftTimeDict[msg.msg.OpenID] = DateTime.Now;
+                return false;
+            }
             if(msg.barType == MsgType.Comment)
             {
                 var uid = msg.msg.OpenID;
@@ -1049,7 +1102,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
         }
 
-        private void Boom(string uid, SquadGroup squad, string uName = null,int maxCount = 5000,bool needClone = false)
+        private void Boom(string uid, SquadGroup squad, string uName = null,int maxCount = 5000,bool needClone = false,string tag = null)
         {
             if (squad != null && !squad.IsEmpty )
             {
@@ -1065,8 +1118,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if (resMgr.RemoveResource(uid, c * squad.price))
                     {
-                        m_Owner.InitCtx.PrintGameMsg($"{squad.uName}暴兵{squad.StringTag}x{c}组");
-                        (m_Owner as MsgGiftParser<IT>).SpawnManySquadQueue(uid, needClone ? squad.Clone() as SquadGroup : squad, c, upLevelgold: c * squad.price, notRecycle: false);
+                        m_Owner.InitCtx.PrintGameMsg($"{squad.uName}{(tag != null ? tag : "")}暴兵{squad.StringTag}x{c}组");
+                        var ud = (m_Owner as MsgGiftParser<IT>).GetUserData(uid);
+                        (m_Owner as MsgGiftParser<IT>).SpawnManySquadQueue(tag != null ? (-(ud.Group + 1)).ToString() : uid, needClone ? squad.Clone() as SquadGroup : squad, c, upLevelgold: c * squad.price, notRecycle: false);
                         //m_Owner.GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(
                         //    m_Owner.m_MsgDispatcher.GetPlayerParser().GetGroupById(uid),c * squad.price);
                     }
@@ -1076,6 +1130,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 m_Owner.InitCtx.PrintGameMsg($"{uName}需要先设置自动出兵才能暴兵");
             }
+        }
+
+        public void OnStartGame()
+        {
+            
         }
 
         public void Stop()

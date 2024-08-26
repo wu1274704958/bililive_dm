@@ -346,6 +346,10 @@ namespace Bililive_dm
                         {
                             _bopm?.PlatformHeartBeatOk();
                         }
+                        else
+                        {
+                            _bopm?.ForceDisconnect();
+                        }
                     }
 
 
@@ -1785,10 +1789,15 @@ namespace Bililive_dm
             {
                 this.logging(exception.Message);
                 this.logging(exception + "");
-                MessageBox.Show(exception.Message);
+                //MessageBox.Show(exception.Message);
                 OPMConnBtn.IsEnabled = true;
                 OPMDisconnBtn.IsEnabled = true;
                 DisableOPM.IsEnabled = true;
+                await Task.Delay(1500);
+                await Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    b_Disconnected(null, new DisconnectEvtArgs() { Error = exception });
+                }));
                 return;
             }
 

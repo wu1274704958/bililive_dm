@@ -58,6 +58,7 @@
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
+    <Compile Include="InteractionGame\Aoe4GameContext.cs" />
     <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
@@ -68,12 +69,16 @@
     <Compile Include="InteractionGame\conf\Squad\SquadDataMgr.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
+    <Compile Include="InteractionGame\IGameContex.cs" />
     <Compile Include="InteractionGame\IGameStateObserver.cs" />
     <Compile Include="InteractionGame\LiveGameUtils.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
+    <Compile Include="InteractionGame\mode\BaseGameMode.cs" />
+    <Compile Include="InteractionGame\mode\BossGameMode.cs" />
     <Compile Include="InteractionGame\Parsers.cs" />
     <Compile Include="InteractionGame\Parser\AdminParser.cs" />
     <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
+    <Compile Include="InteractionGame\Parser\BossGameModeParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
@@ -82,6 +87,7 @@
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
     <Compile Include="InteractionGame\plugs\EveryoneTowerPlug.cs" />
+    <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />
@@ -97,10 +103,12 @@
     <Compile Include="InteractionGame\Utils\LargeTips.cs" />
     <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
+    <Compile Include="Utils\Comm.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />
     <Compile Include="Utils\LocalMemComm.cs" />
     <Compile Include="Utils\Locator.cs" />
     <Compile Include="Utils\ObjectPool.cs" />
+    <Compile Include="Utils\TickTags.cs" />
     <Compile Include="Utils\TimeLinerInteger.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Content Include="Main.cs.txt" />

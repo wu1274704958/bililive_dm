@@ -38,7 +38,7 @@ namespace BililiveDebugPlugin.DB
 
         private bool IsExpired(ItemData itemData)
         {
-            var limitedTime = Utils.Utils.GetDateTimeBySec(itemData.Ext);
+            var limitedTime = Common.GetDateTimeBySec(itemData.Ext);
             return DateTime.Now >= limitedTime;
         }
 

@@ -105,7 +105,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             _group.TryAdd(userData.Id, new TowerData(1,mid));
             _mapUid.TryAdd(mid, userData.Id);
             int op = userData.GuardLevel & 255;
-            if (_isStoneSet.Contains(userData.Id))
+            if (!_isStoneSet.Contains(userData.Id))
                 op |= (1 << 8);
             _bridge.AppendExecCode($"TFE_AddTower('{userData.Id}',{mid},{g + 1},'{userData.Name}',{op})");
         }
@@ -133,7 +133,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public DanmakuModel OnPreJoin(DanmakuModel m)
         {
-            if(m.CommentText != null && m.CommentText.IndexOf("石") >= 0)
+            if(m.CommentText != null && m.CommentText.IndexOf("塔") >= 0)
             {
                 _isStoneSet.Add(m.OpenID);
             }

@@ -97,7 +97,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public void DoSpawnSquad(int g, ReinforcementsData v)
         {
             List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
-            ushort addedAttrForGroup = global::InteractionGame.Utils.Merge(v.DamageAdded, v.HpAdded);
+            ushort addedAttrForGroup = global::InteractionGame.Utils.MergeByte(v.DamageAdded, v.HpAdded);
             foreach (var it in v.SquadConf)
             {
                 var sd = Aoe4DataConfig.GetMaxLevelSquad(it.Key, g);

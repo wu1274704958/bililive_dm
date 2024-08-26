@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Utils
 {
-    public static class Utils
+    public static class Common
     {
         public static DateTime GetDateTimeBySec(int sec)
         {

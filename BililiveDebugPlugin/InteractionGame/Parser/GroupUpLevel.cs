@@ -235,7 +235,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Start()
         {
-            _cxt = Utils.Locator.Instance.Get<DebugPlugin>();
+            _cxt = Locator.Instance.Get<DebugPlugin>();
             m_Owner.m_MsgDispatcher.GetPlayerParser().AddObserver(this);
         }
 

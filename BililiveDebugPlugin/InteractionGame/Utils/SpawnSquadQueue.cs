@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
@@ -11,7 +12,31 @@ using Utils;
 
 namespace BililiveDebugPlugin.InteractionGameUtils
 {
-    public class SpawnSquadQueue : ISpawnSquadQueue
+
+    public abstract class SpawnSquadQueueWithMerge : ISpawnSquadQueue
+    {
+        public override void AppendAction(ISpawnSquadAction action)
+        {
+            base.AppendAction(HandleMerge(action));
+        }
+
+        private ISpawnSquadAction HandleMerge(ISpawnSquadAction action)
+        {
+            int count = action.GetCount();
+            if(count >= 400)
+            {
+                var mult = Math.Min(count / 200, 5);
+                var rest = action.Merge(mult);
+                var user = action.GetUser() as UserData;
+                Locator.Instance.Get<IContext>().PrintGameMsg($"{user.NameColored}触发合批x{mult}倍属性");
+                if (rest != null)
+                    base.AppendAction(rest);
+            }
+            return action;
+        }
+    }
+
+    public class SpawnSquadQueue : SpawnSquadQueueWithMerge
     {
         private IContext debugPlugin;
         private class CheckSCCxt {
@@ -52,29 +77,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             return Aoe4DataConfig.SquadLimit - GameState.GetSquadCount(group);
         }
 
-        //public override void AppendAction(ISpawnSquadAction action)
-        //{
-        //    var g = action.GetGroup();
-        //    GameState.CheckNewSquadCount(g, this, (count, g_) => base.AppendAction(action));
-        //}
-
-        //protected override void PeekQueueAndSpawn(int g, SpawnSquadActionBound action)
-        //{
-        //    CheckSCCxt v = null;
-        //    if (_checkSCCxtMap.TryGetValue(g,out v))
-        //    {
-        //        if (!GameState.HasCheckSquadCountTask(g, v))
-        //        {
-        //            v.action = action;
-        //            GameState.CheckNewSquadCount(g, v, v.OnResult);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        _checkSCCxtMap.TryAdd(g, v = new CheckSCCxt(g, action, base.PeekQueueAndSpawn));
-        //        GameState.CheckNewSquadCount(g, v, v.OnResult);
-        //    }
-        //}
+        
     }
 
     public enum EFallbackType:int
@@ -83,7 +86,22 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         Honor = 1,
         Gift = 2,
     }
-    public class HonorSpawnSquadFallback : ISpawnFallback
+
+
+    public abstract class BaseSpawnFallback : ISpawnFallback
+    {
+        private double percentageScale = 1.0;
+
+        public double PercentageScale { get => percentageScale; set => percentageScale = value; }
+
+        public abstract void Fallback();
+        public abstract void SetPercentage(double percentage);
+
+        public abstract int Type();
+    }
+
+
+    public class HonorSpawnSquadFallback : BaseSpawnFallback
     {
         protected EFallbackType _type = EFallbackType.Honor;
         protected int _origin = 0;
@@ -96,7 +114,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             _user = user;
         }
 
-        public virtual void Fallback()
+        public override void Fallback()
         {
             if (_honor > 0)
             {
@@ -105,14 +123,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             }
         }
 
-        public int GetType()
+        public override int Type()
         {
             return (int)_type;
         }
 
-        public void SetPercentage(double percentage)
+        public override void SetPercentage(double percentage)
         {
-            _honor = (int)Math.Floor(_origin * percentage);
+            _honor = (int)Math.Floor(_origin * (percentage * PercentageScale));
         }
     }
 
@@ -122,7 +140,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
         }
 
-        public int GetType()
+        public int Type()
         {
             return (int)EFallbackType.None;
         }
@@ -133,7 +151,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         }
     }
 
-    public class GiftSpawnSquadFallback : ISpawnFallback
+    public class GiftSpawnSquadFallback : BaseSpawnFallback
     {
         protected EFallbackType _type = EFallbackType.Gift;
         protected double _count = 0;
@@ -149,7 +167,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             _price = price;
         }
 
-        public virtual void Fallback()
+        public override void Fallback()
         {
             int count = (int)Math.Floor(_count);
             if (count > 0)
@@ -166,21 +184,21 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             }
         }
 
-        public int GetType()
+        public override int Type()
         {
             return (int)_type;
         }
 
-        public void SetPercentage(double percentage)
+        public override void SetPercentage(double percentage)
         {
-            _count = _origin * percentage;
+            _count = _origin * (percentage * PercentageScale);
         }
     }
 
     public static class SpawnSquad
     {
         public static void SendSpawnSquad(this ISpawnSquadAction a, UserData u, int c, SquadData sd, ushort attribute = 0,
-            bool log = false)
+            bool log = false,double scoreScale = 1)
         {
             var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
             if(m_MsgDispatcher == null) return;
@@ -204,7 +222,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
             }
             if(u.Id_int > 0)
-                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c ,c);
+                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c * scoreScale,c);
             if (false)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
@@ -223,7 +241,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             return 1;
         }
         public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(SquadData, int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,
-            bool log = false)
+            bool log = false,double scoreScale = 1)
         {
             var rc = 0;
             if (group.Count == 0) return 0;
@@ -243,7 +261,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(rc > 0)
                 Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
             if (u.Id_int > 0)
-                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple) ,rc);
+                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple * scoreScale) ,rc);
             if (false)
                 Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
             return rc;
@@ -267,12 +285,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (user == null) return;
             if (_givHonor > 0)
             {
-                var v = (long)Math.Ceiling(res * _givHonor);
+                var v = (long)Math.Ceiling(res * _givHonor * GetPercentageScale());
                 AddHonor(user, v);
             }
             if(_upLevelgold > 0)
             {
-                var v = Math.Ceiling(res * _upLevelgold);
+                var v = Math.Ceiling(res * _upLevelgold * GetPercentageScale());
                 Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().GetSubMsgParse<GroupUpLevel<DebugPlugin>>().NotifyDepleteGold(user.Group, (int)v);
             }
         }
@@ -310,6 +328,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             return _priority;
         }
+
+        protected abstract double GetPercentageScale();
     }
 
     public class SpawnSingleSquadAction<FT> : BaseSpawnSquadAction
@@ -352,7 +372,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
             if (sc > max) sc = max;
-            this.SendSpawnSquad(_user, sc, _squad, _attribute, true);
+            this.SendSpawnSquad(_user, sc, _squad, _attribute, true,scoreScale:GetPercentageScale());
             count -= sc;
             max -= sc;
             @out += sc;
@@ -381,6 +401,27 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public override object GetUser()
         {
             return _user;
+        }
+
+        public override ISpawnSquadAction Merge(int multiple)
+        {
+            _Percentage = _Percentage / multiple;
+            if (_fallback != null && _fallback is BaseSpawnFallback fallback)
+            {
+                fallback.PercentageScale = multiple;
+                fallback.SetPercentage(_Percentage); 
+            }
+            _attribute = global::InteractionGame.Utils.AttrMult(_attribute, multiple);
+            return null;
+        }
+
+        protected override double GetPercentageScale()
+        {
+            if (_fallback != null && _fallback is BaseSpawnFallback fallback)
+            {
+                return fallback.PercentageScale;
+            }
+            return 1;
         }
     }
     
@@ -447,7 +488,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                     var realCount = (int)Math.Round(c * it.Item2);
                     if (realCount <= 0) continue;
                     rc += realCount;
-                    this.SendSpawnSquad(_user, realCount, it.Item1, _Squad.AddedAttr, true);
+                    this.SendSpawnSquad(_user, realCount, it.Item1, _Squad.AddedAttr, true,scoreScale:GetPercentageScale());
                 }
                 if (rc <= 0)
                     return _specialPercentage;
@@ -470,7 +511,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
-                var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true);
+                var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true,
+                    scoreScale:GetPercentageScale());
                 if (rc <= 0)
                     return _normalPercentage;
                 count -= rc;
@@ -506,6 +548,28 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public override object GetUser()
         {
             return _user;
+        }
+        public override ISpawnSquadAction Merge(int multiple)
+        {
+            _specialPercentage /= multiple;
+            _normalPercentage /= multiple;
+            if (_fallback != null && _fallback is BaseSpawnFallback fallback)
+            {
+                fallback.PercentageScale = multiple;
+                _Percentage = _specialPercentage * _constSpecialPercentage + _normalPercentage * (1.0 - _constSpecialPercentage);
+                fallback.SetPercentage(_Percentage);
+            }
+            _Squad.AddedAttr = global::InteractionGame.Utils.AttrMult(_Squad.AddedAttr, multiple);
+            return null;
+        }
+
+        protected override double GetPercentageScale()
+        {
+            if (_fallback != null && _fallback is BaseSpawnFallback fallback)
+            {
+                return fallback.PercentageScale;
+            }
+            return 1;
         }
     }
 }

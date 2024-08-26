@@ -41,11 +41,26 @@ namespace InteractionGame
             ObjPoolMgr.Instance.Get<Dictionary<int, int>>(null, DefObjectRecycle.OnDictRecycle).Return(dict);
         }
 
-        public static ushort Merge(byte hD, byte lHP)
+        public static ushort MergeByte(byte hD, byte lHP)
         {
             return (ushort)(hD << 8 | lHP);
         }
-        public static int Merge(ushort h, ushort l)
+
+        public static ushort AttrMult(ushort attr,int multiple)
+        {
+            var height = attr >> 8;
+            var low = attr & 0xFF;
+            if (height > 0)
+                height *= multiple;
+            else
+                height += (multiple - 1);
+            if(low > 0)
+                low *= multiple;
+            else
+                low += (multiple - 1);
+            return MergeByte((byte)height, (byte)low);
+        }
+        public static int MergeShort(ushort h, ushort l)
         {
             return h << 16 | l;
         }
@@ -64,6 +79,8 @@ namespace InteractionGame
         public static int GetNewYearActivity()
         {
             var now = DateTime.Now;
+            if (now.Month == 8 && (now.Day == 13 || now.Day == 14))
+                return 2;
             if(now.DayOfYear == 1)
                 return 1; // 4
             var chineseDate = new ChineseLunisolarCalendar();

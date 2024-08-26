@@ -85,8 +85,8 @@ namespace BililiveDebugPlugin
         private TimeSpan UpdatePlayerInterval = TimeSpan.FromSeconds(1);
         private DateTime CheckIsBlackPopTime = DateTime.Now;
         private DateTime CheckAfterSettlementNeedReClickStart = DateTime.Now;
-        private Utils.ObjectPool<GoldInfo> GoldInfoPool = new Utils.ObjectPool<GoldInfo>(()=>new GoldInfo());
-        private Utils.ObjectPool<GoldInfoArr> GoldInfoArrPool;
+        private ObjectPool<GoldInfo> GoldInfoPool = new ObjectPool<GoldInfo>(()=>new GoldInfo());
+        private ObjectPool<GoldInfoArr> GoldInfoArrPool;
         private Aoe4Settlement<DebugPlugin> m_Settlement = new Aoe4Settlement<DebugPlugin>();
 
         private void OnRetGoldInfoArr(GoldInfoArr a)
@@ -107,7 +107,7 @@ namespace BililiveDebugPlugin
             PluginVer = "v0.0.2";
             PluginDesc = "它看着很像F12";
 
-            GoldInfoArrPool = new Utils.ObjectPool<GoldInfoArr>(() => new GoldInfoArr(), OnRetGoldInfoArr);
+            GoldInfoArrPool = new ObjectPool<GoldInfoArr>(() => new GoldInfoArr(), OnRetGoldInfoArr);
         }
         public Aoe4StateData CheckState(EAoe4State state)
         {

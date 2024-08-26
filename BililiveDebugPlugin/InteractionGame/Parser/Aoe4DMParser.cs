@@ -112,7 +112,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     public class MsgGiftParser<IT> : IDyMsgParser<IT>, IPlayerParserObserver
         where IT : class, IContext
     {
-        public Utils.ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new Utils.ObjectPool<List<(string, int)>>(
+        public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
         private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
         private Regex BooHonorRegex2 = new Regex("z([0-9a-wA-W]+)");
@@ -402,8 +402,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             int c = giftCount;
             int t = 0;
             int id = -1;
-            ushort addedAttr = Merge(1, 1);
-            ushort addedAttrForGroup = Merge(1, 1);
+            ushort addedAttr = MergeByte(1, 1);
+            ushort addedAttrForGroup = MergeByte(1, 1);
             List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             switch (giftName)
             {
@@ -415,7 +415,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "牛哇":
                 case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
                 case "干杯": id = 110005; t = 1; c *= 68; break;
-                case "棒棒糖": id = 110003; t = 1; c *= 5; addedAttr = Merge(2, 3); break;
+                case "棒棒糖": id = 110003; t = 1; c *= 5; addedAttr = MergeByte(2, 3); break;
                 case "这个好诶": id = 110004; t = 1; c *= 16; break;
                 case "小蛋糕": id = 110016; t = 1; c *= 7; break;
                 //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
@@ -424,17 +424,17 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 case "水晶之恋": id = 110011; t = 1; c *= 21; break;
                 case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); Squad.Add((300110, 100));
                     Squad.Add((100100, 100)); t = 3;
-                    addedAttrForGroup = addedAttr = Merge(3, 2); break;
+                    addedAttrForGroup = addedAttr = MergeByte(3, 2); break;
                 case "星愿水晶球": id = 110002; 
                     if(Aoe4DataConfig.GetSquadPure(52,2,u.Group) == null)
                         Squad.Add((100104, 45));
                     else
                         Squad.Add((200052, 100));
                     Squad.Add((200050, 100)); Squad.Add((300049, 100)); Squad.Add((200053, 100)); t = 3;
-                    addedAttr = global::InteractionGame.Utils.Merge(20, 100);
-                    addedAttrForGroup = global::InteractionGame.Utils.Merge(6, 40);
+                    addedAttr = global::InteractionGame.Utils.MergeByte(20, 100);
+                    addedAttrForGroup = global::InteractionGame.Utils.MergeByte(6, 40);
                     break;
-                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = Merge(3, 5);break;
+                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = MergeByte(3, 5);break;
                 case "打call":
                     {
                         if(u.HpMultiple + c > 255)
@@ -921,7 +921,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 return v;
             }
-            return global::Utils.Utils.MinDateTime;
+            return Common.MinDateTime;
         }
 
         private void SpawnSquad(string uid,SquadGroup v)

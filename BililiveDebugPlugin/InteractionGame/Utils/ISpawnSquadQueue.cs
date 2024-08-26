@@ -10,7 +10,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
     public interface ISpawnFallback
     {
         void Fallback();
-        int GetType();
+        int Type();
         void SetPercentage(double percentage);
     }
     
@@ -71,6 +71,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public abstract void OnDestroy();
         public abstract object GetUser();
         public abstract int GetPriority();
+        public abstract ISpawnSquadAction Merge(int multiple);
     }
     public class SpawnSquadActionBound
     {

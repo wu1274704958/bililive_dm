@@ -1,96 +1,139 @@
-﻿using InteractionGame;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Utils;
 
-namespace BililiveDebugPlugin.Utils
+
+class LocalMemComm
 {
-    class LocalMemComm
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    protected delegate void ErrorCallbackFunction(UInt32 id, IntPtr message);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    protected delegate void RecvCallbackFunction(IntPtr message);
+
+    [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    protected static extern UInt32 LMC_init(IntPtr mem_id, UInt32 size, ErrorCallbackFunction callback);
+    [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    protected static extern void LMC_send(UInt32 id, IntPtr msg);
+    [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
+    protected static extern int LMC_tick(UInt32 id);
+    [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
+    protected static extern int LMC_has_unsend(UInt32 id);
+    [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
+    protected static extern void LMC_release(UInt32 id);
+    [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    protected static extern void LMC_pop_recv(UInt32 id, RecvCallbackFunction callback);
+    [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
+    protected static extern void LMC_reset(UInt32 id);
+
+    private static string RecvMsgTmp = null;
+    private static object RecvMsgLockObj = new object();
+
+    private UInt32 m_id = 0;
+    private Action<String> OnErrorCallback;
+    private static Dictionary<UInt32, LocalMemComm> InsDict = new Dictionary<UInt32, LocalMemComm>();
+
+    private static void RegisterInstance(LocalMemComm inst)
     {
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        protected delegate void ErrorCallbackFunction(int level, IntPtr message);
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        protected delegate void RecvCallbackFunction(IntPtr message);
-
-        [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        protected static extern void LMC_init(IntPtr mem_id, UInt32 size, ErrorCallbackFunction callback);
-        [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        protected static extern void LMC_send(IntPtr msg);
-        [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
-        protected static extern int LMC_tick();
-        [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
-        protected static extern int LMC_has_unsend();
-        [DllImport("lmc.dll", CallingConvention = CallingConvention.Cdecl)]
-        protected static extern void LMC_release();
-        [DllImport("lmc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        protected static extern void LMC_pop_recv(RecvCallbackFunction callback);
-
-        private static string RecvMsgTmp = null;
-
-        public void Init(string mem_id, UInt32 size)
+        if (inst.m_id > 0 && !InsDict.ContainsKey(inst.m_id))
         {
-            ErrorCallbackFunction errorCallback = ErrorCallback;
-            var msm_id_ptr = Marshal.StringToHGlobalAnsi(mem_id);
-            LMC_init(msm_id_ptr, size, errorCallback);
-            Marshal.FreeHGlobal(msm_id_ptr);
+            InsDict.Add(inst.m_id, inst);
         }
-
-        public void Send(string msg)
+    }
+    private static void UnregisterInstance(LocalMemComm inst)
+    {
+        if (inst.m_id > 0)
         {
-            lock (this)
+            InsDict.Remove(inst.m_id);
+        }
+    }
+
+    public void Init(string mem_id, UInt32 size)
+    {
+        ErrorCallbackFunction errorCallback = ErrorCallback;
+        var msm_id_ptr = Marshal.StringToHGlobalAnsi(mem_id);
+        m_id = LMC_init(msm_id_ptr, size, errorCallback);
+        Marshal.FreeHGlobal(msm_id_ptr);
+        RegisterInstance(this);
+    }
+
+    public void Send(string msg)
+    {
+        if (m_id <= 0) return;
+        lock (this)
+        {
+            var msg_ptr = Marshal.StringToHGlobalUni(msg);
+            LMC_send(m_id, msg_ptr);
+            Marshal.FreeHGlobal(msg_ptr);
+        }
+    }
+
+    public bool Tick()
+    {
+        if (m_id <= 0) return false;
+        lock (this)
+        {
+            return LMC_tick(m_id) != 0;
+        }
+    }
+
+    public bool HasUnsend()
+    {
+        if (m_id <= 0) return false;
+        lock (this)
+        {
+            return LMC_has_unsend(m_id) != 0;
+        }
+    }
+
+    public void Release()
+    {
+        if (m_id <= 0) return;
+        LMC_release(m_id);
+        UnregisterInstance(this);
+        m_id = 0;
+    }
+
+    public string PopRecv()
+    {
+        if (m_id <= 0) return null;
+        lock (this)
+        {
+            RecvCallbackFunction f = RecvCallback;
+            string res = null;
+            lock (RecvMsgLockObj)
             {
-                var msg_ptr = Marshal.StringToHGlobalUni(msg);
-                LMC_send(msg_ptr);
-                Marshal.FreeHGlobal(msg_ptr);
-            }
-        }
-
-        public bool Tick()
-        {
-            lock (this)
-            {
-                return LMC_tick() != 0;
-            }
-        }
-
-        public bool HasUnsend()
-        {
-            lock (this)
-            {
-                return LMC_has_unsend() != 0;
-            }
-        }
-
-        public void Release()
-        {
-            LMC_release();
-        }
-
-        public string PopRecv()
-        {
-            lock (this)
-            {
-                RecvCallbackFunction f = RecvCallback;
                 RecvMsgTmp = null;
-                LMC_pop_recv(f);
-                return RecvMsgTmp;
+                LMC_pop_recv(m_id, f);
+                res = RecvMsgTmp;
             }
+            return res;
         }
+    }
 
-        private static void RecvCallback(IntPtr msg)
+    public void Reset()
+    {
+        if (m_id <= 0) return;
+        lock (this)
         {
-            RecvMsgTmp = Marshal.PtrToStringUni(msg);
+            LMC_reset(m_id);
         }
+    }
 
-        private static void ErrorCallback(int level, IntPtr message)
+    private static void RecvCallback(IntPtr msg)
+    {
+        RecvMsgTmp = Marshal.PtrToStringUni(msg);
+    }
+
+    private static void ErrorCallback(UInt32 id, IntPtr message)
+    {
+        string error = Marshal.PtrToStringAnsi(message);
+        if (error != null && InsDict.TryGetValue(id, out var v))
         {
-            string error = Marshal.PtrToStringAnsi(message);
-            System.Console.WriteLine("LMC error = " + error);
+            if (v.OnErrorCallback != null)
+            {
+                v.OnErrorCallback.Invoke(error);
+            }
         }
     }
 }
+

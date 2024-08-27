@@ -56,13 +56,13 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 func.Invoke(g, action);
             }
         }
-        private Aoe4GameState GameState => _gameState ?? (_gameState = Locator.Instance.Get<Aoe4GameState>());
-        private Aoe4GameState _gameState = null;
+        private IGameState GameState => _gameState ?? (_gameState = Locator.Instance.Get<IGameState>());
+        private IGameState _gameState = null;
         private ConcurrentDictionary<int, CheckSCCxt> _checkSCCxtMap = new ConcurrentDictionary<int, CheckSCCxt>();
         public override bool IsGameEnd()
         {
             if(debugPlugin == null) debugPlugin = Locator.Instance.Get<IContext>();
-            return debugPlugin.IsGameStart() != 1;
+            return debugPlugin.IsGameStart() != EGameState.Started;
         }
 
         protected override bool IsGroupLimit(int count, int remaining)
@@ -200,29 +200,28 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public static void SendSpawnSquad(this ISpawnSquadAction a, UserData u, int c, SquadData sd, ushort attribute = 0,
             bool log = false,double scoreScale = 1)
         {
-            var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
-            if(m_MsgDispatcher == null) return;
+            var cxt = Locator.Instance.Get<IContext>();
             if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
             {
                 if(u.Id_int < 0) return;
-                m_MsgDispatcher.GetResourceMgr().SpawnVillager(u.Id, c);
+                cxt.GetResourceMgr().SpawnVillager(u.Id, c);
                 return;
             }
-            var target = u.Id_int < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = u.Id_int < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti(), 5);
+            var target = u.Id_int < 0 ? -1 : cxt.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
+            Locator.Instance.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
             var attackTy = sd.GetAttackType();
             var op = u?.AppendSquadAttribute(attribute,sd.GetAddHp(self),sd.GetAddDamage(self)) ?? 0;
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1, sd.GetBlueprint(u.Group), c, u.Id, attackTy,op);
+                cxt.GetBridge().ExecSpawnSquad(self + 1, sd.GetBlueprint(u.Group), c, u.Id, attackTy,op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
+                cxt.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
             }
             if(u.Id_int > 0)
-                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,sd.RealScore(u.Group) * c * scoreScale,c);
+                cxt.GetMsgParser().UpdateUserData(u.Id,sd.RealScore(u.Group) * c * scoreScale,c);
             if (false)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
@@ -245,23 +244,23 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             var rc = 0;
             if (group.Count == 0) return 0;
-            var m_MsgDispatcher = Locator.Instance.Get<ILocalMsgDispatcher<DebugPlugin>>();
-            var target = u.Id_int < 0 ? -1 : m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = u.Id_int < 0 ? u.Group : m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var cxt = Locator.Instance.Get<IContext>();
+            var target = u.Id_int < 0 ? -1 : cxt.GetPlayerParser().GetTarget(u.Id);
+            var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
             
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             if (target < 0)
             {
-                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
+                rc = cxt.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
             }
             else
             {
-                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
+                rc = cxt.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
             }
             if(rc > 0)
-                Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc, 5);
+                Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
             if (u.Id_int > 0)
-                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().UpdateUserData(u.Id,(int)(score * multiple * scoreScale) ,rc);
+                cxt.GetMsgParser().UpdateUserData(u.Id,(int)(score * multiple * scoreScale) ,rc);
             if (false)
                 Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
             return rc;
@@ -291,7 +290,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(_upLevelgold > 0)
             {
                 var v = Math.Ceiling(res * _upLevelgold * GetPercentageScale());
-                Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().GetSubMsgParse<GroupUpLevel<DebugPlugin>>().NotifyDepleteGold(user.Group, (int)v);
+                Locator.Instance.Get<IContext>().GetMsgParser().GetSubMsgParse<GroupUpLevel>().NotifyDepleteGold(user.Group, (int)v);
             }
         }
 
@@ -320,7 +319,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var user = GetUser() as UserData;
                 if (user == null) return;
-                Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetResourceMgr().AddResource(user.Id, _restGold);
+                Locator.Instance.Get<IContext>().GetResourceMgr().AddResource(user.Id, _restGold);
             }
         }
 

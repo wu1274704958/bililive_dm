@@ -71,8 +71,7 @@
     <Compile Include="InteractionGame\Context\IContext.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
-    <Compile Include="InteractionGame\IGameContex.cs" />
-    <Compile Include="InteractionGame\IGameStateObserver.cs" />
+    <Compile Include="InteractionGame\IGameState.cs" />
     <Compile Include="InteractionGame\LiveGameUtils.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
     <Compile Include="InteractionGame\mode\BaseGameMode.cs" />
@@ -84,7 +83,6 @@
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
-    <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\bar\GameCommPlug.cs" />
@@ -93,6 +91,7 @@
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
+    <Compile Include="InteractionGame\plugs\IGameState.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />
@@ -101,7 +100,6 @@
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
     <Compile Include="InteractionGame\Settlement\Aoe4Settlement.cs" />
     <Compile Include="InteractionGame\Settlement\ISettlement.cs" />
-    <Compile Include="InteractionGame\SM_SendMsg.cs" />
     <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\Utils\AutoForceStopPlug.cs" />
     <Compile Include="InteractionGame\Utils\ISpawnSquadQueue.cs" />

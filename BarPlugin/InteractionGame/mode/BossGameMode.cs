@@ -15,7 +15,7 @@ namespace BililiveDebugPlugin.InteractionGame.mode
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().AddObserver(this);
+            Locator.Instance.Get<IContext>().GetPlayerParser().AddObserver(this);
             _cxt = Locator.Instance.Get<IContext>();
         }
 
@@ -83,7 +83,7 @@ namespace BililiveDebugPlugin.InteractionGame.mode
         {
             if(SeatCountOfPlayer.ContainsKey(userData.Id) && userData.GuardLevel != 2)
             {
-                (_cxt as DebugPlugin).messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(userData.Id, 2.6f);
+                _cxt.GetResourceMgr().AddAutoResourceAddFactor(userData.Id, 2.6f);
             }
         }
 

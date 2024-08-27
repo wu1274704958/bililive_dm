@@ -17,7 +17,7 @@ namespace InteractionGame.plugs.bar.config
 
         public uint EndDelay => 14000;
 
-        public static readonly Dictionary<string, int> ColorMapIndex = new Dictionary<string, int>
+        public Dictionary<string, int> GroupNameMap { get; } = new Dictionary<string, int>
         {
             { "蓝",0 },
             { "红",1 },
@@ -27,13 +27,13 @@ namespace InteractionGame.plugs.bar.config
 
         public int GetGroupIdByName(string name)
         {
-            if (ColorMapIndex.TryGetValue(name, out var id)) return id;
+            if (GroupNameMap.TryGetValue(name, out var id)) return id;
             return -1;
         }
 
         public string GetGroupName(int id)
         {
-            foreach (var v in ColorMapIndex)
+            foreach (var v in GroupNameMap)
             {
                 if (v.Value + 1 == id)
                 {

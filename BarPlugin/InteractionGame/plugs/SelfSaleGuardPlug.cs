@@ -13,7 +13,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().AddPreJoinObserver(this);
+            Locator.Instance.Get<IContext>().GetPlayerParser().AddPreJoinObserver(this);
         }
 
         public override void Tick()

@@ -20,10 +20,10 @@ namespace InteractionGame.Context
         public bool IsStart => State == 2;
         public PlugMgr<EGameAction> m_PlugMgr { get; protected set; } = new PlugMgr<EGameAction>();
 
-        public abstract IAoe4Bridge<T> GetBridge<T>() where T : class, IContext;
-        public abstract IDyMsgParser<T> GetMsgParser<T>() where T : class, IContext;
-        public abstract IDyPlayerParser<T> GetPlayerParser<T>() where T : class, IContext;
-        public abstract IResourceMgr<T> GetResourceMgr<T>() where T : class, IContext;
+        public abstract IAoe4Bridge GetBridge();
+        public abstract IDyMsgParser GetMsgParser();
+        public abstract IDyPlayerParser GetPlayerParser();
+        public abstract IResourceMgr GetResourceMgr();
 
         public abstract EGameState IsGameStart();
 

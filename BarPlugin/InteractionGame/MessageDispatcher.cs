@@ -24,11 +24,11 @@ namespace InteractionGame
      
     }
 
-    public class MessageDispatcher<PP,MP,B,R,IT> : ILocalMsgDispatcher<IT,Msg,MsgType>
-        where PP : IDyPlayerParser<IT>,new()
-        where MP : IDyMsgParser<IT>,new()
-        where B : IAoe4Bridge<IT>,new()
-        where R : IResourceMgr<IT>,new()
+    public class MessageDispatcher<PP,MP,B,R,IT> : ILocalMsgDispatcher<Msg,MsgType>
+        where PP : IDyPlayerParser,new()
+        where MP : IDyMsgParser,new()
+        where B : IAoe4Bridge,new()
+        where R : IResourceMgr,new()
         where IT:class,IContext
     {
         private Int32 IsRunning = 0;
@@ -178,9 +178,9 @@ namespace InteractionGame
             }
         }
 
-        public void Init(IT it)
+        public void Init(IContext it)
         {
-            InitCtx = it;
+            InitCtx = it as IT;
             bridge.Init(it);
             pp.Init(it);
             mp.Init(it);
@@ -188,22 +188,22 @@ namespace InteractionGame
             InitCtx.OnInit();
         }
 
-        public IAoe4Bridge<IT> GetBridge()
+        public IAoe4Bridge GetBridge()
         {
             return bridge;
         }
 
-        public IDyMsgParser<IT> GetMsgParser()
+        public IDyMsgParser GetMsgParser()
         {
             return mp;
         }
 
-        public IDyPlayerParser<IT> GetPlayerParser()
+        public IDyPlayerParser GetPlayerParser()
         {
            return pp;
         }
 
-        public IResourceMgr<IT> GetResourceMgr()
+        public IResourceMgr GetResourceMgr()
         {
             return resMgr;
         }

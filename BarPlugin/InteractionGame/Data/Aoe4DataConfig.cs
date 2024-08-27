@@ -134,10 +134,9 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 
         public static bool CanSpawnSquad(string uid, SpawnSquadType type)
         {
-            return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
             switch (type)
             {
-                case SpawnSquadType.Auto: return Locator.Instance.Get<EveryoneTowerPlug>().IsTowerAlive(uid);
+                case SpawnSquadType.Auto:
                 case SpawnSquadType.GoldBoom:
                 case SpawnSquadType.HonorBoom:
                 case SpawnSquadType.AutoGoldBoom:

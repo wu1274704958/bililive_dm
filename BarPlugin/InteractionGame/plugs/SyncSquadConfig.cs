@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BililiveDebugPlugin.InteractionGame.Data;
 using conf.Squad;
+using InteractionGame;
 using InteractionGame.Context;
 using ProtoBuf;
 using Utils;
@@ -26,7 +27,14 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public override void Notify(EGameAction m)
         {
-            
+            switch (m)
+            {
+                case EGameAction.GameStart:
+                    SendMsg();
+                    break;
+                case EGameAction.GameStop:
+                    break;
+            }
         }
 
         public override void Init()
@@ -38,7 +46,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public void SendMsg()
         {
-            Locator.Instance.Get<DebugPlugin>().SendMsg.SendMsg((short)EMsgTy.SyncSquadConfig, new SquadConfigData()
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, new SquadConfigData()
             {
                 Squads = (Dictionary<System.Int32, SquadData>)SquadDataMgr.GetInstance().Dict,
                 RandomIdx = Aoe4DataConfig.RandomIdx,

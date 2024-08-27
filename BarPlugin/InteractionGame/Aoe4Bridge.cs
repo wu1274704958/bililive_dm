@@ -23,12 +23,11 @@ namespace Interaction
         public int Msg;
     }
 
-    public interface IAoe4Bridge<IT>
-        where IT : class,IContext
+    public interface IAoe4Bridge
     {
         void SendMsg(DyMsg msg);
         void Stop();
-        void Init(IT it);
+        void Init(IContext it);
         void OnTick(float delta);
         void OnClear();
         WindowInfo GetWindowInfo();
@@ -60,7 +59,7 @@ namespace Interaction
         public static extern int SetCursorPos(int x, int y);
     }
     
-    public class DefAoe4Bridge<IT> : IAoe4Bridge<IT>
+    public class DefAoe4Bridge<IT> : IAoe4Bridge
         where IT:class,IContext
     {
         private WindowInfo _windowInfo = null;
@@ -107,12 +106,12 @@ namespace Interaction
             SavedFileDict.Clear();
         }
 
-        public void Init(IT it)
+        public void Init(IContext it)
         {
             Interlocked.Exchange(ref GameNextIdx, -1);
             Interlocked.Exchange(ref CurrentWriteIdx, -1);
             Interlocked.Exchange(ref ExpectNextIdx, 0);
-            _context = it;
+            _context = it as IT;
 
             DelAllLuaFiles();
             _windowInfo = FindWindow();
@@ -214,7 +213,7 @@ namespace Interaction
             if (uid[0] == '-' && int.TryParse(uid,out var _g))
                 g = Math.Abs(_g) - 1;
             else
-                g = Locator.Instance.Get<IDyPlayerParser<DebugPlugin>>().GetGroupById(uid);
+                g = Locator.Instance.Get<IContext>().GetPlayerParser().GetGroupById(uid);
             int num = 0;
             if (g == -1)
                 goto End;

@@ -15,25 +15,24 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         void OnSquadUpLevel(string uid, short sid, byte lvl,SquadData old,SquadData @new);
     }
-    public class SquadUpLevelSubParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
-        where IT : class, IContext
+    public class SquadUpLevelSubParser : ISubMsgParser
     {
-        private IDyMsgParser<IT> m_Owner;
+        private IDyMsgParser m_Owner;
 
         private ConcurrentDictionary<string, ConcurrentDictionary<short, byte>> UserSquadLevelDict =
             new ConcurrentDictionary<string, ConcurrentDictionary<short, byte>>();
         private static readonly Regex _regex = new Regex("升([0-9a-wA-W]*)");
-        private DebugPlugin _cxt;
-        private IDyMsgParser<DebugPlugin> _msgParser;
+        private IContext _cxt;
+        private IDyMsgParser _msgParser;
 
         private ConcurrentDictionary<int, ISquadUpLevelListener> _listeners =
             new ConcurrentDictionary<int, ISquadUpLevelListener>();
-        public void Init(IDyMsgParser<IT> owner)
+        public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
             Locator.Instance.Deposit(this);
-            _cxt = Locator.Instance.Get<DebugPlugin>();
-            _msgParser = _cxt.messageDispatcher.GetMsgParser();
+            _cxt = Locator.Instance.Get<IContext>();
+            _msgParser = _cxt.GetMsgParser();
         }
 
         public void OnStartGame()
@@ -95,7 +94,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             double price = 0.0;
             if (Consume(ud.Id, (price = sd.RealUpLevelPrice(ud.Group)),out int consumeHonor,out int consumeGold))
             {
-                _msgParser.GetSubMsgParse<GroupUpLevel<DebugPlugin>>().NotifyDepleteGold(ud.Group, (int)price);
+                _msgParser.GetSubMsgParse<GroupUpLevel>().NotifyDepleteGold(ud.Group, (int)price);
                 _msgParser.UpdateUserData(ud.Id, price,0);
                 var next = sd.RealNextLevelRef(ud.Group);
                 SetSquadLevel(ud.Id,sd.Sid, next.Level);
@@ -128,7 +127,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             consumeHonor = 0;
             consumeGold = 0;
-            var resMgr = _cxt.messageDispatcher.GetResourceMgr();
+            var resMgr = _cxt.GetResourceMgr();
             var res = resMgr.GetResource(uid);
             if (res >= price && resMgr.RemoveResource(uid,price))
             {

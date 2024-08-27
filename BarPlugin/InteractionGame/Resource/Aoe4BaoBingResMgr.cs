@@ -7,7 +7,7 @@ using InteractionGame.Resource;
 
 namespace BililiveDebugPlugin.InteractionGame.Resource
 {
-    public class Aoe4BaoBingResMgr<C> : IResourceMgr<C>
+    public class Aoe4BaoBingResMgr<C> : IResourceMgr
         where C : class, IContext
     {
         ConcurrentDictionary<string, TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, TimeLinerInteger>();

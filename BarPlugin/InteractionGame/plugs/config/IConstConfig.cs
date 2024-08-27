@@ -13,7 +13,7 @@ namespace InteractionGame.plugs.config
         uint OverlayCommSize { get; }
         uint GameCommSize { get; }
         uint EndDelay { get; }
-
+        Dictionary<string, int> GroupNameMap { get; }
         string GetGroupName(int id);
         int GetGroupIdByName(string name);
     }

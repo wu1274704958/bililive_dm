@@ -71,12 +71,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             return GetDesc(multiplier.Item1, multiplier.Item2, multiplier.Item3);
         }
     }
-    public class GroupUpLevel<IT> : ISubMsgParser<IDyMsgParser<IT>, IT> , IPlayerParserObserver
-        where IT : class,IContext 
+    public class GroupUpLevel : ISubMsgParser , IPlayerParserObserver
     {
-        private IDyMsgParser<IT> m_Owner;   
+        private IDyMsgParser m_Owner;   
         private ConcurrentDictionary<int,LevelCxt> GroupLevel = new ConcurrentDictionary<int, LevelCxt>();
-        private IT _cxt;
+        private IContext _cxt;
         private static readonly List<LevelConfig> LevelConfigs = new List<LevelConfig>()
         {
             new LevelConfig(1,2000,new List<string>()
@@ -105,7 +104,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 }
                 , 0.64f,0,3 ),
         };
-        public void Init(IDyMsgParser<IT> owner)
+        public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
         }
@@ -196,7 +195,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 .SetBottom(desc).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));
             
             LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) =>
-                    _cxt.GetResourceMgr<IT>().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
+                    _cxt.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
                 (u) =>
                 {
                     u.AddHpMultiple(config.AddHp * hpMultiplier);
@@ -237,8 +236,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Start()
         {
-            _cxt = Locator.Instance.Get<DebugPlugin>();
-            m_Owner.m_MsgDispatcher.GetPlayerParser().AddObserver(this);
+            _cxt = Locator.Instance.Get<IContext>();
+            m_Owner.InitCtx.GetPlayerParser().AddObserver(this);
         }
 
         public void OnAddGroup(UserData userData, int g)
@@ -249,7 +248,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 for (int i = 0;i <= Math.Min(levelCxt.NowConf - 1, LevelConfigs.Count - 1);i++)
                 {
                     var conf = LevelConfigs[i];
-                    _cxt.messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(userData.Id, conf.GoldAddFactor * goldMultiplier);
+                    _cxt.GetResourceMgr().AddAutoResourceAddFactor(userData.Id, conf.GoldAddFactor * goldMultiplier);
                     userData.AddHpMultiple(conf.AddHp * hpMultiplier);
                     userData.AddDamageMultiple(conf.AddDamage * damageMultiplier);
                 }

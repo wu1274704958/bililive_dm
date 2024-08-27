@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BililiveDebugPlugin.InteractionGame
+namespace InteractionGame.plugs
 {
-    internal interface IGameContex
+    public class IGameState
     {
+
     }
 }

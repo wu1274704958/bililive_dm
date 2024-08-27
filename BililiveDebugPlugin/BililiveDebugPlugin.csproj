@@ -86,7 +86,6 @@
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
-    <Compile Include="InteractionGame\plugs\EveryoneTowerPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />

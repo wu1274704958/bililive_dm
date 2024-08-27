@@ -8,11 +8,10 @@ using System.Collections.Concurrent;
 
 namespace InteractionGame.Resource
 {
-    public abstract class IResourceMgr<C>
-        where C: class,IContext
+    public abstract class IResourceMgr
     {
-        protected C InitCtx;
-        public virtual void Init(C it)
+        protected IContext InitCtx;
+        public virtual void Init(IContext it)
         {
             InitCtx = it;
         }

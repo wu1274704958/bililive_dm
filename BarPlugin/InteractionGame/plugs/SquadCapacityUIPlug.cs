@@ -1,4 +1,5 @@
 ﻿using BililiveDebugPlugin.InteractionGame.Data;
+using InteractionGame;
 using InteractionGame.Context;
 using Utils;
 
@@ -19,7 +20,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public override void Tick()
         {
-            var gst = Locator.Instance.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>();
+            var gst = Locator.Instance.Get<IGameState>();
             if (gst == null) return;
             for (int i = 0;i < Aoe4DataConfig.GroupCount;++i)
             {
@@ -32,7 +33,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         {
             base.Init();
             //Locator.Instance.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>().AddObserver(this);
-            Locator.Instance.Get<SM_SendMsg>().SendMsg((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = -1,Count = Aoe4DataConfig.SquadLimit});
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = -1,Count = Aoe4DataConfig.SquadLimit});
         }
 
         public override void Dispose()
@@ -43,7 +44,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public void SquadCountChanged(int g, int old, int n)
         {
-            Locator.Instance.Get<SM_SendMsg>().SendMsg((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = g,Count = n});
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = g,Count = n});
         }
     }
 }

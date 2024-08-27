@@ -6,13 +6,12 @@ using InteractionGame;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
-    public class AdminParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
-        where IT : class,IContext 
+    public class AdminParser : ISubMsgParser
     {
         
-        private IDyMsgParser<IT> m_Owner;
+        private IDyMsgParser m_Owner;
 
-        public void Init(IDyMsgParser<IT> owner)
+        public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
         }

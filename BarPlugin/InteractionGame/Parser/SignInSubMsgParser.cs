@@ -8,13 +8,12 @@ using InteractionGame;
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
     using MsgType = MsgTypeEnum;
-    public class SignInSubMsgParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
-        where IT : class,IContext 
+    public class SignInSubMsgParser : ISubMsgParser
     {
         
-        private IDyMsgParser<IT> m_Owner;
+        private IDyMsgParser m_Owner;
 
-        public void Init(IDyMsgParser<IT> owner)
+        public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
         }
@@ -76,7 +75,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 if (msg.msg.CommentText.Trim().StartsWith("签"))
                 {
-                    var u = m_Owner.m_MsgDispatcher.GetMsgParser().GetUserData(msg.msg.OpenID);
+                    var u = m_Owner.InitCtx.GetMsgParser().GetUserData(msg.msg.OpenID);
                     if (DB.DBMgr.Instance.SignIn(u) || DB.DBMgr.Instance.DepleteItem(msg.msg.OpenID,Aoe4DataConfig.SignTicket,1,out _) > 0)
                     {
                         var now = DateTime.Now;

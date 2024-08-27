@@ -11,9 +11,9 @@ namespace BililiveDebugPlugin.InteractionGame
         public static void ForeachUsersByGroup<IT>(IT cxt,int id,Action<string> a1, Action<UserData> a2)
             where IT : class, IContext
         {
-            var c = cxt as DebugPlugin;
-            var pp = c.messageDispatcher.GetPlayerParser();
-            var mp = c.messageDispatcher.GetMsgParser();
+            var c = cxt;
+            var pp = c.GetPlayerParser();
+            var mp = c.GetMsgParser();
             var ls = pp.GetUsersByGroup(id);
             foreach (var it in ls)
             {

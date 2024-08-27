@@ -1,6 +1,7 @@
 ﻿using System;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
+using InteractionGame;
 using InteractionGame.Context;
 using Utils;
 
@@ -31,7 +32,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             if(DateTime.Now - _startTime > Aoe4DataConfig.OneTimesGameTime)
             {
-                Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge().ForceFinish();
+                Locator.Instance.Get<IContext>().GetBridge().ForceFinish();
                 _startTime = DateTime.Now;
             }
         }
@@ -42,7 +43,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 case EGameAction.GameStart:
                     _safeStartTime = _startTime = DateTime.Now;
-                    Locator.Instance.Get<DebugPlugin>().SendMsg.SendMsg((short)EMsgTy.StartGame,new StartGameData()
+                    Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.StartGame,new StartGameData()
                     {  
                         StartTime = _startTime,
                         GameTime = Aoe4DataConfig.OneTimesGameTime,

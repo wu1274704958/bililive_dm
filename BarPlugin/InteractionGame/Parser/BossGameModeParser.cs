@@ -13,8 +13,7 @@ using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
-    public class BossGameModeParser<IT> : ISubMsgParser<IDyMsgParser<IT>, IT>
-        where IT:class,IContext
+    public class BossGameModeParser : ISubMsgParser
     {
         private TickGroup _tickGroup = new TickGroup();
         private int _state = 0;
@@ -23,7 +22,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         protected ConcurrentDictionary<string, int> SeatCountOfPlayer;
         protected static readonly Regex regex = new Regex("送(.+)");
 
-        public void Init(IDyMsgParser<IT> owner)
+        public void Init(IDyMsgParser owner)
         {
             _tickGroup.Reset();
         }
@@ -69,7 +68,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public bool Parse(DyMsgOrigin msg)
         {
-            var ud = Locator.Instance.Get<IDyMsgParser<DebugPlugin>>().GetUserData(msg.msg.OpenID);
+            var ud = Locator.Instance.Get<IContext>().GetMsgParser().GetUserData(msg.msg.OpenID);
             if (_state != 2 && (
                 (msg.barType == MsgTypeEnum.GiftSend && IsStartBossGift(msg.msg.GiftName)) || 
                 (ud != null && ud.GuardLevel == 2 && msg.msg.CommentText == "boss")
@@ -107,7 +106,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private void OnForceNextBossFight()
         {
             Interlocked.Exchange(ref _state, 2);
-            (_cxt as DebugPlugin).messageDispatcher.GetBridge().ForceFinish();
         }
 
         public void OnTick(float delat)

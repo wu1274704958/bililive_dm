@@ -12,6 +12,8 @@ using Interaction;
 using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.mode;
 using conf.Squad;
+using InteractionGame.plugs.config;
+using BililiveDebugPlugin.InteractionGame.Parser;
 
 namespace InteractionGame 
 {
@@ -31,8 +33,7 @@ namespace InteractionGame
         Msg OnPreJoin(Msg m);
     }
 
-    public abstract class IDyPlayerParser<IT>
-        where IT : class,IContext
+    public abstract class IDyPlayerParser
     {
         private Dictionary<string, int> PlayerGroupMap;
         private ConcurrentDictionary<string, int> GroupDict = new ConcurrentDictionary<string, int>();
@@ -41,10 +42,10 @@ namespace InteractionGame
         private ConcurrentDictionary<Int64,IPlayerParserObserver> _observers = new ConcurrentDictionary<long, IPlayerParserObserver>();
         private ConcurrentDictionary<Int64,IPlayerPreJoinObserver> _preJoinObservers = new ConcurrentDictionary<long, IPlayerPreJoinObserver>();
         private Regex mSelectGrouRegex;
-        protected IT InitCtx;
+        protected IContext InitCtx;
         private readonly object m_LockChooseGroup = new object();
 
-        public virtual void Init(IT it)
+        public virtual void Init(IContext it)
         {
             InitCtx = it;
             PlayerGroupMap = GetPlayerGroupMap();
@@ -84,7 +85,7 @@ namespace InteractionGame
         }
         protected virtual Dictionary<string,int> GetPlayerGroupMap()
         {
-            return DebugPlugin.ColorMapIndex;
+            return Locator.Instance.Get<IConstConfig>().GroupNameMap;
         }
         public List<int> GetLeastGroupList()
         {
@@ -110,7 +111,7 @@ namespace InteractionGame
                 {
                     InitCtx.PrintGameMsg($"{SettingMgr.GetColorWrap(uName,v)}选择加入{match.Groups[1].Value}方");
                     if (oldGroup != -1 && oldGroup != v)
-                        InitCtx.GetResourceMgr<IT>().RemoveAllVillagers(uid);
+                        InitCtx.GetResourceMgr().RemoveAllVillagers(uid);
                     if (GetTarget(uid) == v)
                     {
                         TargetDict[uid] = -1;
@@ -158,7 +159,7 @@ namespace InteractionGame
             if (g > -1)
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
-                InitCtx.GetResourceMgr<IT>().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
+                InitCtx.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
             }
             return g;
@@ -284,7 +285,7 @@ namespace InteractionGame
        
         public void OnAddGroup(UserData userdata, int g)
         {
-            InitCtx.GetMsgParser<IT>().TryAddUser(userdata);
+            InitCtx.GetMsgParser().TryAddUser(userdata);
             foreach (var it in _observers)
             {
                 it.Value.OnAddGroup(userdata, g);
@@ -316,11 +317,9 @@ namespace InteractionGame
             return msg;
         }
     }
-    public interface ISubMsgParser<P,IT>
-        where IT : class, IContext
-        where P : IDyMsgParser<IT>
+    public interface ISubMsgParser
     {
-        void Init(P owner);
+        void Init(IDyMsgParser owner);
         void Start();
         void OnStartGame();
         void Stop();
@@ -328,14 +327,13 @@ namespace InteractionGame
         void OnTick(float delat);
         void OnClear();
     }
-    public abstract class IDyMsgParser<IT>
-        where IT : class,IContext
+    public abstract class IDyMsgParser
     {
         protected ConcurrentDictionary<string,UserData> UserDataDict = new ConcurrentDictionary<string,UserData>();
-        public IT InitCtx { get;protected set; }
-        protected List<ISubMsgParser<IDyMsgParser<IT>, IT>> subMsgParsers = new List<ISubMsgParser<IDyMsgParser<IT>, IT>>();
+        public IContext InitCtx { get;protected set; }
+        protected List<ISubMsgParser> subMsgParsers = new List<ISubMsgParser>();
         
-        public virtual void Init(IT it)
+        public virtual void Init(IContext it)
         {
             InitCtx = it;
             foreach (var subMsgParser in subMsgParsers)
@@ -421,7 +419,7 @@ namespace InteractionGame
         {
             foreach (var key in UserDataDict)
             {
-                key.Value.Group = InitCtx.GetPlayerParser<IT>().GetGroupById(key.Key);
+                key.Value.Group = InitCtx.GetPlayerParser().GetGroupById(key.Key);
                 if(g == key.Value.Group + 1)
                 {
                     key.Value.Score += score;
@@ -436,14 +434,14 @@ namespace InteractionGame
                     subMsgParser.OnTick(delat);
             }
         }
-        public void AddSubMsgParse(ISubMsgParser<IDyMsgParser<IT>, IT> msgParser)
+        public void AddSubMsgParse(ISubMsgParser msgParser)
         {
             lock (subMsgParsers)
             {
                 subMsgParsers.Add(msgParser);
             }
         }
-        public void RmSubMsgParse(ISubMsgParser<IDyMsgParser<IT>, IT> msgParser)
+        public void RmSubMsgParse(ISubMsgParser msgParser)
         {
             lock (subMsgParsers)
             {
@@ -465,6 +463,12 @@ namespace InteractionGame
             }
             return null;
         }
+        public abstract void SendSpawnSquad(UserData u, int c, SquadData sd);
+        public abstract void SendSpawnSquadQueue(UserData u, int sid, int c, SquadData sd, int price = 0, string giftName = null, int giftCount = 0, int honor = 0,
+            int restGold = 0, int upLevelgold = 0, int giveHonor = 0, ushort attribute = 0, int priority = 0);
+        public abstract int SendSpawnSquad(UserData u, List<(SquadData, int)> group, int groupCount, int multiple = 1);
+        public abstract void SpawnManySquadQueue(string uid, SquadGroup v, int c, int price = 0, string giftName = null, int giftCount = 0, int honor = 0,
+            double restGold = 0, double upLevelgold = 0, int giveHonor = 0, bool notRecycle = false, int priority = 0);
     }
     public class StaticMsgDemand
     {
@@ -562,5 +566,149 @@ namespace InteractionGame
             return ((long)oph << 32) | (long)(Op1 | attr);
         }
     }
-    
+
+    public class SquadGroup : ICloneable, IDisposable
+    {
+        public List<(SquadData, int)> squad;
+        public List<(SquadData, int)> specialSquad;
+        public double spawnTime;
+        public DateTime lastSpawnTime;
+        public double score;
+        public double price;
+        public string uName;//user.NameColored
+        public int num;
+        public int specialCount;
+        public int normalCount => num - specialCount;
+        public double specialScore;
+        public double normalScore => score - specialScore;
+        public bool IsEmpty => squad.Count == 0 && specialSquad.Count == 0;
+
+        public bool Invaild => squad == null || specialSquad == null;
+
+        public ushort AddedAttr = 0;
+        public string StringTag = null;
+        public void Reset()
+        {
+            squad?.Clear();
+            specialSquad?.Clear();
+            spawnTime = 0.0f;
+            lastSpawnTime = DateTime.Now;
+            score = 0;
+            price = 0;
+            num = 0;
+            specialCount = 0;
+            specialScore = 0;
+            AddedAttr = 0;
+            StringTag = null;
+        }
+
+        public SquadGroup SetAddedAttr(ushort attr)
+        {
+            AddedAttr = attr;
+            return this;
+        }
+
+        public static void OnClearList(List<(string, int)> list)
+        {
+            list.Clear();
+        }
+        public static SquadGroup FromString(string s, int g, string uid)
+        {
+            var squad = new SquadGroup();
+            squad.StringTag = s;
+            squad.squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
+            squad.specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
+            Utils.StringToDictAndForeach(s, (item) =>
+            {
+                var lvl = Locator.Instance.Get<SquadUpLevelSubParser>().GetSquadLevel(uid, item.Key);
+                var sd = Aoe4DataConfig.GetSquad(item.Key, g, lvl);
+                if (sd == null) return;
+                if (sd.SquadType_e == ESquadType.Normal)
+                    squad.squad.Add((sd, item.Value));
+                else
+                {
+                    squad.specialSquad.Add((sd, item.Value));
+                    squad.specialCount += item.Value;
+                    squad.specialScore += sd.RealScore(g) * item.Value;
+                }
+                squad.spawnTime += sd.RealTrainTime(g) * item.Value;
+                squad.score += sd.RealScore(g) * item.Value;
+                squad.num += item.Value;
+                squad.price += sd.RealPrice(g) * item.Value;
+            });
+            return squad;
+        }
+
+        public static SquadGroup FromData(List<(int, int)> squad, int g, ushort addedAttr = 0)
+        {
+            SquadGroup group = new SquadGroup();
+            group.AddedAttr = addedAttr;
+            group.Init();
+            Action<(int, int)> f = (item) =>
+            {
+                var sd = Aoe4DataConfig.GetSquadBySid(item.Item1, g);
+                if (sd == null) return;
+                group.spawnTime += sd.RealTrainTime(g) * item.Item2;
+                group.score += sd.RealScore(g) * item.Item2;
+                group.num += item.Item2;
+                group.price += sd.RealPrice(g) * item.Item2;
+                if (sd.SquadType_e != ESquadType.Normal)
+                {
+                    group.specialCount += item.Item2;
+                    group.specialScore += sd.RealScore(g) * item.Item2;
+                    group.specialSquad.Add((sd, item.Item2));
+                }
+                else
+                {
+                    group.squad.Add((sd, item.Item2));
+                }
+            };
+            foreach (var it in squad)
+                f(it);
+            return group;
+        }
+
+        public void Init()
+        {
+            squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
+            specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
+        }
+
+        public static void Recycle(SquadGroup d)
+        {
+            if (d.squad != null)
+                ObjPoolMgr.Instance.Get<List<(SquadData, int)>>().Return(d.squad);
+            if (d.specialSquad != null)
+                ObjPoolMgr.Instance.Get<List<(SquadData, int)>>().Return(d.specialSquad);
+            d.squad = null; d.specialSquad = null;
+            d.Reset();
+        }
+
+        public object Clone()
+        {
+            SquadGroup oth = new SquadGroup();
+            oth.Init();
+            oth.uName = uName;
+            oth.price = price;
+            oth.score = score;
+            oth.AddedAttr = AddedAttr;
+            oth.lastSpawnTime = lastSpawnTime;
+            oth.spawnTime = spawnTime;
+            oth.num = num;
+            oth.specialCount = specialCount;
+            oth.specialScore = specialScore;
+            oth.StringTag = StringTag;
+            foreach (var it in squad)
+                oth.squad.Add(it);
+            foreach (var it in specialSquad)
+                oth.specialSquad.Add(it);
+            return oth;
+        }
+
+        public void Dispose()
+        {
+            Recycle(this);
+        }
+    }
+
 }

@@ -50,18 +50,15 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         {
             //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
             if(winGroup > 0 && winGroup <= Aoe4DataConfig.GroupCount)
-                it.GetMsgParser<IT>().AddWinScore(winGroup, 300);
-            var data = it.GetMsgParser<IT>().GetSortedUserData();
+                it.GetMsgParser().AddWinScore(winGroup, 300);
+            var data = it.GetMsgParser().GetSortedUserData();
             PreSettlement(it,data);
-            DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,it.GetPlayerParser<IT>().GetLeastGroupList());
+            DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,it.GetPlayerParser().GetLeastGroupList());
             //todo show settlement
             AfterSettlement();
             SendSettlement( data, winGroup - 1);
             //var bridge = messageDispatcher.GetBridge();
             //bridge.FroceOverrideCurrentMsg("Mod_Restart()");
-            Locator.Instance.Get<IContext>().Log("Aoe4GameState clean");
-            Locator.Instance.Get<Aoe4GameState>().OnClear();
-            Locator.Instance.Get<IContext>().Log("Settlement end");
         }
 
         private void AfterSettlement()

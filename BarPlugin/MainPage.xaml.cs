@@ -13,6 +13,7 @@ using conf.Squad;
 using BililiveDebugPlugin.InteractionGameUtils;
 using BililiveDebugPlugin.InteractionGame.Settlement;
 using BililiveDebugPlugin.InteractionGame;
+using InteractionGame.Context;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -83,26 +84,11 @@ namespace BililiveDebugPlugin
             try
             {
                 Match match = null;
-                if(TestIn.Text == "TestRe")
-                {
-                    Aoe4Settlement<DebugPlugin>.ClickRestart();
-                    return;
-                }
                 if ((match = new Regex("AddSign (.+) ([0-9]+)").Match(TestIn.Text)).Success)
                 {
                     if (int.TryParse(match.Groups[2].Value, out var count))
                     {
                         m_Cxt.Log($"AddSign {DB.DBMgr.Instance.AddGiftItem(match.Groups[1].Value, Aoe4DataConfig.SignTicket, count)}");
-                    }
-                    return;
-                }
-                if ((match = new Regex("AddUser ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
-                {
-                    if (int.TryParse(match.Groups[1].Value, out var count) && int.TryParse(match.Groups[2].Value,out var g))
-                    {
-                        var r = new Random();
-                        for(int i = 1;i <= count;i++)
-                            (m_Cxt as DebugPlugin).OnAddGroup(new global::InteractionGame.UserData(i.ToString(),$"name{i}","",g,0), g);
                     }
                     return;
                 }
@@ -156,18 +142,18 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
-                if ((match = new Regex("援 ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
-                {
-                    int g = 0;
-                    if (match.Groups.Count >= 3 && int.TryParse(match.Groups[2].Value, out var _g)) 
-                        g = _g;
-                    if (int.TryParse(match.Groups[1].Value, out var lvl))
-                    {
-                        if(conf.Reinforcements.ReinforcementsDataMgr.GetInstance().Dict.TryGetValue(lvl, out var data))
-                            Locator.Instance.Get<DefineKeepDamagedSpawnSquadPlug>().DoSpawnSquad(g, data);
-                    }
-                    return;
-                }
+                //if ((match = new Regex("援 ([0-9]+) ([0-9]*)").Match(TestIn.Text)).Success)
+                //{
+                //    int g = 0;
+                //    if (match.Groups.Count >= 3 && int.TryParse(match.Groups[2].Value, out var _g)) 
+                //        g = _g;
+                //    if (int.TryParse(match.Groups[1].Value, out var lvl))
+                //    {
+                //        if(conf.Reinforcements.ReinforcementsDataMgr.GetInstance().Dict.TryGetValue(lvl, out var data))
+                //            Locator.Instance.Get<DefineKeepDamagedSpawnSquadPlug>().DoSpawnSquad(g, data);
+                //    }
+                //    return;
+                //}
                 if (TestIn.Text == "TransfarSys")
                 {
                     TransfarSys();
@@ -183,7 +169,7 @@ namespace BililiveDebugPlugin
 
                 if (TestIn.Text == "Settlement")
                 {
-                    Locator.Instance.Get<DebugPlugin>().DoSettlement(2,0,false);
+                    Locator.Instance.Get<BarContext>().DoSettlement(2,false);
                     return;
                 }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
@@ -311,14 +297,7 @@ namespace BililiveDebugPlugin
 
         private void TestGetColor(object sender, RoutedEventArgs e)
         {
-            var ss = TestIn.Text.Split(' ');
-            if(ss.Length >= 2 && int.TryParse(ss[0],out var x) && int.TryParse(ss[1],out var y))
-            {
-                var d = (m_Cxt as BililiveDebugPlugin.DebugPlugin);
-                var w = d.messageDispatcher.Aoe4Bridge.GetWindowInfo();
-                var c = d?.GetGameState().GetData(x, y,w.Hwnd);
-                Text.Content = c.ToString();
-            }
+            
         }
 
         private BilibiliDM_PluginFramework.ReceivedDanmakuArgs GetDmData(UserData ud,

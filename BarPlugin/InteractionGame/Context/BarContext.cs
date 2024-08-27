@@ -148,24 +148,24 @@ namespace InteractionGame.Context
             base.OnDestroy();
         }
 
-        public override IAoe4Bridge<BarContext> GetBridge<BarContext>()
+        public override IAoe4Bridge GetBridge()
         {
-            return messageDispatcher.GetBridge() as IAoe4Bridge<BarContext>;
+            return messageDispatcher.GetBridge();
         }
 
-        public override IDyMsgParser<BarContext> GetMsgParser<BarContext>()
+        public override IDyMsgParser GetMsgParser()
         {
-            return messageDispatcher.GetMsgParser() as IDyMsgParser<BarContext>;
+            return messageDispatcher.GetMsgParser();
         }
 
-        public override IDyPlayerParser<BarContext> GetPlayerParser<BarContext>()
+        public override IDyPlayerParser GetPlayerParser()
         {
-            return messageDispatcher.GetPlayerParser() as IDyPlayerParser<BarContext>;
+            return messageDispatcher.GetPlayerParser();
         }
 
-        public override IResourceMgr<T> GetResourceMgr<T>()
+        public override IResourceMgr GetResourceMgr()
         {
-            return messageDispatcher.GetResourceMgr() as IResourceMgr<T>;
+            return messageDispatcher.GetResourceMgr();
         }
 
         public override EGameState IsGameStart()

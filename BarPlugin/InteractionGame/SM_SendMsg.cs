@@ -27,23 +27,7 @@ namespace BililiveDebugPlugin.InteractionGame
 //    ]
 //  }
 
-    public enum EMsgTy:short
-    {
-        None = 0,
-        Settlement = 1,
-        AddPlayer = 2,
-        ClearAllPlayer = 3,
-        UpdatePlayerGold = 4,
-        ShowPlayerAction = 5,
-        RemoveGroup = 6,
-        UpdateGroupLevel = 7,
-        StartGame = 8,
-        SquadCountChanged = 9,
-        ShowLargeTips = 10,
-        SyncSquadConfig = 11,
-        EventCue = 12,
-        DefenseKeepHp = 13,
-    }
+    
     public class SM_SendMsg
     {
         readonly static string MUTEX_NAME = "SM_Mutex";

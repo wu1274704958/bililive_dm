@@ -28,9 +28,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
          where IT : class, IContext
     {
 
-        public override void Init(IT it, ILocalMsgDispatcher<IT> dispatcher)
+        public override void Init(IT it)
         {
-            base.Init(it, dispatcher);
+            base.Init(it);
             Locator.Instance.Deposit(this);
         }
         public override bool Demand(Msg msg, MsgType barType)
@@ -88,7 +88,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，{str}阵营{DebugPlugin.GetColorById(v + 1)}方");
             }
-            m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(msgOrigin.msg.OpenID);
+            InitCtx.GetResourceMgr<IT>().AddAutoResourceById(msgOrigin.msg.OpenID);
             return v;
         }
         public static DateTime GetDateTimeFromSeconds(long sec)
@@ -126,7 +126,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             return StaticMsgDemand.Demand(msg, barType);
         }
 
-        public override void Init(IT it, ILocalMsgDispatcher<IT> dispatcher)
+        public override void Init(IT it)
         {
             AddSubMsgParse(new AutoSpawnSquadSubMsgParser<IT>());
             AddSubMsgParse(new SignInSubMsgParser<IT>());
@@ -134,8 +134,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new AdminParser<IT>());
             AddSubMsgParse(new BossGameModeParser<IT>());
             AddSubMsgParse(SquadUpLevelSubParser = new SquadUpLevelSubParser<IT>());
-            base.Init(it, dispatcher);
-            m_MsgDispatcher.GetPlayerParser().AddObserver(this);
+            base.Init(it);
+            InitCtx.GetPlayerParser<IT>().AddObserver(this);
             Locator.Instance.Deposit(this,m_SpawnSquadQueue = new SpawnSquadQueue());
             Locator.Instance.Deposit(this);
         }
@@ -189,7 +189,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 }
                 else if (con.StartsWith("查"))
                 {
-                    var resMgr = m_MsgDispatcher.GetResourceMgr();
+                    var resMgr = InitCtx.GetResourceMgr<IT>();
                     var res = resMgr.GetResource(msgOrigin.msg.OpenID);
                     var c = DB.DBMgr.Instance.GetUser(uid)?.Honor ?? 0;
                     var canSign = DB.DBMgr.Instance.CanSign(uid);
@@ -197,11 +197,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 }
                 else if (false && (con[0] == '防' || con[0] == '撤'))
                 {
-                    var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(uid);
+                    var self = InitCtx.GetPlayerParser<IT>().GetGroupById(uid);
                     if (self > -1)
                     {
                         var tar = true || con.Contains("金") ? self + 10 : self;
-                        m_MsgDispatcher.GetPlayerParser().SetTarget(uid, tar);
+                        InitCtx.GetPlayerParser<IT>().SetTarget(uid, tar);
                         InitCtx.PrintGameMsg($"{user?.NameColored ?? uName}选择{con}");
                         SendAllSquadAttack(tar, uid, con[0] == '撤');
                     }
@@ -210,7 +210,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     var isGold = con.Length > 1 && con[1] == '金';
                     if (!isGold && con.Length > 1) return (0,0);
-                    var pp = m_MsgDispatcher.GetPlayerParser();
+                    var pp = InitCtx.GetPlayerParser<IT>();
                     var target = pp.GetTarget(uid);
                     var self = pp.GetGroupById(uid);
                     if(target == self || target == self + 10)
@@ -252,7 +252,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)
             {
                 if (user == null) return(0,0);
-                m_MsgDispatcher.GetResourceMgr().AddResource(uid, user.FansLevel + 15);
+                InitCtx.GetResourceMgr<IT>().AddResource(uid, user.FansLevel + 15);
                 InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{user.FansLevel + 15}金");
                 return (0,0);
 
@@ -283,7 +283,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
                     AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
                     var activityAdd = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 0.8f : 0.0f;
-                    m_MsgDispatcher.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,
+                    InitCtx.GetResourceMgr<IT>().AddAutoResourceAddFactor(ud.Id,
                         Aoe4DataConfig.PlayerGoldResAddFactorArr[ud.RealGuardLevel] + activityAdd);
                     AddInitAttr(ud);
                     AddInitUpgrade(ud);
@@ -526,7 +526,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 case 0:
                     InitCtx.PrintGameMsg($"{u.NameColored}获得{c}个金矿");
-                    m_MsgDispatcher.GetResourceMgr().AddResource(u.Id, c);
+                    InitCtx.GetResourceMgr<IT>().AddResource(u.Id, c);
                     break;
                 case 1:
                     {
@@ -572,20 +572,20 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
             {
-                m_MsgDispatcher.GetResourceMgr().SpawnVillager(u.Id, c);
+                InitCtx.GetResourceMgr<IT>().SpawnVillager(u.Id, c);
                 return;
             }
-            var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var target = InitCtx.GetPlayerParser<IT>().GetTarget(u.Id);
+            var self = InitCtx.GetPlayerParser<IT>().GetGroupById(u.Id);
             var attackTy = sd.GetAttackType();
             var op = u?.AppendSquadAttribute(0, sd.GetAddHp(self), sd.GetAddDamage(self)) ?? 0; 
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,op);
+                InitCtx.GetBridge<IT>().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,op);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,op);
+                InitCtx.GetBridge<IT>().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,op);
             }
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
         }
@@ -615,16 +615,16 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public int SendSpawnSquad(UserData u, List<(SquadData,int)> group,int groupCount,int multiple = 1)
         {
             if (group.Count == 0) return 0;
-            var target = m_MsgDispatcher.GetPlayerParser().GetTarget(u.Id);
-            var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(u.Id);
+            var target = InitCtx.GetPlayerParser<IT>().GetTarget(u.Id);
+            var self = InitCtx.GetPlayerParser<IT>().GetGroupById(u.Id);
             int rc = 0;
             if (target < 0)
             {
-                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
+                rc = InitCtx.GetBridge<IT>().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
             }
             else
             {
-                rc = m_MsgDispatcher.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
+                rc = InitCtx.GetBridge<IT>().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
             }
             Locator.Instance.Get<Aoe4GameState>().OnSpawnSquad(self, rc);
             return rc;
@@ -633,20 +633,20 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public override void SendAllSquadAttack(int target, string uid, bool isMove = false)
         {
-            var self = m_MsgDispatcher.GetPlayerParser().GetGroupById(uid);
+            var self = InitCtx.GetPlayerParser<IT>().GetGroupById(uid);
             if (target < 0)
             {
-                m_MsgDispatcher.GetBridge().ExecAllSquadMove(self + 1, uid);
+                InitCtx.GetBridge<IT>().ExecAllSquadMove(self + 1, uid);
             }
             else
             {
-                m_MsgDispatcher.GetBridge().ExecAllSquadMoveWithTarget(self + 1, target + 1, uid, isMove ? 1 : 0);
+                InitCtx.GetBridge<IT>().ExecAllSquadMoveWithTarget(self + 1, target + 1, uid, isMove ? 1 : 0);
             }
         }
 
         public void GivePlayerUpgrade(UserData u, string upg)
         {
-            m_MsgDispatcher.GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{u.Group + 1}].id, nil, nil, {upg});");
+            InitCtx.GetBridge<IT>().AppendExecCode($"GiveAbility(PLAYERS[{u.Group + 1}].id, nil, nil, {upg});");
         }
         
 
@@ -864,7 +864,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public void Init(IDyMsgParser<IT> owner)
         {
             m_Owner = owner;
-            m_Owner.m_MsgDispatcher.GetPlayerParser().AddObserver(this);
+            m_Owner.InitCtx.GetPlayerParser<IT>().AddObserver(this);
             
         }
 
@@ -899,7 +899,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var lastSendGiftTime = GetSendGiftTime(it.Key);
                     if ((DateTime.Now - lastSendGiftTime).TotalMinutes < 1.5)
                         continue;
-                    var gold = m_Owner.m_MsgDispatcher.GetResourceMgr().GetResource(it.Key);
+                    var gold = m_Owner.InitCtx.GetResourceMgr<IT>().GetResource(it.Key);
                     if(gold >= 3000)
                     {
                         AutoBoom(it.Key,it.Value);
@@ -1050,7 +1050,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 squad.StringTag = str;
                 StringToDictAndForeach(str, (item) =>
                 {
-                    var u = m_Owner.m_MsgDispatcher.GetMsgParser().GetUserData(uid);
+                    var u = m_Owner.InitCtx.GetMsgParser<IT>().GetUserData(uid);
                     var lvl = Locator.Instance.Get<SquadUpLevelSubParser<IT>>().GetSquadLevel(uid, item.Key);
                     var sd = Aoe4DataConfig.GetSquad(item.Key,u.Group, lvl);
                     if (sd == null) return;
@@ -1077,7 +1077,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             if (m_Dict.TryGetValue(uid, out var squad))
             {
-                var resMgr = m_Owner.m_MsgDispatcher.GetResourceMgr();
+                var resMgr = m_Owner.InitCtx.GetResourceMgr<IT>();
                 var g = resMgr.GetResource(uid);
                 var c = (int)(g / squad.price);
                 if(c > maxCount) c = maxCount;
@@ -1091,8 +1091,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     {
                         m_Owner.InitCtx.PrintGameMsg($"{squad.uName}暴兵{squad.StringTag}x{c}组");
                         (m_Owner as MsgGiftParser<IT>).SpawnManySquadQueue(uid, squad.Clone() as SquadGroup, c,upLevelgold: c * squad.price,notRecycle:false);
-                        //m_Owner.GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(
-                        //    m_Owner.m_MsgDispatcher.GetPlayerParser().GetGroupById(uid),c * squad.price);
                     }
                 }
             }
@@ -1106,7 +1104,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             if (squad != null && !squad.IsEmpty )
             {
-                var resMgr = m_Owner.m_MsgDispatcher.GetResourceMgr();
+                var resMgr = m_Owner.InitCtx.GetResourceMgr<IT>();
                 var g = resMgr.GetResource(uid);
                 var c = (int)(g / squad.price);
                 if (c > maxCount) c = maxCount;

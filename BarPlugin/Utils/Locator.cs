@@ -83,7 +83,20 @@ namespace Utils
             }
             pool.TryAdd(typeof(T), t);
         }
-        
+
+        public void Remove<T>()
+        {
+            _pools.TryRemove(typeof(T),out _);
+        }
+
+        public void Remove<T>(object depositor)
+        {
+            if (_poolsOfObj.TryGetValue(depositor, out ConcurrentDictionary<Type, object> pool))
+            {
+                pool.TryRemove(typeof(T), out _);
+            }
+        }
+
         public T DepositOrExchange<T>(T t)
         {
             var ty = typeof(T);

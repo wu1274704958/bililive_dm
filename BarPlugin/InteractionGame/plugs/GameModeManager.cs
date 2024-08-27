@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BililiveDebugPlugin.InteractionGame.mode;
+using InteractionGame.Context;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.plugs

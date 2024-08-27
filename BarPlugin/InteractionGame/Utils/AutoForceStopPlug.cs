@@ -1,6 +1,7 @@
 ﻿using System;
 using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
+using InteractionGame.Context;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGameUtils

@@ -3,18 +3,10 @@ using ConsoleHotKey;
 using Interaction;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using BilibiliDM_PluginFramework;
-using BililiveDebugPlugin.InteractionGame;
-using BililiveDebugPlugin.InteractionGame.Resource;
-using Utils;
+using InteractionGame.Resource;
 
 namespace InteractionGame
 {
@@ -32,42 +24,7 @@ namespace InteractionGame
      
     }
 
-    public interface IContext
-    {
-        void Log(string text);
-        void OnInit(Action<DyMsg> appendMsgAction);
-        void OnStop();
-        void OnTick(float delta);
-        void OnAppendMsg(DyMsg msg);
-        Aoe4StateData CheckState(EAoe4State state);
-        Aoe4StateData CheckState(EAoe4State state, IntPtr hwnd);
-        void AppendMsg(DyMsg msg);
-        void AppendMsg(DyMsg msg,float delay);
-        void PrintGameMsg(string text);
-        void SendTestDanMu(object sender, ReceivedDanmakuArgs e);
-        int IsGameStart();
-        int IsOverload();
-        void SendMsgToOverlay<T>(short id, T msg) where T:class;
-    }
-
-    public interface ILocalMsgDispatcher<IT>
-        where IT:class,IContext
-    {
-        void Start();
-        void OnStartGame();
-        bool Demand(Msg msg, MsgType barType);
-        void Dispatch(Msg msg, MsgType barType);
-        void Stop();
-        void Init(IT it);
-        IAoe4Bridge<IT> GetBridge();
-        IDyMsgParser<IT> GetMsgParser();
-        IDyPlayerParser<IT> GetPlayerParser();
-        IResourceMgr<IT> GetResourceMgr();
-        void Clear();
-        void SetIsEmit(bool v);
-    }
-
-    public class MessageDispatcher<PP,MP,B,R,IT> : ILocalMsgDispatcher<IT>
+    public class MessageDispatcher<PP,MP,B,R,IT> : ILocalMsgDispatcher<IT,Msg,MsgType>
         where PP : IDyPlayerParser<IT>,new()
         where MP : IDyMsgParser<IT>,new()
         where B : IAoe4Bridge<IT>,new()
@@ -165,7 +122,7 @@ namespace InteractionGame
             DateTime startTime = DateTime.Now;
             while (IsRunning == 1)
             {
-                if (IsEmit == 0 && InitCtx.IsGameStart() == 1) continue;
+                if (IsEmit == 0 && InitCtx.IsGameStart() != EGameState.Started) continue;
                 //if (queue.TryDequeue(out var msg))
                 //{
                 //    bridge.SendMsg(msg);
@@ -224,11 +181,11 @@ namespace InteractionGame
         public void Init(IT it)
         {
             InitCtx = it;
-            bridge.Init(it, this);
-            pp.Init(it,this);
-            mp.Init(it,this);
-            resMgr.Init(it,this);
-            InitCtx.OnInit(AppendMsg);
+            bridge.Init(it);
+            pp.Init(it);
+            mp.Init(it);
+            resMgr.Init(it);
+            InitCtx.OnInit();
         }
 
         public IAoe4Bridge<IT> GetBridge()

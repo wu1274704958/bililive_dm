@@ -42,13 +42,11 @@ namespace InteractionGame
         private ConcurrentDictionary<Int64,IPlayerPreJoinObserver> _preJoinObservers = new ConcurrentDictionary<long, IPlayerPreJoinObserver>();
         private Regex mSelectGrouRegex;
         protected IT InitCtx;
-        protected ILocalMsgDispatcher<IT> m_MsgDispatcher;
         private readonly object m_LockChooseGroup = new object();
 
-        public virtual void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
+        public virtual void Init(IT it)
         {
             InitCtx = it;
-            m_MsgDispatcher = dispatcher;
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
             SetupGroupCount();
@@ -112,7 +110,7 @@ namespace InteractionGame
                 {
                     InitCtx.PrintGameMsg($"{SettingMgr.GetColorWrap(uName,v)}选择加入{match.Groups[1].Value}方");
                     if (oldGroup != -1 && oldGroup != v)
-                        m_MsgDispatcher.GetResourceMgr().RemoveAllVillagers(uid);
+                        InitCtx.GetResourceMgr<IT>().RemoveAllVillagers(uid);
                     if (GetTarget(uid) == v)
                     {
                         TargetDict[uid] = -1;
@@ -160,7 +158,7 @@ namespace InteractionGame
             if (g > -1)
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
-                m_MsgDispatcher.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
+                InitCtx.GetResourceMgr<IT>().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
             }
             return g;
@@ -271,7 +269,6 @@ namespace InteractionGame
         public virtual void Stop()
         {
             InitCtx = null;
-            m_MsgDispatcher = null;
             OnClear();
         }
         public abstract int Parse(DyMsgOrigin msgOrigin);
@@ -287,7 +284,7 @@ namespace InteractionGame
        
         public void OnAddGroup(UserData userdata, int g)
         {
-            m_MsgDispatcher.GetMsgParser().TryAddUser(userdata);
+            InitCtx.GetMsgParser<IT>().TryAddUser(userdata);
             foreach (var it in _observers)
             {
                 it.Value.OnAddGroup(userdata, g);
@@ -336,13 +333,11 @@ namespace InteractionGame
     {
         protected ConcurrentDictionary<string,UserData> UserDataDict = new ConcurrentDictionary<string,UserData>();
         public IT InitCtx { get;protected set; }
-        public ILocalMsgDispatcher<IT> m_MsgDispatcher { get; protected set; }
         protected List<ISubMsgParser<IDyMsgParser<IT>, IT>> subMsgParsers = new List<ISubMsgParser<IDyMsgParser<IT>, IT>>();
         
-        public virtual void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
+        public virtual void Init(IT it)
         {
             InitCtx = it;
-            m_MsgDispatcher = dispatcher;
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.Init(this);
         }
@@ -362,7 +357,6 @@ namespace InteractionGame
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.Stop();
             InitCtx = null;
-            m_MsgDispatcher = null;
             UserDataDict.Clear();
         }
         public virtual (int, int) Parse(DyMsgOrigin msgOrigin)
@@ -427,7 +421,7 @@ namespace InteractionGame
         {
             foreach (var key in UserDataDict)
             {
-                key.Value.Group = m_MsgDispatcher.GetPlayerParser().GetGroupById(key.Key);
+                key.Value.Group = InitCtx.GetPlayerParser<IT>().GetGroupById(key.Key);
                 if(g == key.Value.Group + 1)
                 {
                     key.Value.Score += score;

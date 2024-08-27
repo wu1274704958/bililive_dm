@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 
-class LocalMemComm
+public class LocalMemComm
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     protected delegate void ErrorCallbackFunction(UInt32 id, IntPtr message);

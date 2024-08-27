@@ -8,6 +8,8 @@ using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.mode;
 using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame;
+using InteractionGame.Context;
+using InteractionGame.plugs.config;
 using ProtoBuf;
 using Utils;
 
@@ -74,7 +76,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         private IDyMsgParser<IT> m_Owner;   
         private ConcurrentDictionary<int,LevelCxt> GroupLevel = new ConcurrentDictionary<int, LevelCxt>();
-        private DebugPlugin _cxt;
+        private IT _cxt;
         private static readonly List<LevelConfig> LevelConfigs = new List<LevelConfig>()
         {
             new LevelConfig(1,2000,new List<string>()
@@ -190,11 +192,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             c.NowLevel = config.Price;
             c.NowConf++;
             var desc = config.GetDesc(goldMultiplier,damageMultiplier,hpMultiplier);
-            LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{DebugPlugin.GetColorById(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
+            LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
                 .SetBottom(desc).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));
             
             LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) =>
-                    _cxt.messageDispatcher.GetResourceMgr().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
+                    _cxt.GetResourceMgr<IT>().AddAutoResourceAddFactor(id, config.GoldAddFactor * goldMultiplier),
                 (u) =>
                 {
                     u.AddHpMultiple(config.AddHp * hpMultiplier);
@@ -215,7 +217,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void GivePlayerUpgrade(int g, string upg)
         {
-            m_Owner.m_MsgDispatcher.GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{g + 1}].id, nil, nil, {upg});");
+            //m_Owner..GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{g + 1}].id, nil, nil, {upg});");
         }
         private string GetLevelStr(int l)
         {

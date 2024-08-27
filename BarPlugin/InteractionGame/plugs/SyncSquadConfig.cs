@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BililiveDebugPlugin.InteractionGame.Data;
 using conf.Squad;
+using InteractionGame.Context;
 using ProtoBuf;
 using Utils;
 

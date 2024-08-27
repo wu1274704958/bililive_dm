@@ -28,7 +28,7 @@ namespace Interaction
     {
         void SendMsg(DyMsg msg);
         void Stop();
-        void Init(IT it,ILocalMsgDispatcher<IT> dispatcher);
+        void Init(IT it);
         void OnTick(float delta);
         void OnClear();
         WindowInfo GetWindowInfo();
@@ -84,7 +84,6 @@ namespace Interaction
         private static readonly int ButtonWidth = 30;
         private static readonly int ClickOffset = 10;
         private static readonly int ReverseMin = 100_0000;
-        private ILocalMsgDispatcher<IT> m_MsgDispatcher;
         private static readonly int NextAdded = 1;
         private Utils.ObjectPool<StringBuilder> sbPool = new Utils.ObjectPool<StringBuilder>(()=>new StringBuilder(),(a)=>a.Clear());
 
@@ -104,18 +103,16 @@ namespace Interaction
             Interlocked.Exchange(ref CurrentWriteIdx, -1);
             Interlocked.Exchange(ref ExpectNextIdx, 0);
             _context = null;
-            m_MsgDispatcher = null;
             m_TmpList.Clear();
             SavedFileDict.Clear();
         }
 
-        public void Init(IT it,ILocalMsgDispatcher<IT> dispatcher)
+        public void Init(IT it)
         {
             Interlocked.Exchange(ref GameNextIdx, -1);
             Interlocked.Exchange(ref CurrentWriteIdx, -1);
             Interlocked.Exchange(ref ExpectNextIdx, 0);
             _context = it;
-            m_MsgDispatcher = dispatcher;
 
             DelAllLuaFiles();
             _windowInfo = FindWindow();
@@ -139,15 +136,15 @@ namespace Interaction
         {
             if (_context != null && _windowInfo != null)
             {
-                var state = _context.CheckState(EAoe4State.ExecExtern);
-                if(!(Math.Abs(state.R - ExpectNextIdx) < NextAdded))
-                {
-                    //_context.Log($"Game Exec Id {state.r} != ExpectNextIdx {ExpectNextIdx}");
-                }
-                else
-                {
-                    Interlocked.Exchange(ref GameNextIdx, state.R);
-                }
+                //var state = _context.CheckState(EAoe4State.ExecExtern);
+                //if(!(Math.Abs(state.R - ExpectNextIdx) < NextAdded))
+                //{
+                //    //_context.Log($"Game Exec Id {state.r} != ExpectNextIdx {ExpectNextIdx}");
+                //}
+                //else
+                //{
+                //    Interlocked.Exchange(ref GameNextIdx, state.R);
+                //}
                 CheckAndRemoveExecutedFile();
                 if(NeedFlush())
                 {

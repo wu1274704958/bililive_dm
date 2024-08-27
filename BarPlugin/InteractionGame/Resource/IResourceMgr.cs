@@ -6,22 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
-namespace BililiveDebugPlugin.InteractionGame.Resource
+namespace InteractionGame.Resource
 {
     public abstract class IResourceMgr<C>
         where C: class,IContext
     {
         protected C InitCtx;
-        protected ILocalMsgDispatcher<C> m_MsgDispatcher;
-        public virtual void Init(C it, ILocalMsgDispatcher<C> dispatcher)
+        public virtual void Init(C it)
         {
             InitCtx = it;
-            m_MsgDispatcher = dispatcher;
         }
         public virtual void Stop()
         {
             InitCtx = null;
-            m_MsgDispatcher = null;
         }
         public abstract double GetResource(string id,int ty = 0);
         public abstract int GetVillagerCount(string id);

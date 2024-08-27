@@ -59,7 +59,6 @@
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameContext.cs" />
-    <Compile Include="InteractionGame\Aoe4GameState.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgrEx.cs" />
@@ -67,6 +66,9 @@
     <Compile Include="InteractionGame\conf\Squad\SettingMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataMgr.cs" />
+    <Compile Include="InteractionGame\Context\BarContext.cs" />
+    <Compile Include="InteractionGame\Context\BaseContext.cs" />
+    <Compile Include="InteractionGame\Context\IContext.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
     <Compile Include="InteractionGame\IGameContex.cs" />
@@ -84,9 +86,12 @@
     <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
     <Compile Include="InteractionGame\plugs\Aoe4AutoAttack.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
+    <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
+    <Compile Include="InteractionGame\plugs\bar\GameCommPlug.cs" />
+    <Compile Include="InteractionGame\plugs\bar\OverlayCommPlug.cs" />
+    <Compile Include="InteractionGame\plugs\config\IConstConfig.cs" />
+    <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
-    <Compile Include="InteractionGame\plugs\DefineKeepDamagedSpawnSquadPlug.cs" />
-    <Compile Include="InteractionGame\plugs\EveryoneTowerPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />

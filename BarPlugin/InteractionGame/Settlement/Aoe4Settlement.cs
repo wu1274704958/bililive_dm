@@ -6,9 +6,9 @@ using InteractionGame;
 using UserData = InteractionGame.UserData;
 using ProtoBuf;
 using Utils;
-using System.Security.Cryptography;
 using BililiveDebugPlugin.InteractionGame.Data;
-using System.Threading;
+using InteractionGame.Context;
+using InteractionGame.plugs.config;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
@@ -48,28 +48,20 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
         public void ShowSettlement(IT it,int winGroup)
         {
-            var messageDispatcher = (it as DebugPlugin)?.messageDispatcher; 
-            var sendMsg =  (it as DebugPlugin)?.SendMsg; 
             //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
             if(winGroup > 0 && winGroup <= Aoe4DataConfig.GroupCount)
-                messageDispatcher?.MsgParser.AddWinScore(winGroup, 300);
-            var data = messageDispatcher?.MsgParser.GetSortedUserData();
-            sendMsg?.SendMsg<object>((short)EMsgTy.ClearAllPlayer, null);
+                it.GetMsgParser<IT>().AddWinScore(winGroup, 300);
+            var data = it.GetMsgParser<IT>().GetSortedUserData();
             PreSettlement(it,data);
-            DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,messageDispatcher.PlayerParser.GetLeastGroupList());
+            DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,it.GetPlayerParser<IT>().GetLeastGroupList());
             //todo show settlement
             AfterSettlement();
-            SendSettlement(sendMsg, data, winGroup - 1);
+            SendSettlement( data, winGroup - 1);
             //var bridge = messageDispatcher.GetBridge();
             //bridge.FroceOverrideCurrentMsg("Mod_Restart()");
-            Locator.Instance.Get<DebugPlugin>().Log("Wait Send Message clean");
-            sendMsg?.waitClean();
-            Locator.Instance.Get<DebugPlugin>().Log("messageDispatcher clean");
-            messageDispatcher.Clear();
-            Locator.Instance.Get<DebugPlugin>().Log("Aoe4GameState clean");
+            Locator.Instance.Get<IContext>().Log("Aoe4GameState clean");
             Locator.Instance.Get<Aoe4GameState>().OnClear();
-            Locator.Instance.Get<DebugPlugin>().Log("Settlement end");
-            ClickRestart();
+            Locator.Instance.Get<IContext>().Log("Settlement end");
         }
 
         private void AfterSettlement()
@@ -190,19 +182,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             }
             return d.DateTimeValue;
         }
-
-        public static void ClickRestart()
-        {
-            var gs = Locator.Instance.Get<Aoe4GameState>();
-            var bridge = Locator.Instance.Get<DebugPlugin>().messageDispatcher.GetBridge();
-            bridge.SendKeyEvent(0x1B);
-            Thread.Sleep(1000);
-            bridge.ClickLeftMouse(1920 / 2,(int)(1080 * 0.643f));
-            Thread.Sleep(1000);
-            bridge.ClickLeftMouse((int)(1920 * 0.492f) , (int)(1080 * 0.548f));
-        }
-        
-        private void SendSettlement(SM_SendMsg sendMsg, List<UserData> data,int win)
+        private void SendSettlement( List<UserData> data,int win)
         {
             var scoreList = DB.DBMgr.Instance.GetSortedUsersByScore(Max);
             PretreatmentScore(scoreList);
@@ -211,13 +191,13 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             PretreatmentScore(honorList);
             RankMsg rankMsg = new RankMsg()
             {
-                Title = win >= 0 ? $"{DebugPlugin.GetColorById(win + 1)}方获胜" : "平局",
+                Title = win >= 0 ? $"{Locator.Instance.Get<IConstConfig>().GetGroupName(win + 1)}方获胜" : "平局",
                 Items = data.Take(Max).ToList(),
                 ScoreItems = scoreList,
                 HonorItems = honorList,
                 WinGroup = win
             };
-            sendMsg.SendMsg((short)EMsgTy.Settlement, rankMsg);
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.Settlement, rankMsg);
         }
 
         private void TrySettlementScore(List<DB.Model.UserData> scoreList)
@@ -254,9 +234,5 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             }
         }
 
-        public void Restart()
-        {
-            ClickRestart();
-        }
     }
 }

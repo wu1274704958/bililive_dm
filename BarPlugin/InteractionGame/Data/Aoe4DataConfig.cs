@@ -163,54 +163,8 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly int BaoBingOriginResource = 0;
         public static readonly int BaoBingAddResFactor = 2;
 
-        public static long CalcHonorSettlement(SettlementData user, bool b,bool isLeastGroup,int i)
-        {
-            RandomSquad.Clear();
-            var minutes = (DateTime.Now - Locator.Instance.Get<AutoForceStopPlug>().StartTime).TotalMinutes;
-            var f = (b ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
-                 + (i < 3 ? 0.0005 * (3 - i) : 0.0) + (minutes / 10 / 1000);
-            if (user.FansLevel > 0) f += (user.FansLevel / 1000);
-            if (user.GuardLevel > 0) f += f * SettlementPlayerResAddFactorArr[user.GuardLevel];
-            f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, b);
-            var r = (long)Math.Floor(user.Score * f) + (b ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
-            var activityMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
-            
-            return r * activityMult;
-        }
 
-        public static bool IsTestId(string id)
-        {
-            return int.TryParse(id,out var idNum) && idNum < 100;
-        }
+       
 
-        public static long LoseSettlementHonorAdd = 3;
-        public static long WinSettlementHonorAdd = 10;
-        public static double LoseSettlementHonorFactor = 0.0005;
-        public static double WinSettlementHonorFactor = 0.0012;
-        private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
-
-        public static readonly Dictionary<int, float> SettlementPlayerResAddFactorArr = new Dictionary<int, float>() {
-            {0,0.0f }, {1,65.0f }, {2, 6.6f },{3, 0.6f }, { 33, 1.8f } 
-        };
-        public static readonly Dictionary<int, float> PlayerHonorResAddFactorArr = new Dictionary<int, float>() 
-        { 
-            {0,0.0f },{1,65.0f },{2,6.6f },{3,0.6f },{33,1.8f },
-        };// new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
-        public static readonly Dictionary<int, float> PlayerGoldResAddFactorArr_ = new Dictionary<int, float>()
-        {
-            {0,0.0f },{1,65.0f },{2,4.6f },{3,0.6f },{33,1.8f },
-        };// = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
-        public static readonly Dictionary<int,int> PlayerAddAttributeArr = new Dictionary<int, int>()
-        {
-            { 0,0 },{1, 140 }, {2,10 },{3, 1 },{33,3}
-        };
-        public static readonly List<KeyValuePair<int, string>> GuardLevelListSorted =
-            new List<KeyValuePair<int, string>>(){ 
-                new KeyValuePair<int, string>( 2, TiDu ), 
-                new KeyValuePair<int, string>(33, JianZhang ), 
-                new KeyValuePair<int, string>(3, JianZhang) 
-            };
-
-        
     }
 }

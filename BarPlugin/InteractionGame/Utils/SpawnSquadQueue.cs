@@ -8,6 +8,7 @@ using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.Parser;
 using conf.Squad;
 using InteractionGame;
+using InteractionGame.plugs.config;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGameUtils
@@ -307,8 +308,8 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         private void AddHonor(UserData u, long v)
         {
-
-            if (u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.RealGuardLevel]);
+            if (u.GuardLevel > 0) 
+                v += (long)Math.Ceiling(v * Locator.Instance.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
             if (DB.DBMgr.Instance.AddHonor(u, v) > 0)
                 Locator.Instance.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }

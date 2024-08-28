@@ -71,13 +71,13 @@ namespace BililiveDebugPlugin.DB
             return r;
         }
 
-        public int OnSettlement(List<SettlementData> data,int winGroup,List<int> leastGroups)
+        public int OnSettlement(List<SettlementData> data,int winGroup,Func<SettlementData,int,long> calcFunc)
         {
             int r = 0;
             int i = 0;
             foreach (var v in data)
             {
-                v.Honor += Aoe4DataConfig.CalcHonorSettlement(v,v.Group == winGroup,leastGroups.Contains(v.Group),i);
+                v.Honor += calcFunc(v,i);
                 r += OnSettlement(v,v.Group == winGroup);
                 ++i;
             }

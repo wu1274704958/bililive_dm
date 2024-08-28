@@ -99,7 +99,7 @@
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
-    <Compile Include="InteractionGame\Settlement\Aoe4Settlement.cs" />
+    <Compile Include="InteractionGame\Settlement\BarSettlement.cs" />
     <Compile Include="InteractionGame\Settlement\ISettlement.cs" />
     <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\Utils\AutoForceStopPlug.cs" />

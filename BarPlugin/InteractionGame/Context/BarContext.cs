@@ -107,7 +107,7 @@ namespace InteractionGame.Context
             RegisterOnRecvGameMsg<GameStartData>(EGameMsg.BStart, OnGameStart);
             RegisterOnRecvGameMsg<GameEndData>(EGameMsg.BEnd, OnGameEnd);
 
-            settlement = new Aoe4Settlement<BarContext>();
+            settlement = new BarSettlement<BarContext>();
             messageDispatcher.Init(this);
         }
 

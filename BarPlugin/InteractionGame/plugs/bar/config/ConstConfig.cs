@@ -25,7 +25,12 @@ namespace InteractionGame.plugs.bar.config
             { "黄",3 },
         };
 
-        public Dictionary<int, float> OnPlayerJoinGoldAddition => throw new NotImplementedException();
+        public List<KeyValuePair<int, string>> GuardLevelListSorted =>
+            new List<KeyValuePair<int, string>>(){
+                new KeyValuePair<int, string>( 2, "提督" ),
+                new KeyValuePair<int, string>(33, "舰长" ),
+                new KeyValuePair<int, string>(3, "舰长")
+            };
 
         public int GetGroupIdByName(string name)
         {
@@ -45,7 +50,22 @@ namespace InteractionGame.plugs.bar.config
             return "";
         }
 
+        public int GetOnPlayerJoinAttributeAddition(int guardLevel)
+        {
+            return 0;
+        }
+
         public float GetOnPlayerJoinGoldAddition(int guardLevel)
+        {
+            return 0.0f;
+        }
+
+        public float GetPlayerHonorAddition(int guardLevel)
+        {
+            return 0.0f;
+        }
+
+        public float GetPlayerHonorAdditionForSettlement(int guardLevel)
         {
             return 0.0f;
         }
@@ -59,6 +79,11 @@ namespace InteractionGame.plugs.bar.config
                 return guardLvl / 10;
             }
             return guardLvl;
+        }
+
+        public bool IsTestId(string id)
+        {
+            return int.TryParse(id, out var idNum) && idNum < 100;
         }
     }
 }

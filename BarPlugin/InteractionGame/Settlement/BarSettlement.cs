@@ -9,6 +9,7 @@ using Utils;
 using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame.Context;
 using InteractionGame.plugs.config;
+using BililiveDebugPlugin.InteractionGame.mode;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
@@ -26,7 +27,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         [ProtoMember(5)]
         public List<DB.Model.UserData> ScoreItems;
     }
-    public class Aoe4Settlement<IT> : ISettlement<IT>
+    public class BarSettlement<IT> : ISettlement<IT>
         where IT : class, IContext
     {
 
@@ -49,11 +50,13 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public void ShowSettlement(IT it,int winGroup)
         {
             //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
-            if(winGroup > 0 && winGroup <= Locator.Instance.Get<IGameState>().GroupCount)
+            if(winGroup >= 0 && winGroup < Locator.Instance.Get<IGameState>().GroupCount)
                 it.GetMsgParser().AddWinScore(winGroup, 300);
             var data = it.GetMsgParser().GetSortedUserData();
             PreSettlement(it,data);
-            DB.DBMgr.Instance.OnSettlement(data, winGroup - 1,it.GetPlayerParser().GetLeastGroupList());
+            var leastGroupList = it.GetPlayerParser().GetLeastGroupList();
+            DB.DBMgr.Instance.OnSettlement(data, winGroup,
+                (user,rank) => CalculatHonorSettlement(user, winGroup == user.Group, leastGroupList.Contains(user.Group), rank));
             //todo show settlement
             AfterSettlement();
             SendSettlement( data, winGroup - 1);
@@ -77,6 +80,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
         private List<SingleGameScoreData> RefreshSingleGameScoreRank(List<UserData> data)
         {
+            var config = Locator.Instance.Get<IConstConfig>();
             var rankList = GetSingleGameScoreRank();
             if (data.Count > 0)
             {
@@ -90,7 +94,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
                         _tmpLLDict.Add(rankList[i].id, (rankList[i].score,i));
                     foreach (var d in data)
                     {
-                        if (Aoe4DataConfig.IsTestId(d.Id))
+                        if (config.IsTestId(d.Id))
                             continue;
                         if (_tmpLLDict.TryGetValue(d.Id, out var oldScore))
                         {
@@ -231,5 +235,24 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             }
         }
 
+        private static long LoseSettlementHonorAdd = 3;
+        private static long WinSettlementHonorAdd = 10;
+        private static double LoseSettlementHonorFactor = 0.0005;
+        private static double WinSettlementHonorFactor = 0.0012;
+        private static readonly double LeastGroupSettlementHonorFactor = 0.0005;
+
+        public long CalculatHonorSettlement(UserData user, bool win, bool isLeastGroup, int rank)
+        {
+            var config = Locator.Instance.Get<IConstConfig>();
+            var f = (win ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
+                 + (rank < 3 ? 0.0005 * (3 - rank) : 0.0);
+            if (user.FansLevel > 0) f += (user.FansLevel / 1000);
+            if (user.GuardLevel > 0) f += f * config.GetPlayerHonorAdditionForSettlement(user.GuardLevel);
+            f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, win);
+            var r = (long)Math.Floor(user.Score * f) + (win ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
+            var activityMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
+
+            return r * activityMult;
+        }
     }
 }

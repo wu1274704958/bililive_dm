@@ -18,5 +18,10 @@ namespace InteractionGame.plugs.config
         int GetGroupIdByName(string name);
         int GetPureGuardLevel(int level);
         float GetOnPlayerJoinGoldAddition(int guardLevel);
+        List<KeyValuePair<int, string>> GuardLevelListSorted { get; }
+        int GetOnPlayerJoinAttributeAddition(int guardLevel);
+        float GetPlayerHonorAddition(int guardLevel);
+        float GetPlayerHonorAdditionForSettlement(int guardLevel);
+        bool IsTestId(string id);
     }
 }

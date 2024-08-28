@@ -216,7 +216,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
         private void AddInitAttr(UserData ud,StringBuilder sb = null)
         {
-            var addAttr = Aoe4DataConfig.PlayerAddAttributeArr[ud.RealGuardLevel];
+            var addAttr = Locator.Instance.Get<IConstConfig>().GetOnPlayerJoinAttributeAddition(ud.RealGuardLevel);
             if (addAttr > 0)
             {
                 var dv = ud.AddDamageMultiple(addAttr);
@@ -473,7 +473,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private void AddHonor(UserData u, long v,bool hasAddition = true)
         {
-            if (hasAddition && u.GuardLevel > 0) v += (long)Math.Ceiling(v * Aoe4DataConfig.PlayerHonorResAddFactorArr[u.RealGuardLevel]);
+            if (hasAddition && u.GuardLevel > 0) 
+                v += (long)Math.Ceiling(v * Locator.Instance.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
             if (DB.DBMgr.Instance.AddHonor(u,v) > 0)
                 InitCtx.PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }

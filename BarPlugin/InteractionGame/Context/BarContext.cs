@@ -7,6 +7,7 @@ using BililiveDebugPlugin.InteractionGame.Settlement;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf;
 using Interaction;
+using InteractionGame.Parser.bar;
 using InteractionGame.plugs.bar;
 using InteractionGame.plugs.bar.config;
 using InteractionGame.plugs.config;
@@ -18,7 +19,7 @@ using Utils;
 namespace InteractionGame.Context
 {
     using MessageDispatcherType = MessageDispatcher<
-        PlayerBirthdayParser<BarContext>,
+        PlayerMsgParser,
         MsgGiftParser<BarContext>,
         DefAoe4Bridge<BarContext>,
         Aoe4BaoBingResMgr<BarContext>, BarContext>;
@@ -40,6 +41,16 @@ namespace InteractionGame.Context
         EventCue = 12,
         DefenseKeepHp = 13,
     }
+    public static class EGameMsg
+    {
+        public static readonly string BStart = "start";
+        public static readonly string BEnd = "end";
+        public static readonly string BUnitReward = "unitReward";
+        public static readonly string BUnitDestroyed = "unitDestroyed";
+
+        public static readonly string SJoin = "join";
+
+    }
 
     public class EventCueData
     {
@@ -48,6 +59,10 @@ namespace InteractionGame.Context
     public class GameEndData
     {
         public int winner;
+    }
+    public class GameStartData
+    {
+        public int teamCount;
     }
     public class BarContext : BaseContext
     {
@@ -87,9 +102,10 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(-1, new ConstConfigPlug<ConstConfig>());
             m_PlugMgr.Add(100,overlayComm = new OverlayCommPlug());
             m_PlugMgr.Add(100,gameComm = new GameCommPlug());
+            m_PlugMgr.Add(-1, new BarGameState());
 
-            RegisterOnRecvGameMsg<NoArgs>("start", OnGameStart);
-            RegisterOnRecvGameMsg<GameEndData>("end", OnGameEnd);
+            RegisterOnRecvGameMsg<GameStartData>(EGameMsg.BStart, OnGameStart);
+            RegisterOnRecvGameMsg<GameEndData>(EGameMsg.BEnd, OnGameEnd);
 
             settlement = new Aoe4Settlement<BarContext>();
             messageDispatcher.Init(this);

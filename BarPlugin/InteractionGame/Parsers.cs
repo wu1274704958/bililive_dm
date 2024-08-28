@@ -43,6 +43,7 @@ namespace InteractionGame
         private ConcurrentDictionary<Int64,IPlayerPreJoinObserver> _preJoinObservers = new ConcurrentDictionary<long, IPlayerPreJoinObserver>();
         private Regex mSelectGrouRegex;
         protected IContext InitCtx;
+        protected IGameState _gameState;
         private readonly object m_LockChooseGroup = new object();
 
         public virtual void Init(IContext it)
@@ -50,6 +51,7 @@ namespace InteractionGame
             InitCtx = it;
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
+            _gameState = Locator.Instance.Get<IGameState>();
             SetupGroupCount();
         }
 
@@ -159,7 +161,7 @@ namespace InteractionGame
             if (g > -1)
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
-                InitCtx.GetResourceMgr().AddAutoResourceById(uid, Aoe4DataConfig.PlayerGoldResAddFactorArr[msgOrigin.msg.GuardLevel]);
+                InitCtx.GetResourceMgr().AddAutoResourceById(uid, Locator.Instance.Get<IConstConfig>().GetOnPlayerJoinGoldAddition(msgOrigin.msg.GuardLevel));
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
             }
             return g;
@@ -185,13 +187,24 @@ namespace InteractionGame
             }
             if(allSame)
             {
-                return new Random().Next(0,Aoe4DataConfig.GroupCount);
+                return new Random().Next(0, _gameState.GroupCount);
             }
             return g;
         }
 
-        public abstract int GetGroupCount();
-        public abstract int GetGroupExclude(int g);
+        public int GetGroupCount()
+        {
+            return _gameState.GroupCount;
+        }
+        public int GetGroupExclude(int g)
+        {
+            for (int i = 0; i < _gameState.GroupCount; i++)
+            {
+                if (g != i)
+                    return i;
+            }
+            return -1;
+        }
         protected bool TryParseChangTarget(string uid, string con, string uName,bool autoChangeGroup = true)
         {
             var match = new Regex("攻(.+)").Match(con);

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BililiveDebugPlugin.InteractionGame
+namespace InteractionGame
 {
     public interface ISquadCountObserver
     {
@@ -16,5 +16,6 @@ namespace BililiveDebugPlugin.InteractionGame
         int GetSquadCount(int group);
         void AddObserver(ISquadCountObserver observer);
         void RemoveObserver(ISquadCountObserver observer);
+        int GroupCount { get; }
     }
 }

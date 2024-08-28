@@ -51,7 +51,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
                 Squads = (Dictionary<System.Int32, SquadData>)SquadDataMgr.GetInstance().Dict,
                 RandomIdx = Aoe4DataConfig.RandomIdx,
                 ContryList = SettingMgr.GetInstance().Get(1).Country,
-                GroupCount = Aoe4DataConfig.GroupCount
+                GroupCount = Locator.Instance.Get<IGameState>().GroupCount
             });
         }
     }

@@ -16,5 +16,7 @@ namespace InteractionGame.plugs.config
         Dictionary<string, int> GroupNameMap { get; }
         string GetGroupName(int id);
         int GetGroupIdByName(string name);
+        int GetPureGuardLevel(int level);
+        float GetOnPlayerJoinGoldAddition(int guardLevel);
     }
 }

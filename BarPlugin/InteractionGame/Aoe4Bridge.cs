@@ -384,8 +384,8 @@ namespace Interaction
 
         private WindowInfo FindWindow()
         {
-            var ls = WindowEnumerator.FindAll((w) => w.Title.Contains(Aoe4DataConfig.Aoe4WinTitle));
-            if(ls.Count > 0) return ls[0];
+            //var ls = WindowEnumerator.FindAll((w) => w.Title.Contains(Aoe4DataConfig.Aoe4WinTitle));
+            //if(ls.Count > 0) return ls[0];
             return null;
         }
 

@@ -25,6 +25,8 @@ namespace InteractionGame.plugs.bar.config
             { "黄",3 },
         };
 
+        public Dictionary<int, float> OnPlayerJoinGoldAddition => throw new NotImplementedException();
+
         public int GetGroupIdByName(string name)
         {
             if (GroupNameMap.TryGetValue(name, out var id)) return id;
@@ -41,6 +43,22 @@ namespace InteractionGame.plugs.bar.config
                 }
             }
             return "";
+        }
+
+        public float GetOnPlayerJoinGoldAddition(int guardLevel)
+        {
+            return 0.0f;
+        }
+
+        public int GetPureGuardLevel(int guardLvl)
+        {
+            if (guardLvl < 0 || guardLvl > 3)
+                guardLvl = 0;
+            if (guardLvl >= 10)
+            {
+                return guardLvl / 10;
+            }
+            return guardLvl;
         }
     }
 }

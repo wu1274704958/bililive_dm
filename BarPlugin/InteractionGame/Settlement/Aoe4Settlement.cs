@@ -49,7 +49,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public void ShowSettlement(IT it,int winGroup)
         {
             //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
-            if(winGroup > 0 && winGroup <= Aoe4DataConfig.GroupCount)
+            if(winGroup > 0 && winGroup <= Locator.Instance.Get<IGameState>().GroupCount)
                 it.GetMsgParser().AddWinScore(winGroup, 300);
             var data = it.GetMsgParser().GetSortedUserData();
             PreSettlement(it,data);

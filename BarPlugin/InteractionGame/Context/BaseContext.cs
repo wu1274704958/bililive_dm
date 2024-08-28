@@ -43,6 +43,7 @@ namespace InteractionGame.Context
         {
             Locator.Instance.Remove<IContext>();
             Locator.Instance.Remove<PlugMgr<EGameAction>>();
+            m_PlugMgr.Dispose();
             Debug.Assert(State == 1);
             Interlocked.Exchange(ref State, 0);
         }
@@ -51,10 +52,12 @@ namespace InteractionGame.Context
         {
             Debug.Assert(State == 1);
             Interlocked.CompareExchange(ref State, 2, 1);
+            m_PlugMgr.Start();
         }
 
         public virtual void OnStop()
         {
+            m_PlugMgr.Stop();
             Debug.Assert(State == 2);
             Interlocked.CompareExchange(ref State, 1, 2);
         }

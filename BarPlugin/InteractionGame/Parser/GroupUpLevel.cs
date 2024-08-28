@@ -111,7 +111,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void OnStartGame()
         {
-            for (int i = 0; i < Aoe4DataConfig.GroupCount; ++i)
+            for (int i = 0; i < Locator.Instance.Get<IGameState>().GroupCount; ++i)
             {
                 var level = Locator.Instance.Get<IGameMode>().StartGroupLevel(i);
                 GroupLevel.TryAdd(i, new LevelCxt(){ All = 0, NowLevel = level + 1, NowConf = level  });

@@ -26,90 +26,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 {
     using Msg = DanmakuModel;
     using MsgType = MsgTypeEnum;
-    public class PlayerBirthdayParser<IT> : IDyPlayerParser
-         where IT : class, IContext
-    {
-
-        public override void Init(IContext it)
-        {
-            base.Init(it);
-            Locator.Instance.Deposit(this);
-        }
-        public override bool Demand(Msg msg, MsgType barType)
-        {
-            return StaticMsgDemand.Demand(msg, barType) || barType == MsgType.Welcome;
-        }
-
-        
-        public override int Parse(DyMsgOrigin msgOrigin)
-        {
-            if (msgOrigin == null) return 0;
-            if (msgOrigin.msg.CommentText == null)
-                msgOrigin.msg.CommentText = "";
-            // 系统选择阵营
-            var uid = msgOrigin.msg.OpenID;
-            if(uid == null)
-            {
-                InitCtx.Log($"uid == null raw = {msgOrigin.msg.RawData}");
-                return -1;
-            }
-            var con = msgOrigin.msg.CommentText.Trim();
-            var uName = msgOrigin.msg.UserName;
-            int g = -1;
-            if (!HasGroup(uid))
-            {
-                g = ParseJoinGroup(uid, con, msgOrigin);
-                if (g != -1)
-                {
-                    InitCtx.PrintGameMsg($"{SettingMgr.GetColorWrap(uName,g)}加入{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方");
-                }
-                else
-                {
-                    InitCtx.PrintGameMsg($"{uName}请先发“加入”，加入游戏");
-                }
-            }
-            else
-            {
-                g = GetGroupById(uid);
-                TryParseChangTarget(uid, con, uName, false);
-            }
-
-            return g;
-            // 自由选择阵营
-            ParseChooseGroup(uid, con, uName);
-            var v = GetGroupById(uid);
-            var str = "";
-            if (v == -1)
-            {
-                v = new Random((int)DateTime.Now.Ticks).Next(0, Aoe4DataConfig.GroupCount);
-                str = "随机加入";
-                SetGroup(msgOrigin.msg.OpenID, v);
-                SetTarget(msgOrigin.msg.OpenID, -1);
-            }
-            if (msgOrigin.barType == MsgType.Welcome)
-            {
-                InitCtx.PrintGameMsg($"欢迎{msgOrigin.msg.UserName}进入直播间，{str}阵营{Locator.Instance.Get<IConstConfig>().GetGroupName(v + 1)}方");
-            }
-            InitCtx.GetResourceMgr().AddAutoResourceById(msgOrigin.msg.OpenID);
-            return v;
-        }
-        public static DateTime GetDateTimeFromSeconds(long sec)
-        {
-            DateTime startTime = new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime();
-            TimeSpan time = TimeSpan.FromSeconds(sec);
-            return startTime.Add(time);
-        }
-
-        public override int GetGroupExclude(int g)
-        {
-            return Aoe4DataConfig.GetGroupExclude(g);
-        }
-
-        public override int GetGroupCount()
-        {
-            return Aoe4DataConfig.GroupCount;
-        }
-    }
 
     public class MsgGiftParser<IT> : IDyMsgParser, IPlayerParserObserver
         where IT : class, IContext
@@ -284,9 +200,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.ZheGe, 30 * c);
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
                     AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
-                    var activityAdd = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 0.8f : 0.0f;
-                    InitCtx.GetResourceMgr().AddAutoResourceAddFactor(ud.Id,
-                        Aoe4DataConfig.PlayerGoldResAddFactorArr[ud.RealGuardLevel] + activityAdd);
                     AddInitAttr(ud);
                     AddInitUpgrade(ud);
                     if(msgOrigin.msg.UserGuardLevel <= 2)

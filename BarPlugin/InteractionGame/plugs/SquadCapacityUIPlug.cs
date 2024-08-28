@@ -22,7 +22,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         {
             var gst = Locator.Instance.Get<IGameState>();
             if (gst == null) return;
-            for (int i = 0;i < Aoe4DataConfig.GroupCount;++i)
+            for (int i = 0;i < gst.GroupCount;++i)
             {
                 var c = gst.GetSquadCount(i);
                 SquadCountChanged(i, 0, c);

@@ -161,18 +161,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly int AutoGoldLimit = 4000;
         public static readonly int OriginResource = 50;
         public static readonly int BaoBingOriginResource = 0;
-        public static readonly int GroupCount = 2;
         public static readonly int BaoBingAddResFactor = 2;
-
-        public static int GetGroupExclude(int g)
-        {
-            for(int i = 0; i < GroupCount; i++)
-            {
-                if(g != i)
-                    return i;
-            }
-            return -1;
-        }
 
         public static long CalcHonorSettlement(SettlementData user, bool b,bool isLeastGroup,int i)
         {
@@ -207,7 +196,7 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         { 
             {0,0.0f },{1,65.0f },{2,6.6f },{3,0.6f },{33,1.8f },
         };// new float[] { 0.0f, 65.0f, 6.6f, 0.6f };
-        public static readonly Dictionary<int, float> PlayerGoldResAddFactorArr = new Dictionary<int, float>()
+        public static readonly Dictionary<int, float> PlayerGoldResAddFactorArr_ = new Dictionary<int, float>()
         {
             {0,0.0f },{1,65.0f },{2,4.6f },{3,0.6f },{33,1.8f },
         };// = new float[] { 0.0f, 65.0f, 4.6f, 0.6f };
@@ -221,7 +210,6 @@ namespace BililiveDebugPlugin.InteractionGame.Data
                 new KeyValuePair<int, string>(33, JianZhang ), 
                 new KeyValuePair<int, string>(3, JianZhang) 
             };
-        internal static readonly string Aoe4WinTitle = "Age of Empires IV";
 
         
     }

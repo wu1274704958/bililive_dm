@@ -32,6 +32,14 @@ namespace InteractionGame.plugs.bar.config
                 new KeyValuePair<int, string>(3, "舰长")
             };
 
+        public long HonorGoldFactor => 20;
+
+        public int AutoGoldLimit => 4000;
+
+        public int OriginResource => 0;
+
+        public int AddResFactor => 2;
+
         public int GetGroupIdByName(string name)
         {
             if (GroupNameMap.TryGetValue(name, out var id)) return id;

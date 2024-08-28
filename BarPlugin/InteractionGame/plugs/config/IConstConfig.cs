@@ -23,5 +23,9 @@ namespace InteractionGame.plugs.config
         float GetPlayerHonorAddition(int guardLevel);
         float GetPlayerHonorAdditionForSettlement(int guardLevel);
         bool IsTestId(string id);
+        long HonorGoldFactor { get; }
+        int AutoGoldLimit { get; }
+        int OriginResource { get; }
+        int AddResFactor { get; }
     }
 }

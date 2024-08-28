@@ -157,12 +157,6 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static int SquadLimit => SettingMgr.GetInt(3,850);
         public static int AutoSquadLimit => SquadLimit - SettingMgr.GetInt(4, 120);
 
-        public static readonly long HonorGoldFactor = 20;
-        public static readonly int AutoGoldLimit = 4000;
-        public static readonly int OriginResource = 50;
-        public static readonly int BaoBingOriginResource = 0;
-        public static readonly int BaoBingAddResFactor = 2;
-
 
        
 

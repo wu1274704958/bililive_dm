@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using BililiveDebugPlugin.InteractionGame.Data;
 using Utils;
 using InteractionGame.Resource;
+using InteractionGame.plugs.config;
 
 namespace BililiveDebugPlugin.InteractionGame.Resource
 {
@@ -13,8 +14,9 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         ConcurrentDictionary<string, TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, TimeLinerInteger>();
         public override void AddAutoResourceById(string id, float addFactor = 1f)
         {
+            var config = Locator.Instance.Get<IConstConfig>();
             TimeLinerInteger v = null;
-            AutoAddMap.TryAdd(id, v = new TimeLinerInteger(Aoe4DataConfig.BaoBingOriginResource, Aoe4DataConfig.BaoBingAddResFactor, Aoe4DataConfig.AutoGoldLimit));
+            AutoAddMap.TryAdd(id, v = new TimeLinerInteger(config.OriginResource, config.AddResFactor, config.AutoGoldLimit));
             v.AddFactor = addFactor;
         }
 

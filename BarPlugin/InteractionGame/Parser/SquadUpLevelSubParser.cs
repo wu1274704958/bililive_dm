@@ -6,6 +6,7 @@ using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf.Squad;
 using InteractionGame;
+using InteractionGame.plugs.config;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
@@ -18,6 +19,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     public class SquadUpLevelSubParser : ISubMsgParser
     {
         private IDyMsgParser m_Owner;
+        private IConstConfig _config;
 
         private ConcurrentDictionary<string, ConcurrentDictionary<short, byte>> UserSquadLevelDict =
             new ConcurrentDictionary<string, ConcurrentDictionary<short, byte>>();
@@ -33,6 +35,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             Locator.Instance.Deposit(this);
             _cxt = Locator.Instance.Get<IContext>();
             _msgParser = _cxt.GetMsgParser();
+            _config = Locator.Instance.Get<IConstConfig>();
         }
 
         public void OnStartGame()
@@ -136,10 +139,10 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             }
             else
             {
-                var honor = (price - res) / Aoe4DataConfig.HonorGoldFactor; 
+                var honor = (price - res) / _config.HonorGoldFactor; 
                 if(honor < 1)
                     return false;
-                var restGold = (honor - Math.Truncate(honor)) * Aoe4DataConfig.HonorGoldFactor;
+                var restGold = (honor - Math.Truncate(honor)) * _config.HonorGoldFactor;
                 var f = 0;
 
                 if (!DB.DBMgr.Instance.DepleteHonor(uid, (int)honor))

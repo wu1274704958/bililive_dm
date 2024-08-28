@@ -30,6 +30,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     public class MsgGiftParser<IT> : IDyMsgParser, IPlayerParserObserver
         where IT : class, IContext
     {
+        private IConstConfig _config;
         public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
         private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
@@ -53,6 +54,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new BossGameModeParser());
             AddSubMsgParse(SquadUpLevelSubParser = new SquadUpLevelSubParser());
             base.Init(it);
+            _config = Locator.Instance.Get<IConstConfig>();
             InitCtx.GetPlayerParser().AddObserver(this);
             Locator.Instance.Deposit(this,m_SpawnSquadQueue = new SpawnSquadQueue());
             Locator.Instance.Deposit(this);
@@ -294,7 +296,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 InitCtx.PrintGameMsg($"{ud.NameColored}没有足够的功勋");
                 return;
             }
-            var price = (double)squad.price / Aoe4DataConfig.HonorGoldFactor;
+            var price = (double)squad.price / _config.HonorGoldFactor;
             var c = max / price;
             var count = Math.Truncate(c);
             var dec = c - count;
@@ -417,7 +419,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 if (t > 0)
                 {
-                    upLevelGold = (int)(battery * giftCount * Aoe4DataConfig.HonorGoldFactor);
+                    upLevelGold = (int)(battery * giftCount * _config.HonorGoldFactor);
                     giveHonor = 0;// (int)Math.Ceiling(transHonorfactor * battery * giftCount * giveHonorMult);
                 }
                 else {

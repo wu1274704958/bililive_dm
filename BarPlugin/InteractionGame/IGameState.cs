@@ -17,5 +17,6 @@ namespace InteractionGame
         void AddObserver(ISquadCountObserver observer);
         void RemoveObserver(ISquadCountObserver observer);
         int GroupCount { get; }
+        string MapName { get; }
     }
 }

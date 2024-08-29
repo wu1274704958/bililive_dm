@@ -14,9 +14,12 @@ namespace InteractionGame.plugs.bar
     {
         private ConcurrentDictionary<int, ISquadCountObserver> _squadCountObservers = new ConcurrentDictionary<int, ISquadCountObserver>();
         private int _groupCount = 0;
+        private string _mapName;
         private ConcurrentDictionary<int, int> _squadCountDict = new ConcurrentDictionary<int, int>();
 
         public int GroupCount => _groupCount;
+
+        public string MapName => _mapName;
 
         public void AddObserver(ISquadCountObserver observer)
         {
@@ -84,6 +87,7 @@ namespace InteractionGame.plugs.bar
             if(arg2 is GameStartData data)
             {
                 _groupCount = data.teamCount;
+                _mapName = data.mapName;
                 for(int i = 0;i < _groupCount;i++)
                 {
                     _squadCountDict.TryAdd(i, 0);

@@ -85,6 +85,7 @@
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
+    <Compile Include="InteractionGame\plugs\BarSquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarGameState.cs" />
     <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\bar\GameCommPlug.cs" />
@@ -96,7 +97,7 @@
     <Compile Include="InteractionGame\plugs\ISquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
-    <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />
+    <Compile Include="InteractionGame\plugs\SyncGameConfig.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />

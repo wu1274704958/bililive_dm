@@ -163,7 +163,6 @@ namespace BililiveDebugPlugin
                 if (TestIn.Text == "Reload")
                 {
                     ConfigMgr.ReloadAll();
-                    Locator.Instance.Get<SyncSquadConfig>().SendMsg();
                     return;
                 }
 

@@ -1,4 +1,6 @@
-﻿using InteractionGame.Resource;
+﻿using InteractionGame.Context;
+using InteractionGame.plugs.bar;
+using InteractionGame.Resource;
 using System;
 
 namespace InteractionGame

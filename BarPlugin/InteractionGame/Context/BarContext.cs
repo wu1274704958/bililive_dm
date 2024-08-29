@@ -63,6 +63,7 @@ namespace InteractionGame.Context
     public class GameStartData
     {
         public int teamCount;
+        public string mapName;
     }
     public class BarContext : BaseContext
     {
@@ -93,7 +94,7 @@ namespace InteractionGame.Context
             //m_PlugMgr.Add(1000 * 30, new AutoForceStopPlug());
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60, new AutoDownLivePlug());
-            m_PlugMgr.Add(-1, new SyncSquadConfig());
+            m_PlugMgr.Add(-1, new SyncGameConfig());
             m_PlugMgr.Add(-1, new SelfSaleGuardPlug());
             //m_PlugMgr.Add(300, new DefineKeepDamagedSpawnSquadPlug());
             //m_PlugMgr.Add(100, new EveryoneTowerPlug());
@@ -103,6 +104,7 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(100,overlayComm = new OverlayCommPlug());
             m_PlugMgr.Add(100,gameComm = new GameCommPlug());
             m_PlugMgr.Add(-1, new BarGameState());
+            m_PlugMgr.Add(-1, new BarSquadMgr());
 
             RegisterOnRecvGameMsg<GameStartData>(EGameMsg.BStart, OnGameStart);
             RegisterOnRecvGameMsg<GameEndData>(EGameMsg.BEnd, OnGameEnd);

@@ -4,21 +4,21 @@ using BililiveDebugPlugin.InteractionGame.Data;
 using conf.Squad;
 using InteractionGame;
 using InteractionGame.Context;
+using InteractionGame.plugs.config;
 using ProtoBuf;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.plugs
 {
-    [ProtoContract]
-    public class SquadConfigData
+    public class SyncGameConfigData
     {
-        [ProtoMember(1)] public Dictionary<System.Int32, SquadData> Squads;
-        [ProtoMember(2)] public int RandomIdx;
-        [ProtoMember(3)] public List<System.String> ContryList;
-        [ProtoMember(4)] public int GroupCount;
+        public string MapName;
+        public int GroupCount;
+        public int StartTime;
+        public int GameTime;
     }
 
-    public class SyncSquadConfig : IPlug<EGameAction>
+    public class SyncGameConfig : IPlug<EGameAction>
     {
         public override void Tick()
         {
@@ -40,17 +40,22 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit(this);
-            SendMsg();
+            
+        }
+
+        public override void Start()
+        {
+            base.Start();
         }
 
         public void SendMsg()
         {
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, new SquadConfigData()
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.StartGame, new SyncGameConfigData()
             {
-                Squads = (Dictionary<System.Int32, SquadData>)SquadDataMgr.GetInstance().Dict,
-                ContryList = SettingMgr.GetInstance().Get(1).Country,
-                GroupCount = Locator.Instance.Get<IGameState>().GroupCount
+                GroupCount = Locator.Instance.Get<IGameState>().GroupCount,
+                MapName = Locator.Instance.Get<IGameState>().MapName,
+                StartTime = DateTime.Now.ToSecond(),
+                GameTime = (int)Locator.Instance.Get<IConstConfig>().OneTimesGameTime.TotalSeconds
             });
         }
     }

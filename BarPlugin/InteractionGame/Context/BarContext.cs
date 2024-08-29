@@ -1,12 +1,10 @@
-﻿using BarPlugin.InteractionGame.plugs;
-using BilibiliDM_PluginFramework;
+﻿using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin.InteractionGame.Parser;
 using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGame.Resource;
 using BililiveDebugPlugin.InteractionGame.Settlement;
-using BililiveDebugPlugin.InteractionGameUtils;
 using conf;
-using Interaction;
+using InteractionGame.gameBridge;
 using InteractionGame.Parser.bar;
 using InteractionGame.plugs.bar;
 using InteractionGame.plugs.bar.config;
@@ -21,7 +19,7 @@ namespace InteractionGame.Context
     using MessageDispatcherType = MessageDispatcher<
         PlayerMsgParser,
         MsgGiftParser<BarContext>,
-        DefAoe4Bridge<BarContext>,
+        BarBridge,
         Aoe4BaoBingResMgr<BarContext>, BarContext>;
 
     public enum EMsgTy : short
@@ -49,6 +47,8 @@ namespace InteractionGame.Context
         public static readonly string BUnitDestroyed = "unitDestroyed";
 
         public static readonly string SJoin = "join";
+        public static readonly string SSpawn = "spawn";
+        public static readonly string SForceFinish = "forceFinish";
 
     }
 
@@ -99,7 +99,7 @@ namespace InteractionGame.Context
             //m_PlugMgr.Add(100, new EveryoneTowerPlug());
             //m_PlugMgr.Add(-1, new DbTransfarPlug());
             m_PlugMgr.Add(-1, new GameModeManager());
-            m_PlugMgr.Add(-1, new ConstConfigPlug<ConstConfig>());
+            m_PlugMgr.Add(-1, new ConstConfig());
             m_PlugMgr.Add(100,overlayComm = new OverlayCommPlug());
             m_PlugMgr.Add(100,gameComm = new GameCommPlug());
             m_PlugMgr.Add(-1, new BarGameState());
@@ -164,7 +164,7 @@ namespace InteractionGame.Context
             base.OnDestroy();
         }
 
-        public override IAoe4Bridge GetBridge()
+        public override IGameBridge GetBridge()
         {
             return messageDispatcher.GetBridge();
         }

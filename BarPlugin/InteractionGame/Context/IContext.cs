@@ -1,10 +1,5 @@
-﻿using Interaction;
-using InteractionGame.Resource;
+﻿using InteractionGame.Resource;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InteractionGame
 {
@@ -28,7 +23,7 @@ namespace InteractionGame
         void SendMsgToOverlay<T>(short id, T msg) where T : class;
         void SendMsgToGame<T>(string id, T msg) where T : class;
         void RegisterOnRecvGameMsg<T>(string key, Action<string, object> callback);
-        IAoe4Bridge GetBridge();
+        IGameBridge GetBridge();
         IDyMsgParser GetMsgParser();
         IDyPlayerParser GetPlayerParser();
         IResourceMgr GetResourceMgr();
@@ -42,7 +37,7 @@ namespace InteractionGame
         void Dispatch(MSG msg, MSG_TY barType);
         void Stop();
         void Init(IContext it);
-        IAoe4Bridge GetBridge();
+        IGameBridge GetBridge();
         IDyMsgParser GetMsgParser();
         IDyPlayerParser GetPlayerParser();
         IResourceMgr GetResourceMgr();

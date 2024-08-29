@@ -1,8 +1,6 @@
 ﻿
 using ConsoleHotKey;
-using Interaction;
 using System;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Windows.Forms;
 using BilibiliDM_PluginFramework;
@@ -27,14 +25,13 @@ namespace InteractionGame
     public class MessageDispatcher<PP,MP,B,R,IT> : ILocalMsgDispatcher<Msg,MsgType>
         where PP : IDyPlayerParser,new()
         where MP : IDyMsgParser,new()
-        where B : IAoe4Bridge,new()
+        where B : IGameBridge, new()
         where R : IResourceMgr,new()
         where IT:class,IContext
     {
         private Int32 IsRunning = 0;
         private Int32 IsEmit = 0;
         private Thread thread;
-        private ConcurrentQueue<DyMsg> queue;
         private int MY_HOTKEY_ID_S = 1;
         private int MY_HOTKEY_ID_E = 2;
         private int MY_HOTKEY_ID_R = 3;
@@ -49,7 +46,6 @@ namespace InteractionGame
         public B Aoe4Bridge => bridge;
         public MessageDispatcher()
         {
-            queue = new ConcurrentQueue<DyMsg>();
 
         }
 
@@ -92,18 +88,10 @@ namespace InteractionGame
                     case Keys.PageDown:
                         Interlocked.Exchange(ref IsRunning, 0);
                         break;
-                    case Keys.R:
-                        while(!queue.IsEmpty)
-                            queue.TryDequeue(out _);
-                        break;
                 }
             }
         }
 
-        public void AppendMsg(DyMsg msg)
-        {
-            queue.Enqueue(msg);
-        }
         public void Stop()
         {
             Interlocked.Exchange(ref IsRunning, 0);
@@ -188,7 +176,7 @@ namespace InteractionGame
             InitCtx.OnInit();
         }
 
-        public IAoe4Bridge GetBridge()
+        public IGameBridge GetBridge()
         {
             return bridge;
         }

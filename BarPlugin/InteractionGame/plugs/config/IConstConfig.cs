@@ -27,5 +27,10 @@ namespace InteractionGame.plugs.config
         int AutoGoldLimit { get; }
         int OriginResource { get; }
         int AddResFactor { get; }
+
+        TimeSpan OneTimesGameTime {  get; }
+        int OneTimesSpawnSquadCount { get; }
+        int SquadCountLimit { get; }
+        int AutoSquadCountLimit { get; }
     }
 }

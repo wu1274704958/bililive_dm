@@ -3,6 +3,7 @@ using BililiveDebugPlugin.InteractionGame;
 using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame;
 using InteractionGame.Context;
+using InteractionGame.plugs.config;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGameUtils
@@ -23,14 +24,16 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         //Outter useful
         private DateTime _safeStartTime = DateTime.Now;
         public DateTime StartTime => _safeStartTime;
+        private IConstConfig _config;
         public override void Init()
         {
             base.Init();
             Locator.Instance.Deposit(this);
+            _config = Locator.Instance.Get<IConstConfig>();
         }
         public override void Tick()
         {
-            if(DateTime.Now - _startTime > Aoe4DataConfig.OneTimesGameTime)
+            if(DateTime.Now - _startTime > _config.OneTimesGameTime)
             {
                 Locator.Instance.Get<IContext>().GetBridge().ForceFinish();
                 _startTime = DateTime.Now;
@@ -46,7 +49,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                     Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.StartGame,new StartGameData()
                     {  
                         StartTime = _startTime,
-                        GameTime = Aoe4DataConfig.OneTimesGameTime,
+                        GameTime = _config.OneTimesGameTime,
                         MapName = conf.Squad.SettingMgr.GetInstance().Get((int)conf.Squad.ESettingType.MapName).StrVal
                     });
                     break;

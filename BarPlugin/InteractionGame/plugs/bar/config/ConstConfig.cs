@@ -1,13 +1,16 @@
-﻿using InteractionGame.plugs.config;
+﻿using conf.Squad;
+using InteractionGame.Context;
+using InteractionGame.plugs.config;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Utils;
 
 namespace InteractionGame.plugs.bar.config
 {
-    public class ConstConfig : IConstConfig
+    public class ConstConfig : IPlug<EGameAction>,IConstConfig
     {
         public string OverlayCommKey => "BarOverlayMem";
 
@@ -39,6 +42,16 @@ namespace InteractionGame.plugs.bar.config
         public int OriginResource => 0;
 
         public int AddResFactor => 2;
+        ///----------------------------------------------------
+        private TimeSpan _oneTimesGameTime;
+        private int _oneTimesSpawnSquadCount;
+        private int _squadCountLimit;
+        private int _autoSquadCountLimit;
+        ///----------------------------------------------------
+        public TimeSpan OneTimesGameTime => _oneTimesGameTime;
+        public int OneTimesSpawnSquadCount => _oneTimesSpawnSquadCount;
+        public int SquadCountLimit => _squadCountLimit;
+        public int AutoSquadCountLimit => _autoSquadCountLimit;
 
         public int GetGroupIdByName(string name)
         {
@@ -92,6 +105,41 @@ namespace InteractionGame.plugs.bar.config
         public bool IsTestId(string id)
         {
             return int.TryParse(id, out var idNum) && idNum < 100;
+        }
+
+        public override void Tick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Notify(EGameAction m)
+        {
+            switch(m)
+            {
+                case EGameAction.GameStart:
+                    InitData();
+                    break;
+            }
+        }
+
+        public override void Init()
+        {
+            base.Init();
+            Locator.Instance.Deposit<IConstConfig>(this);
+        }
+
+        public override void Dispose()
+        {
+            Locator.Instance.Remove<IConstConfig>();
+            base.Dispose();
+        }
+
+        private void InitData()
+        {
+            _oneTimesGameTime = TimeSpan.FromMinutes(SettingMgr.GetInt(9, 30));
+            _oneTimesSpawnSquadCount = SettingMgr.GetInt(5, 50);
+            _squadCountLimit = SettingMgr.GetInt(3, 850);
+            _autoSquadCountLimit = _squadCountLimit - SettingMgr.GetInt(4, 120);
         }
     }
 }

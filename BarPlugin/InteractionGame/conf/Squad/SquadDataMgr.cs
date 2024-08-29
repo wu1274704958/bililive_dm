@@ -25,16 +25,9 @@ public Squad.SquadData NextLevelRef => Squad.SquadDataMgr.GetInstance().Get(Next
 [ProtoMember(9)] public System.Double UpLevelPrice { get; private set; }
 [ProtoMember(10)] public System.String PB { get; private set; }
 [ProtoMember(11)] public System.Boolean IsBase { get; private set; }
-[ProtoMember(12)] public System.Collections.Generic.Dictionary<System.String,System.Int32> CountryMap { get; private set; }
+[ProtoMember(12)] public System.Int32 RandomProbability { get; private set; }
 [ProtoMember(13)] public System.Int32 OverloadId { get; private set; }
-[ProtoMember(14)] public System.String OverloadCountry { get; private set; }
-[ProtoMember(15)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadPrice { get; private set; }
-[ProtoMember(16)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadUpPrice { get; private set; }
-[ProtoMember(17)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadPriceMult { get; private set; }
-[ProtoMember(18)] public System.Collections.Generic.Dictionary<System.String,System.Double> OverloadUpPriceMult { get; private set; }
-[ProtoMember(19)] public System.Int16 SquadCount { get; private set; }
-[ProtoMember(20)] public System.Collections.Generic.Dictionary<System.String,System.Byte> AddHP { get; private set; }
-[ProtoMember(21)] public System.Collections.Generic.Dictionary<System.String,System.Byte> AddDamage { get; private set; }
+[ProtoMember(14)] public System.Int16 SquadCount { get; private set; }
 }
 
 [ProtoContract]

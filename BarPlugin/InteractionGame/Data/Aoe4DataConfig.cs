@@ -14,7 +14,6 @@ namespace BililiveDebugPlugin.InteractionGame.Data
 {
     public class Aoe4DataConfig
     {
-        public const int VILLAGER_ID = 199;
         public static readonly ConcurrentDictionary<int, SquadData> RandomSquad = new ConcurrentDictionary<int, SquadData>();
 
 
@@ -67,95 +66,10 @@ namespace BililiveDebugPlugin.InteractionGame.Data
             //{ GoDuck , ItemData.Create(GoDuck               ,EItemType.Gift,99) },
         };
 
-        public enum SpawnSquadType
-        {
-            Auto,
-            GoldBoom,
-            AutoGoldBoom,
-            HonorBoom,
-            Gift
-        }
-
-        public static readonly int[] RandomPool = { 100,102,104,106,107,109,110,111,113,117,118,122 };
-        public static SquadData GetSquadPure(int index,int level,int g)
-        {
-            SquadData sd = null;
-            if ((sd = SquadDataMgr.GetInstance().GetCountrySpecialSquad(index, level, g)) != null)
-                return HandleHide(sd);
-            sd = conf.Squad.SquadDataMgr.GetInstance().Get(level * 10_0000 + index);
-            if (sd != null && sd.GetOverload(g, out var v))
-                return v;
-            if(sd != null && sd.Type_e == conf.Squad.EType.Placeholder)
-            {
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{SettingMgr.GetCountry(g)}没有配置特殊单位{(char)index}");
-                return null;
-            }
-            return HandleHide(sd);
-        }
-        public static SquadData GetMaxLevelSquad(int sid, int g)
-        {
-            var sd = GetSquadPure(sid, 1, g);
-            while(sd.NextLevelRef != null)
-                sd = sd.NextLevelRef;
-            if (sd != null)
-                return sd;
-            return null;
-        }
-        private static SquadData HandleHide(SquadData squad)
-        {
-            if (squad == null || squad.Type_e == EType.Hide)
-                return null;
-            return squad;
-        }
-        public static SquadData GetSquadBySid(int sid,int g)
-        {
-            var index = sid % 10_0000;
-            var level = sid / 10_0000;
-            return GetSquadPure(index, level, g);
-        }
         
-        public static SquadData GetSquad(int index,int group,int level)
-        {
-            if(index == RandomIdx)
-            {
-                var key = RandomIdx * 10 + group;
-                if (RandomSquad.TryGetValue(key, out var v))
-                {
-                    return v;
-                }
-                else
-                {
-                    RandomSquad.TryAdd(key, v = conf.Squad.SquadDataMgr.GetInstance().RandomGiftSquad);
-                    return v;
-                }
-            }
-            return GetSquadPure(index, level,group);
-        }
 
-        public static bool CanSpawnSquad(string uid, SpawnSquadType type)
-        {
-            switch (type)
-            {
-                case SpawnSquadType.Auto:
-                case SpawnSquadType.GoldBoom:
-                case SpawnSquadType.HonorBoom:
-                case SpawnSquadType.AutoGoldBoom:
-                case SpawnSquadType.Gift:
-                    return true;
-            }
-            return true;
-        }
+        
 
-        public static int SquadCount => conf.Squad.SquadDataMgr.GetInstance().NormalSquadDatas.Count;
-
-        public static int RandomIdx { get; private set; } = 116;
-
-        public static readonly TimeSpan OneTimesGameTime = TimeSpan.FromMinutes(SettingMgr.GetInt(9, 30));
-
-        public static int OneTimesSpawnSquadCount => SettingMgr.GetInt(5, 50);
-
-        public static int SquadLimit => SettingMgr.GetInt(3,850);
-        public static int AutoSquadLimit => SquadLimit - SettingMgr.GetInt(4, 120);
 
 
        

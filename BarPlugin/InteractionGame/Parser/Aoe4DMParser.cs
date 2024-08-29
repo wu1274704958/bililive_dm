@@ -21,6 +21,7 @@ using BililiveDebugPlugin.InteractionGame.plugs;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using InteractionGame.plugs.config;
 using InteractionGame.plugs;
+using BarPlugin.InteractionGame.plugs;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -31,6 +32,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         where IT : class, IContext
     {
         private IConstConfig _config;
+        private ISquadMgr _squadMgr;
         public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
         private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
@@ -38,7 +40,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private Regex SendBagGiftRegex = new Regex("送(.+)[x,\\*,×]([0-9]+)");
         private Regex SendBagGiftRegex2 = new Regex("送(.+)");
         private SpawnSquadQueue m_SpawnSquadQueue;
-        public SquadUpLevelSubParser SquadUpLevelSubParser { get; private set; }
 
         public override bool Demand(Msg msg, MsgType barType)
         {
@@ -52,7 +53,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new GroupUpLevel());
             AddSubMsgParse(new AdminParser());
             AddSubMsgParse(new BossGameModeParser());
-            AddSubMsgParse(SquadUpLevelSubParser = new SquadUpLevelSubParser());
             base.Init(it);
             _config = Locator.Instance.Get<IConstConfig>();
             InitCtx.GetPlayerParser().AddObserver(this);
@@ -115,45 +115,17 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var canSign = DB.DBMgr.Instance.CanSign(uid);
                     InitCtx.PrintGameMsg($"{user?.NameColored ?? uName}金矿{(int)res},功勋{c}{(canSign ? ",可签到" : "")}");
                 }
-                else if (false && (con[0] == '防' || con[0] == '撤'))
-                {
-                    var self = InitCtx.GetPlayerParser().GetGroupById(uid);
-                    if (self > -1)
-                    {
-                        var tar = true || con.Contains("金") ? self + 10 : self;
-                        InitCtx.GetPlayerParser().SetTarget(uid, tar);
-                        InitCtx.PrintGameMsg($"{user?.NameColored ?? uName}选择{con}");
-                        SendAllSquadAttack(tar, uid, con[0] == '撤');
-                    }
-                }
-                else if (con[0] == '攻')
-                {
-                    var isGold = con.Length > 1 && con[1] == '金';
-                    if (!isGold && con.Length > 1) return (0,0);
-                    var pp = InitCtx.GetPlayerParser();
-                    var target = pp.GetTarget(uid);
-                    var self = pp.GetGroupById(uid);
-                    if(target == self || target == self + 10)
-                    {
-                        target = pp.SetTarget(uid,pp.GetGroupExclude(self) + (isGold ? 10 : 0));
-                    }
-                    if (isGold && target >= 0 && target < 10)
-                    {
-                        target = pp.SetTarget(uid, target + 10);
-                    }
-                    SendAllSquadAttack(target, uid);
-                    InitCtx.PrintGameMsg($"{user?.NameColored ?? uName}选择{con}");
-                }else if (con.StartsWith("背包"))
+                else if (con.StartsWith("背包"))
                 {
                     PrintAllItems(uid, user?.NameColored ?? uName);
                 }
                 else if ((match = BooHonorRegex.Match(con)).Success && match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out var c))
                 {
-                    if (user != null && Aoe4DataConfig.CanSpawnSquad(user.Id,Aoe4DataConfig.SpawnSquadType.HonorBoom)) BoomHonor(match.Groups[1].Value,user,c);
+                    if (user != null && _squadMgr.CanSpawnSquad(user.Id,SpawnSquadType.HonorBoom)) BoomHonor(match.Groups[1].Value,user,c);
                 }
                 else if ((match = BooHonorRegex2.Match(con)).Success && match.Groups.Count == 2)
                 {
-                    if (user != null && Aoe4DataConfig.CanSpawnSquad(user.Id, Aoe4DataConfig.SpawnSquadType.HonorBoom)) BoomHonor(match.Groups[1].Value,user);
+                    if (user != null && _squadMgr.CanSpawnSquad(user.Id, SpawnSquadType.HonorBoom)) BoomHonor(match.Groups[1].Value,user);
                 }else if ((match = SendBagGiftRegex.Match(con)).Success && match.Groups.Count == 3 &&
                           int.TryParse(match.Groups[2].Value, out c))
                 {
@@ -175,19 +147,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 InitCtx.GetResourceMgr().AddResource(uid, user.FansLevel + 15);
                 InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{user.FansLevel + 15}金");
                 return (0,0);
-
-                var r = new Random((int)DateTime.Now.Ticks);
-                var sd = SquadDataMgr.GetInstance().RandomNormalSquad;
-                var lvl = SquadUpLevelSubParser.GetSquadLevel(uid, sd.Sid);
-                sd = Aoe4DataConfig.GetSquad(sd.Sid,user.Group,lvl);
-                if (sd == null) return (0, 0);
-                
-                var c = 1;//r.Next(1, sd.QuickSuccessionNum + 1);
-                InitCtx.PrintGameMsg($"{user.NameColored}点赞随机出了{c}个{sd.Name}");
-                //UpdateUserData(msgOrigin.msg.UserID_long, c * sd.Score, c, msgOrigin.msg.UserName, msgOrigin.msg.UserFace);
-                //SendSpawnSquad(u, id, c, sd);
-                Locator.Instance.Get<ISpawnSquadQueue>(this).AppendAction(new SpawnSingleSquadAction<EmptySpawnSquadFallback>(user,c,sd,null,0,0,0));
-                return (0, 0);
             }
             if (msgOrigin.barType == MsgTypeEnum.GuardBuy)
             {
@@ -203,7 +162,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
                     AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
                     AddInitAttr(ud);
-                    AddInitUpgrade(ud);
                     if(msgOrigin.msg.UserGuardLevel <= 2)
                     {
                         AddGift(ud, Aoe4DataConfig.DaCall,          400 * c);
@@ -227,26 +185,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     InitCtx.PrintGameMsg($"{ud.Name}后续部队增加{dv * 10}%伤害、{hv * 10}%血量");
                 else
                     sb.Append($"{ud.Name}后续部队增加{dv * 10}%伤害、{hv * 10}%血量，");
-            }
-        } 
-        private void AddInitUpgrade(UserData ud,StringBuilder sb = null)
-        {
-            if (ud.GuardLevel > 0)
-            {
-                GivePlayerUpgrade(ud, "UPG.COMMON.UPGRADE_RANGED_INCENDIARY");
-                if(sb == null)
-                    InitCtx.PrintGameMsg($"{ud.Name}的队伍获得火箭科技");
-                else    
-                    sb.Append($"{ud.Name}的队伍获得火箭科技，");
-                if (ud.GuardLevel <= 2)
-                {
-                    GivePlayerUpgrade(ud, "UPG.COMMON.UPGRADE_SIEGE_ENGINEERS");
-                    GivePlayerUpgrade(ud, "UPG.COMMON.UPGRADE_SIEGE_MATHEMATICS");
-                    if (sb == null)
-                        InitCtx.PrintGameMsg($"{ud.Name}的队伍获得攻城器工程科技");
-                    else
-                        sb.Append($"{ud.Name}的队伍获得攻城器工程科技，");
-                }
             }
         }
 
@@ -316,7 +254,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
         private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5,bool isRealGift = true)
         {
-            int c = giftCount;
+            /*int c = giftCount;
             int t = 0;
             int id = -1;
             ushort addedAttr = MergeByte(1, 1);
@@ -343,13 +281,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     Squad.Add((100100, 100)); t = 3;
                     addedAttrForGroup = addedAttr = MergeByte(3, 2); break;
                 case "星愿水晶球": id = 110002; 
-                    if(Aoe4DataConfig.GetSquadPure(52,2,u.Group) == null)
-                        Squad.Add((100104, 45));
-                    else
-                        Squad.Add((200052, 100));
-                    Squad.Add((200050, 100)); Squad.Add((300049, 100)); Squad.Add((200053, 100)); t = 3;
-                    addedAttr = global::InteractionGame.Utils.MergeByte(20, 100);
-                    addedAttrForGroup = global::InteractionGame.Utils.MergeByte(6, 40);
+                    //if(Aoe4DataConfig.Get(52,2,u.Group) == null)
+                    //    Squad.Add((100104, 45));
+                    //else
+                    //    Squad.Add((200052, 100));
+                    //Squad.Add((200050, 100)); Squad.Add((300049, 100)); Squad.Add((200053, 100)); t = 3;
+                    //addedAttr = global::InteractionGame.Utils.MergeByte(20, 100);
+                    //addedAttrForGroup = global::InteractionGame.Utils.MergeByte(6, 40);
                     break;
                 case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = MergeByte(3, 5);break;
                 case "打call":
@@ -469,7 +407,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     }
             }
             End:
-            ObjPoolMgr.Instance.Get<List<(int,int)>>().Return(Squad);
+            ObjPoolMgr.Instance.Get<List<(int,int)>>().Return(Squad);*/
             return (0, 0);
         }
 
@@ -488,23 +426,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public override void SendSpawnSquad(UserData u, int c, SquadData sd)
         {
-            if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
-            {
-                InitCtx.GetResourceMgr().SpawnVillager(u.Id, c);
-                return;
-            }
             var target = InitCtx.GetPlayerParser().GetTarget(u.Id);
             var self = InitCtx.GetPlayerParser().GetGroupById(u.Id);
-            var attackTy = sd.GetAttackType();
-            var op = u?.AppendSquadAttribute(0, sd.GetAddHp(self), sd.GetAddDamage(self)) ?? 0; 
-            if (target < 0)
-            {
-                InitCtx.GetBridge().ExecSpawnSquad(self + 1,  sd.GetBlueprint(self),c, u.Id, attackTy,op);
-            }
-            else
-            {
-                InitCtx.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(self), target + 1, c, u.Id,attackTy,op);
-            }
+            InitCtx.GetBridge().ExecSpawnSquad(u,  sd , c, target);
             Locator.Instance.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
         }
         
@@ -535,36 +459,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (group.Count == 0) return 0;
             var target = InitCtx.GetPlayerParser().GetTarget(u.Id);
             var self = InitCtx.GetPlayerParser().GetGroupById(u.Id);
-            int rc = 0;
-            if (target < 0)
-            {
-                rc = InitCtx.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
-            }
-            else
-            {
-                rc = InitCtx.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:u?.Op1 ?? 0);
-            }
+            int rc = InitCtx.GetBridge().ExecSpawnGroup(u, group,multiple,target);
             Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
             return rc;
-        }
-
-
-        public override void SendAllSquadAttack(int target, string uid, bool isMove = false)
-        {
-            var self = InitCtx.GetPlayerParser().GetGroupById(uid);
-            if (target < 0)
-            {
-                InitCtx.GetBridge().ExecAllSquadMove(self + 1, uid);
-            }
-            else
-            {
-                InitCtx.GetBridge().ExecAllSquadMoveWithTarget(self + 1, target + 1, uid, isMove ? 1 : 0);
-            }
-        }
-
-        public void GivePlayerUpgrade(UserData u, string upg)
-        {
-            InitCtx.GetBridge().AppendExecCode($"GiveAbility(PLAYERS[{u.Group + 1}].id, nil, nil, {upg});");
         }
         
 
@@ -598,7 +495,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 StringBuilder sb = new StringBuilder();
                 AddInitAttr(userData,sb);
-                AddInitUpgrade(userData,sb);
                 sb = sb.Remove(sb.Length - 1,1);
                 LargeTips.Show(LargePopTipsDataBuilder.Create(userData.Name,$"加入{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方")
                     .SetBottom(sb.ToString()).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.Yellow).SetRightColor(LargeTips.GetGroupColor(g)));
@@ -622,7 +518,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         }
     }
 
-    public class AutoSpawnSquadSubMsgParser : ISubMsgParser , IPlayerParserObserver,ISquadUpLevelListener
+    public class AutoSpawnSquadSubMsgParser : ISubMsgParser , IPlayerParserObserver
     {
         
         private ConcurrentDictionary<string,SquadGroup> m_Dict = new ConcurrentDictionary<string,SquadGroup>();
@@ -632,23 +528,27 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private readonly Regex Reg = new Regex("^([0-9a-wA-W]*)$");
         private readonly Regex BoomWithCountReg = new Regex("^([0-9a-wA-W]+)[x,\\*,×]([0-9]+)$");
         private readonly Regex BoomOnlyCountReg = new Regex("^[x,\\*,×]([0-9]+)$");
+        private IConstConfig _config;
+        private ISquadMgr _squadMgr;
 
         public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
             m_Owner.InitCtx.GetPlayerParser().AddObserver(this);
-            
+            _config = Locator.Instance.Get<IConstConfig>();
+            _squadMgr = Locator.Instance.Get<ISquadMgr>();
         }
 
         public void OnTick(float delat)
         {
+
             var gameState = Locator.Instance.Get<IGameState>();
             foreach (var it in m_Dict.Keys)
             {
-                if(Aoe4DataConfig.CanSpawnSquad(it, Aoe4DataConfig.SpawnSquadType.Auto) && m_Dict.TryGetValue(it,out var v))
+                if(_squadMgr.CanSpawnSquad(it, SpawnSquadType.Auto) && m_Dict.TryGetValue(it,out var v))
                 {
                     var ud = m_Owner.GetUserData(it);
-                    if (gameState.GetSquadCount(ud.Group) >= Aoe4DataConfig.AutoSquadLimit)
+                    if (gameState.GetSquadCount(ud.Group) >= _config.AutoSquadCountLimit)
                         continue;
                     lock (v)
                     {
@@ -666,7 +566,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 foreach (var it in m_Dict)
                 {
-                    if(!Aoe4DataConfig.CanSpawnSquad(it.Key, Aoe4DataConfig.SpawnSquadType.AutoGoldBoom))
+                    if(!_squadMgr.CanSpawnSquad(it.Key, SpawnSquadType.AutoGoldBoom))
                         continue;
                     var lastSendGiftTime = GetSendGiftTime(it.Key);
                     if ((DateTime.Now - lastSendGiftTime).TotalMinutes < 1.5)
@@ -774,7 +674,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     return true;
                 }else if (lower.StartsWith("暴") || lower.StartsWith("爆"))
                 {
-                    if (!Aoe4DataConfig.CanSpawnSquad(uid, Aoe4DataConfig.SpawnSquadType.GoldBoom))
+                    if (!_squadMgr.CanSpawnSquad(uid, SpawnSquadType.GoldBoom))
                         return true;
                     var maxCount = 5000;
                     bool isNew = false;
@@ -822,8 +722,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 StringToDictAndForeach(str, (item) =>
                 {
                     var u = m_Owner.InitCtx.GetMsgParser().GetUserData(uid);
-                    var lvl = Locator.Instance.Get<SquadUpLevelSubParser>().GetSquadLevel(uid, item.Key);
-                    var sd = Aoe4DataConfig.GetSquad(item.Key,u.Group, lvl);
+                    var sd = _squadMgr.GetSquadBySlot(item.Key,u);
                     if (sd == null) return;
                     if(sd.SquadType_e == ESquadType.Normal)
                         squad.squad.Add((sd, item.Value));
@@ -831,12 +730,12 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     {
                         squad.specialSquad.Add((sd, item.Value));
                         squad.specialCount += item.Value;
-                        squad.specialScore += sd.RealScore(u.Group) * item.Value;
+                        squad.specialScore += sd.Score * item.Value;
                     }
-                    squad.spawnTime += sd.RealTrainTime(u.Group) * item.Value;
-                    squad.score += sd.RealScore(u.Group) * item.Value;
+                    squad.spawnTime += sd.TrainTime * item.Value;
+                    squad.score += sd.Score * item.Value;
                     squad.num += item.Value;
-                    squad.price += sd.RealPrice(u.Group) * item.Value;
+                    squad.price += sd.Price * item.Value;
                 });
                 spawnTime = squad.spawnTime;
                 isEmpty = squad.IsEmpty;
@@ -973,7 +872,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Start()
         {
-            Locator.Instance.Get<SquadUpLevelSubParser>().AddListener(this);
+
         }
     }
 

@@ -5,17 +5,14 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using BilibiliDM_PluginFramework;
-using BililiveDebugPlugin;
 using ProtoBuf;
 using Utils;
-using Interaction;
-using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.mode;
 using conf.Squad;
 using InteractionGame.plugs.config;
-using BililiveDebugPlugin.InteractionGame.Parser;
+using InteractionGame.plugs;
 
-namespace InteractionGame 
+namespace InteractionGame
 {
     using Msg = DanmakuModel;
     using MsgType = MsgTypeEnum;
@@ -439,7 +436,6 @@ namespace InteractionGame
                 }
             }
         }
-        public abstract void SendAllSquadAttack(int target, string uid, bool isMove = false);
         public virtual void OnTick(float delat) {
             lock (subMsgParsers)
             {
@@ -631,10 +627,11 @@ namespace InteractionGame
             squad.StringTag = s;
             squad.squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             squad.specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
+            var squadMgr = Locator.Instance.Get<ISquadMgr>();
+            var user = Locator.Instance.Get<IContext>().GetMsgParser().GetUserData(uid);
             Utils.StringToDictAndForeach(s, (item) =>
             {
-                var lvl = Locator.Instance.Get<SquadUpLevelSubParser>().GetSquadLevel(uid, item.Key);
-                var sd = Aoe4DataConfig.GetSquad(item.Key, g, lvl);
+                var sd = squadMgr.GetSquadBySlot(item.Key, user);
                 if (sd == null) return;
                 if (sd.SquadType_e == ESquadType.Normal)
                     squad.squad.Add((sd, item.Value));
@@ -642,33 +639,34 @@ namespace InteractionGame
                 {
                     squad.specialSquad.Add((sd, item.Value));
                     squad.specialCount += item.Value;
-                    squad.specialScore += sd.RealScore(g) * item.Value;
+                    squad.specialScore += sd.Score * item.Value;
                 }
-                squad.spawnTime += sd.RealTrainTime(g) * item.Value;
-                squad.score += sd.RealScore(g) * item.Value;
+                squad.spawnTime += sd.TrainTime * item.Value;
+                squad.score += sd.Score * item.Value;
                 squad.num += item.Value;
-                squad.price += sd.RealPrice(g) * item.Value;
+                squad.price += sd.Price * item.Value;
             });
             return squad;
         }
 
-        public static SquadGroup FromData(List<(int, int)> squad, int g, ushort addedAttr = 0)
+        public static SquadGroup FromData(List<(int, int)> squad, UserData user, ushort addedAttr = 0)
         {
             SquadGroup group = new SquadGroup();
             group.AddedAttr = addedAttr;
             group.Init();
+            var squadMgr = Locator.Instance.Get<ISquadMgr>();
             Action<(int, int)> f = (item) =>
             {
-                var sd = Aoe4DataConfig.GetSquadBySid(item.Item1, g);
+                var sd = squadMgr.GetSquadBySlot(item.Item1, user);
                 if (sd == null) return;
-                group.spawnTime += sd.RealTrainTime(g) * item.Item2;
-                group.score += sd.RealScore(g) * item.Item2;
+                group.spawnTime += sd.TrainTime * item.Item2;
+                group.score += sd.Score * item.Item2;
                 group.num += item.Item2;
-                group.price += sd.RealPrice(g) * item.Item2;
+                group.price += sd.Price * item.Item2;
                 if (sd.SquadType_e != ESquadType.Normal)
                 {
                     group.specialCount += item.Item2;
-                    group.specialScore += sd.RealScore(g) * item.Item2;
+                    group.specialScore += sd.Score * item.Item2;
                     group.specialSquad.Add((sd, item.Item2));
                 }
                 else

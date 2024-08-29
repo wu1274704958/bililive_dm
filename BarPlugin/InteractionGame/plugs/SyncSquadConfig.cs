@@ -49,7 +49,6 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, new SquadConfigData()
             {
                 Squads = (Dictionary<System.Int32, SquadData>)SquadDataMgr.GetInstance().Dict,
-                RandomIdx = Aoe4DataConfig.RandomIdx,
                 ContryList = SettingMgr.GetInstance().Get(1).Country,
                 GroupCount = Locator.Instance.Get<IGameState>().GroupCount
             });

@@ -1,6 +1,7 @@
 ﻿using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame;
 using InteractionGame.Context;
+using InteractionGame.plugs.config;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.plugs
@@ -33,7 +34,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         {
             base.Init();
             //Locator.Instance.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>().AddObserver(this);
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = -1,Count = Aoe4DataConfig.SquadLimit});
+            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = -1,Count = Locator.Instance.Get<IConstConfig>().SquadCountLimit});
         }
 
         public override void Dispose()

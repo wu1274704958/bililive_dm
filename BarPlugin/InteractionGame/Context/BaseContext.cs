@@ -1,6 +1,4 @@
-﻿using BilibiliDM_PluginFramework;
-using Interaction;
-using InteractionGame.Resource;
+﻿using InteractionGame.Resource;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -20,7 +18,7 @@ namespace InteractionGame.Context
         public bool IsStart => State == 2;
         public PlugMgr<EGameAction> m_PlugMgr { get; protected set; } = new PlugMgr<EGameAction>();
 
-        public abstract IAoe4Bridge GetBridge();
+        public abstract IGameBridge GetBridge();
         public abstract IDyMsgParser GetMsgParser();
         public abstract IDyPlayerParser GetPlayerParser();
         public abstract IResourceMgr GetResourceMgr();

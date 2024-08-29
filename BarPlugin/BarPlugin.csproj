@@ -57,7 +57,6 @@
     <Compile Include="DB\Model2\UserData.cs" />
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
-    <Compile Include="InteractionGame\Aoe4Bridge.cs" />
     <Compile Include="InteractionGame\Aoe4GameContext.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
@@ -70,7 +69,9 @@
     <Compile Include="InteractionGame\Context\BaseContext.cs" />
     <Compile Include="InteractionGame\Context\IContext.cs" />
     <Compile Include="InteractionGame\Data\Aoe4DataConfig.cs" />
+    <Compile Include="InteractionGame\gameBridge\BarBridge.cs" />
     <Compile Include="InteractionGame\HotKeyManager.cs" />
+    <Compile Include="InteractionGame\IGameBridge.cs" />
     <Compile Include="InteractionGame\IGameState.cs" />
     <Compile Include="InteractionGame\LiveGameUtils.cs" />
     <Compile Include="InteractionGame\MessageDispatcher.cs" />
@@ -83,7 +84,6 @@
     <Compile Include="InteractionGame\Parser\BossGameModeParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
-    <Compile Include="InteractionGame\Parser\SquadUpLevelSubParser.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarGameState.cs" />
     <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
@@ -93,6 +93,7 @@
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
+    <Compile Include="InteractionGame\plugs\ISquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncSquadConfig.cs" />
@@ -146,6 +147,8 @@
     </PackageReference>
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="excel\Squad.xlsx" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

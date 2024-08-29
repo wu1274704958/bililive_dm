@@ -37,7 +37,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         }
     }
 
-    public class SpawnSquadQueue : SpawnSquadQueueWithMerge
+    public class SpawnSquadQueue : ISpawnSquadQueue
     {
         private IContext debugPlugin;
         private class CheckSCCxt {
@@ -68,14 +68,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
 
         protected override bool IsGroupLimit(int count, int remaining)
         {
-            if(count < Aoe4DataConfig.OneTimesSpawnSquadCount)
+            if(count < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
                 return count > remaining;
-            return remaining < Aoe4DataConfig.OneTimesSpawnSquadCount;
+            return remaining < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount;
         }
 
         protected override int RemainingQuantity(int group)
         {
-            return Aoe4DataConfig.SquadLimit - GameState.GetSquadCount(group);
+            return Locator.Instance.Get<IConstConfig>().SquadCountLimit - GameState.GetSquadCount(group);
         }
 
         
@@ -202,27 +202,12 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             bool log = false,double scoreScale = 1)
         {
             var cxt = Locator.Instance.Get<IContext>();
-            if (sd.Sid == Aoe4DataConfig.VILLAGER_ID)
-            {
-                if(u.Id_int < 0) return;
-                cxt.GetResourceMgr().SpawnVillager(u.Id, c);
-                return;
-            }
             var target = u.Id_int < 0 ? -1 : cxt.GetPlayerParser().GetTarget(u.Id);
             var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
             Locator.Instance.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
-            var attackTy = sd.GetAttackType();
-            var op = u?.AppendSquadAttribute(attribute,sd.GetAddHp(self),sd.GetAddDamage(self)) ?? 0;
-            if (target < 0)
-            {
-                cxt.GetBridge().ExecSpawnSquad(self + 1, sd.GetBlueprint(u.Group), c, u.Id, attackTy,op);
-            }
-            else
-            {
-                cxt.GetBridge().ExecSpawnSquadWithTarget(self + 1, sd.GetBlueprint(u.Group), target + 1, c, u.Id,attackTy,op);
-            }
+            cxt.GetBridge().ExecSpawnSquad(u, sd, c, target);
             if(u.Id_int > 0)
-                cxt.GetMsgParser().UpdateUserData(u.Id,sd.RealScore(u.Group) * c * scoreScale,c);
+                cxt.GetMsgParser().UpdateUserData(u.Id,sd.Score * c * scoreScale,c);
             if (false)
                 Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
@@ -250,14 +235,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
             
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
-            if (target < 0)
-            {
-                rc = cxt.GetBridge().ExecSpawnGroup(self + 1, group, u.Id,multiple,op1:op);
-            }
-            else
-            {
-                rc = cxt.GetBridge().ExecSpawnGroupWithTarget(self + 1, target + 1, group, u.Id,multiple,op1:op);
-            }
+            rc = cxt.GetBridge().ExecSpawnGroup(u, group,target, multiple);
             if(rc > 0)
                 Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
             if (u.Id_int > 0)
@@ -363,14 +341,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             while (count > 0 && max > 0)
             {
                 SpawnInternalStep(ref count, ref max, ref @out);
-                if (!IsGreedy && @out >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                if (!IsGreedy && @out >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / (double)_count;
         }
         protected void SpawnInternalStep(ref int count,ref int max,ref int @out)
         {
-            var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
+            var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
             if (sc > max) sc = max;
             this.SendSpawnSquad(_user, sc, _squad, _attribute, true,scoreScale:GetPercentageScale());
             count -= sc;
@@ -465,7 +443,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(count > 0)
                 specialPercentage = SpawnSpecialCount(ref max, ref count,ref sumOut);
             count = (int)(_Squad.normalCount * _normalPercentage * _count);
-            if(count > 0 && max > 0 && (IsGreedy || sumOut < Aoe4DataConfig.OneTimesSpawnSquadCount))
+            if(count > 0 && max > 0 && (IsGreedy || sumOut < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount))
                 normalPercentage = SpawnNormalCount(ref max, ref count,ref sumOut);
             _specialPercentage -= specialPercentage;
             _normalPercentage -= normalPercentage;
@@ -478,7 +456,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var @out = 0;
             while (count > 0 && max > 0)
             {
-                var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
+                var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.specialCount;                
                 if (c <= 0) break;
@@ -496,7 +474,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 max -= rc;
                 @out += rc;
                 sumOut += rc;
-                if (!IsGreedy && sumOut >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                if (!IsGreedy && sumOut >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / all;
@@ -507,7 +485,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var @out = 0;
             while (count > 0 && max > 0)
             {
-                var sc = Math.Min(count, Aoe4DataConfig.OneTimesSpawnSquadCount);
+                var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
@@ -519,7 +497,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 max -= rc;
                 @out += rc;
                 sumOut += rc;
-                if (!IsGreedy && sumOut >= Aoe4DataConfig.OneTimesSpawnSquadCount)
+                if (!IsGreedy && sumOut >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / all;

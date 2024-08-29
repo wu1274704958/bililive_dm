@@ -10,6 +10,7 @@ using InteractionGame.plugs.bar;
 using InteractionGame.plugs.bar.config;
 using InteractionGame.plugs.config;
 using InteractionGame.Resource;
+using InteractionGameUtils;
 using System;
 using System.Threading;
 using Utils;
@@ -41,6 +42,7 @@ namespace InteractionGame.Context
     }
     public static class EGameMsg
     {
+        public static readonly string BPreStart = "preStart";
         public static readonly string BStart = "start";
         public static readonly string BEnd = "end";
         public static readonly string BUnitReward = "unitReward";
@@ -60,7 +62,7 @@ namespace InteractionGame.Context
     {
         public int winner;
     }
-    public class GameStartData
+    public class GamePreStartData
     {
         public int teamCount;
         public string mapName;
@@ -91,7 +93,7 @@ namespace InteractionGame.Context
 
             messageDispatcher = new MessageDispatcherType();
             
-            //m_PlugMgr.Add(1000 * 30, new AutoForceStopPlug());
+            m_PlugMgr.Add(1000 * 30, new AutoForceStopPlug());
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60, new AutoDownLivePlug());
             m_PlugMgr.Add(-1, new SyncGameConfig());
@@ -106,11 +108,23 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(-1, new BarGameState());
             m_PlugMgr.Add(-1, new BarSquadMgr());
 
-            RegisterOnRecvGameMsg<GameStartData>(EGameMsg.BStart, OnGameStart);
+            RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
+            RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BStart, OnGameStart);
             RegisterOnRecvGameMsg<GameEndData>(EGameMsg.BEnd, OnGameEnd);
 
             settlement = new BarSettlement<BarContext>();
             messageDispatcher.Init(this);
+        }
+
+        private void OnGamePreStart(string arg1, object arg2)
+        {
+            m_PlugMgr.Notify(EGameAction.GamePreStart);
+        }
+
+        private void OnGameStart(string arg1, object arg2)
+        {
+            gameState = EGameState.Started;
+            m_PlugMgr.Notify(EGameAction.GameStart);
         }
 
         private void OnGameEnd(string arg1, object arg2)
@@ -133,11 +147,7 @@ namespace InteractionGame.Context
                 Thread.Sleep((int)Locator.Instance.Get<IConstConfig>().EndDelay);
         }
 
-        private void OnGameStart(string arg1, object arg2)
-        {
-            gameState = EGameState.Started;
-            m_PlugMgr.Notify(EGameAction.GameStart);
-        }
+        
 
         public override void OnStart()
         {

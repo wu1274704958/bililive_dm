@@ -46,7 +46,7 @@ namespace InteractionGame.plugs.bar
         {
             switch (m)
             {
-                case EGameAction.GameStart:
+                case EGameAction.GamePreStart:
                     RandomSlot();
                     SendSlotToOverlay();
                     break;

@@ -8,6 +8,7 @@ namespace InteractionGame.Context
 {
     public enum EGameAction
     {
+        GamePreStart,
         GameStart,
         GameStop,
     }

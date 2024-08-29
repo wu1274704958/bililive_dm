@@ -67,11 +67,16 @@ namespace InteractionGame.plugs.bar
             }
         }
 
+        public override void Init()
+        {
+            base.Init();
+            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
+            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<UnitDestroyedData>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
+        }
+
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<GameStartData>(EGameMsg.BStart, OnGameStart);
-            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<UnitDestroyedData>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
         }
 
         private void OnUnitDestroyer(string arg1, object arg2)
@@ -82,9 +87,9 @@ namespace InteractionGame.plugs.bar
             }
         }
 
-        private void OnGameStart(string arg1, object arg2)
+        private void OnGamePreStart(string arg1, object arg2)
         {
-            if(arg2 is GameStartData data)
+            if(arg2 is GamePreStartData data)
             {
                 _groupCount = data.teamCount;
                 _mapName = data.mapName;

@@ -6,7 +6,7 @@ using InteractionGame.Context;
 using InteractionGame.plugs.config;
 using Utils;
 
-namespace BililiveDebugPlugin.InteractionGameUtils
+namespace InteractionGameUtils
 {
     public class AutoForceStopPlug : IPlug<EGameAction>
     {

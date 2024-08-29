@@ -100,7 +100,6 @@ namespace InteractionGame
             pp.Stop();
             mp.Stop();
             resMgr.Stop();
-            InitCtx.OnStop();
         }
 
 
@@ -173,7 +172,6 @@ namespace InteractionGame
             pp.Init(it);
             mp.Init(it);
             resMgr.Init(it);
-            InitCtx.OnInit();
         }
 
         public IGameBridge GetBridge()

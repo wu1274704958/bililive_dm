@@ -98,6 +98,7 @@ namespace InteractionGame.plugs.bar
         public override void Init()
         {
             base.Init();
+            Locator.Instance.Deposit<ISquadMgr>(this);
             LoadSquad();
         }
 

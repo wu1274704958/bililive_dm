@@ -13,13 +13,11 @@ namespace InteractionGame.gameBridge
     {
         public string Squad;
         public int Count;
-        private string v;
-        private int item2;
 
-        public UnitData(string v, int item2)
+        public UnitData(string v, int c)
         {
-            this.v = v;
-            this.item2 = item2;
+            this.Squad = v;
+            this.Count = c;
         }
     }
     public class SpawnSquadData

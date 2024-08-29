@@ -95,8 +95,15 @@ namespace InteractionGame.plugs.bar
                         Locator.Instance.Get<IContext>().Log($"Game comm recv msg deserialize failed!!! msg = {json}");
                         return;
                     }
+                    var argsField = msgTy.GetField("args");
+                    var args = argsField.GetValue(msgArgs);
+                    if (msgArgs == null)
+                    {
+                        Locator.Instance.Get<IContext>().Log($"Game comm recv msg get args failed!!! msg = {json}");
+                        return;
+                    }
                     foreach (var it in v.Item2)
-                        it.Invoke(key, msgArgs);
+                        it.Invoke(key, args);
                 }
             }
             else
@@ -107,7 +114,7 @@ namespace InteractionGame.plugs.bar
 
         public void SendMsgToGame<T>(string id, T msg)
         {
-            string jsonString = JsonConvert.SerializeObject(new GameBaseMsg<T>(id,msg), Formatting.Indented);
+            string jsonString = JsonConvert.SerializeObject(new GameBaseMsg<T>(id,msg), Formatting.None);
             if(jsonString != null && jsonString.Length > 0) {
                 comm.Send(jsonString);
             }

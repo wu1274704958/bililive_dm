@@ -5,7 +5,7 @@ namespace conf
 {
     public sealed class ConfigMgr
     {
-        private static readonly string ConfigPath = "E:\\code\\bililive_dm\\resource\\data";
+        private static readonly string ConfigPath = "E:\\code\\bililive_dm\\resource\\bar";
 
         public static void Init()
         {

@@ -459,7 +459,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (group.Count == 0) return 0;
             var target = InitCtx.GetPlayerParser().GetTarget(u.Id);
             var self = InitCtx.GetPlayerParser().GetGroupById(u.Id);
-            int rc = InitCtx.GetBridge().ExecSpawnGroup(u, group,multiple,target);
+            int rc = InitCtx.GetBridge().ExecSpawnGroup(u, group, target,multiple);
             Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
             return rc;
         }
@@ -495,7 +495,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             {
                 StringBuilder sb = new StringBuilder();
                 AddInitAttr(userData,sb);
-                sb = sb.Remove(sb.Length - 1,1);
+                if(sb.Length > 0)
+                    sb = sb.Remove(sb.Length - 1,1);
                 LargeTips.Show(LargePopTipsDataBuilder.Create(userData.Name,$"加入{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方")
                     .SetBottom(sb.ToString()).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.Yellow).SetRightColor(LargeTips.GetGroupColor(g)));
             }

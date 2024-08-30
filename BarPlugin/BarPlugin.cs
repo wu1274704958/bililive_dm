@@ -7,22 +7,6 @@ using Utils;
 
 namespace BililiveDebugPlugin
 {
-    [ProtoContract]
-    class GoldInfo
-    {
-        [ProtoMember(1)]
-        public string Id;
-        [ProtoMember(2)]
-        public int Gold;
-        [ProtoMember(3)]
-        public float Progress;
-    }
-    [ProtoContract]
-    class GoldInfoArr
-    {
-        [ProtoMember(1)]
-        public List<GoldInfo> Items = new List<GoldInfo>();
-    }
     [ProtoBuf.ProtoContract]
     public class EventCueData
     {

@@ -81,8 +81,10 @@ namespace InteractionGame.Parser.bar
                 lock (this)
                 {
                     var g = ChooseGroupSystem(uid, msgOrigin);
-                    if(con != null && con.Length > 1 && int.TryParse(con.Substring(1),out var op) && g > -1)
+                    if(con != null && g > -1)
                     {
+                        int op = 0;
+                        if (con.Length > 1 && int.TryParse(con.Substring(1), out op)) ;
                         if (op >= 10)
                             op = 0;
                         op = _config.GetPureGuardLevel(msgOrigin.msg.UserGuardLevel) * 10 + op;

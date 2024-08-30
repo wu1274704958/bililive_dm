@@ -19,6 +19,10 @@ namespace InteractionGameUtils
         {
             base.Init();
             Locator.Instance.Deposit(this);
+        }
+        public override void Start()
+        {
+            base.Start();
             _config = Locator.Instance.Get<IConstConfig>();
         }
         public override void Tick()

@@ -106,6 +106,7 @@
     <Compile Include="InteractionGame\Utils.cs" />
     <Compile Include="InteractionGame\Utils\AutoForceStopPlug.cs" />
     <Compile Include="InteractionGame\Utils\ISpawnSquadQueue.cs" />
+    <Compile Include="InteractionGame\Utils\JsonParseAttribute.cs" />
     <Compile Include="InteractionGame\Utils\LargeTips.cs" />
     <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />

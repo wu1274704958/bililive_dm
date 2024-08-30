@@ -49,6 +49,7 @@ public static void InitInstance(FileInfo file)
         _instance = Serializer.DeserializeWithLengthPrefix<SquadDataMgr>(fs, PrefixStyle.Fixed32);
         Debug.Assert(_instance != null,"Load Config SquadData failed at "+file.FullName);
         _lastReadFile = file;
+        
     }
 }
 
@@ -64,7 +65,7 @@ public static void Save(FileInfo file)
         Serializer.SerializeWithLengthPrefix(fs, _instance, PrefixStyle.Fixed32);
     }
 }
-public static void AppendData(Int32 id,SquadData d)
+public static void AppendData(System.Int32 id,SquadData d)
 {
     if (_instance == null)
         _instance = new SquadDataMgr();

@@ -40,6 +40,7 @@ public static void InitInstance(FileInfo file)
         _instance = Serializer.DeserializeWithLengthPrefix<TechnologyDataMgr>(fs, PrefixStyle.Fixed32);
         Debug.Assert(_instance != null,"Load Config TechnologyData failed at "+file.FullName);
         _lastReadFile = file;
+        
     }
 }
 
@@ -55,7 +56,7 @@ public static void Save(FileInfo file)
         Serializer.SerializeWithLengthPrefix(fs, _instance, PrefixStyle.Fixed32);
     }
 }
-public static void AppendData(Int32 id,TechnologyData d)
+public static void AppendData(System.Int32 id,TechnologyData d)
 {
     if (_instance == null)
         _instance = new TechnologyDataMgr();

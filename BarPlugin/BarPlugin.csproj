@@ -59,6 +59,8 @@
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4GameContext.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
+    <Compile Include="InteractionGame\conf\Gift\GiftItemMgr.cs" />
+    <Compile Include="InteractionGame\conf\plugins\AnyArray.cs.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SettingMgr.cs" />

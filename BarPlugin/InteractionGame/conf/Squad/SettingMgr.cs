@@ -36,6 +36,7 @@ public static void InitInstance(FileInfo file)
         _instance = Serializer.DeserializeWithLengthPrefix<SettingMgr>(fs, PrefixStyle.Fixed32);
         Debug.Assert(_instance != null,"Load Config Setting failed at "+file.FullName);
         _lastReadFile = file;
+        
     }
 }
 
@@ -51,7 +52,7 @@ public static void Save(FileInfo file)
         Serializer.SerializeWithLengthPrefix(fs, _instance, PrefixStyle.Fixed32);
     }
 }
-public static void AppendData(Int32 id,Setting d)
+public static void AppendData(System.Int32 id,Setting d)
 {
     if (_instance == null)
         _instance = new SettingMgr();

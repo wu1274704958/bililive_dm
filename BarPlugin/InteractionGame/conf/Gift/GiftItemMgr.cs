@@ -20,6 +20,7 @@ public EItemType ItemType_e => (EItemType)ItemType;
 [ProtoMember(6)] public System.Collections.Generic.Dictionary<System.Int32,System.Int32> SpawnSquad { get; private set; }
 [ProtoMember(7)] public System.Collections.Generic.Dictionary<System.Int32,conf.plugin.AnyArray> Functions { get; private set; }
 [ProtoMember(8)] public System.TimeSpan Duration { get; private set; }
+[ProtoMember(9)] public System.Int32 Ext { get; private set; }
 }
 
 [ProtoContract]

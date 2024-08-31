@@ -1,4 +1,5 @@
-﻿using BilibiliDM_PluginFramework;
+﻿using BarPlugin.InteractionGame.plugs.bar;
+using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin.InteractionGame.Parser;
 using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGame.Resource;
@@ -107,6 +108,7 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(100,gameComm = new GameCommPlug());
             m_PlugMgr.Add(-1, new BarGameState());
             m_PlugMgr.Add(-1, new BarSquadMgr());
+            m_PlugMgr.Add(-1, new GiftMgr());
 
             RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
             RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BStart, OnGameStart);

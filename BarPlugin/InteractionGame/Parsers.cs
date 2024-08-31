@@ -678,6 +678,35 @@ namespace InteractionGame
                 f(it);
             return group;
         }
+        public static SquadGroup FromData(Dictionary<int, int> squad, UserData user, ushort addedAttr = 0)
+        {
+            SquadGroup group = new SquadGroup();
+            group.AddedAttr = addedAttr;
+            group.Init();
+            var squadMgr = Locator.Instance.Get<ISquadMgr>();
+            Action<int,int> f = (id,count) =>
+            {
+                var sd = squadMgr.GetSquadBySlot(id, user);
+                if (sd == null) return;
+                group.spawnTime += sd.TrainTime * count;
+                group.score += sd.Score * count;
+                group.num += count;
+                group.price += sd.Price * count;
+                if (sd.SquadType_e != ESquadType.Normal)
+                {
+                    group.specialCount += count;
+                    group.specialScore += sd.Score * count;
+                    group.specialSquad.Add((sd, count));
+                }
+                else
+                {
+                    group.squad.Add((sd, count));
+                }
+            };
+            foreach (var it in squad)
+                f(it.Key,it.Value);
+            return group;
+        }
 
         public void Init()
         {

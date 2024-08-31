@@ -1,5 +1,5 @@
 ﻿using BilibiliDM_PluginFramework;
-using BililiveDebugPlugin.InteractionGame.Data;
+
 using InteractionGame;
 using System;
 using System.Collections.Generic;
@@ -22,6 +22,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using InteractionGame.plugs.config;
 using InteractionGame.plugs;
 using BarPlugin.InteractionGame.plugs;
+using System.Windows.Documents;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -33,6 +34,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         private IConstConfig _config;
         private ISquadMgr _squadMgr;
+        private IGiftMgr _giftMgr;
         public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
         private Regex BooHonorRegex = new Regex("z([0-9a-wA-W]+)[x,\\*,×]([0-9]+)");
@@ -58,6 +60,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             InitCtx.GetPlayerParser().AddObserver(this);
             Locator.Instance.Deposit(this,m_SpawnSquadQueue = new SpawnSquadQueue());
             Locator.Instance.Deposit(this);
+
+            _giftMgr = Locator.Instance.Get<IGiftMgr>();
         }
 
         public override void OnTick(float delat)
@@ -139,35 +143,28 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (msgOrigin.barType == MsgType.GiftSend)
             {
                 var ud = GetUserData(msgOrigin.msg.OpenID);
-                return SendGift(msgOrigin.msg.GiftName,msgOrigin.msg.GiftCount,msgOrigin.msg.GiftBatteryCount,ud,1);
+                _giftMgr.ApplyGift(msgOrigin.msg.GiftName, ud, msgOrigin.msg.GiftCount);
+                InitCtx.PrintGameMsg($"{user.NameColored}使用了{msgOrigin.msg.GiftName}*{msgOrigin.msg.GiftCount}");
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)
             {
                 if (user == null) return(0,0);
-                InitCtx.GetResourceMgr().AddResource(uid, user.FansLevel + 15);
-                InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{user.FansLevel + 15}金");
+                var gold = user.FansLevel * 2 + 15;
+                InitCtx.GetResourceMgr().AddResource(uid, gold);
+                InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{gold}金");
                 return (0,0);
             }
             if (msgOrigin.barType == MsgTypeEnum.GuardBuy)
             {
                 if (msgOrigin.msg.UserGuardLevel >= 1)
                 {
-                    var ud = GetUserData(msgOrigin.msg.OpenID);
-                    ud.SetGuardLevel(msgOrigin.msg.UserGuardLevel);
-                    var c = 4 - ud.GuardLevel;
-                    AddGift(ud, Aoe4DataConfig.Gaobai, 5 * c);
-                    AddGift(ud, Aoe4DataConfig.GanBao, 5 * c);
-                    AddGift(ud, Aoe4DataConfig.QingShu, 20 * c);
-                    AddGift(ud, Aoe4DataConfig.ZheGe, 30 * c);
-                    AddGift(ud, Aoe4DataConfig.Xinghe, 5 * c);
-                    AddHonor(ud, 1000 * (int)Math.Pow(10,c - 1),false);
-                    AddInitAttr(ud);
-                    if(msgOrigin.msg.UserGuardLevel <= 2)
+                    foreach(var i in _config.GuardLevelListSorted)
                     {
-                        AddGift(ud, Aoe4DataConfig.DaCall,          400 * c);
-                        AddGift(ud, Aoe4DataConfig.XiaoFuDie,       400 * c);
-                        AddGift(ud, Aoe4DataConfig.ShuiJingBall,    10 * c);
-                        AddGift(ud, Aoe4DataConfig.KuaKua,          30 * c);
+                        if(i.Key == msgOrigin.msg.UserGuardLevel)
+                        {
+                            _giftMgr.ApplyGift(i.Value,user,1);
+                            break;
+                        }
                     }
                 }
             }
@@ -206,14 +203,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private void SendBagGift(string gift, UserData ud,int c = 1)
         {
-            foreach (var it in Aoe4DataConfig.ItemDatas)
+            foreach (var it in conf.Gift.GiftItemMgr.GetInstance().Dict)
             {
                 var item = it.Value;
                 if (it.Key.StartsWith(gift))
                 {
-                    if (DB.DBMgr.Instance.DepleteItem(ud.Id, item.Name, c, out var rest) > 0)
+                    if (DB.DBMgr.Instance.DepleteItem(ud.Id, item.Id, c, out var rest) > 0)
                     {
-                        SendGift(it.Key, c, item.Price, ud,isRealGift:false);
+                        _giftMgr.ApplyGift(item.Id,ud, c);
                         InitCtx.PrintGameMsg($"{ud.NameColored}使用了{c}个{it.Key}，剩余{rest}个");
                     }
                     else
@@ -251,164 +248,6 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 //GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(ud.Group,(int)count * squad.price);
             }
             //SquadData.Recycle(squad);
-        }
-        private (int, int) SendGift(string giftName, int giftCount,int battery, UserData u,double transHonorfactor = 0.5,bool isRealGift = true)
-        {
-            /*int c = giftCount;
-            int t = 0;
-            int id = -1;
-            ushort addedAttr = MergeByte(1, 1);
-            ushort addedAttrForGroup = MergeByte(1, 1);
-            List<(int, int)> Squad = ObjPoolMgr.Instance.Get<List<(int, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
-            switch (giftName)
-            {
-                case "辣条": c *= 15; transHonorfactor = -0.01; break;
-                case "人气票": c *= 60; transHonorfactor = -0.01; break;
-                case "PK票": c *= 20; transHonorfactor = -0.01; break;
-                case "小花花": c *= 30; transHonorfactor = -0.01; break;
-                // case "打call": c *= 110; break;
-                case "牛哇":
-                case "牛哇牛哇": id = 110001; t = 1; c *= 3; break;
-                case "干杯": id = 110005; t = 1; c *= 68; break;
-                case "棒棒糖": id = 110003; t = 1; c *= 5; addedAttr = MergeByte(2, 3); break;
-                case "这个好诶": id = 110004; t = 1; c *= 16; break;
-                case "小蛋糕": id = 110016; t = 1; c *= 7; break;
-                //case "小蝴蝶": id = 105; t = 1; c *= 8; break;
-                case "情书":id = 110007; t = 1;c *= 12; break;
-                case "告白花束": Squad.Add((110011, 120)); Squad.Add((200050, 100)); Squad.Add((110007, 36)); t = 3; break;
-                case "水晶之恋": id = 110011; t = 1; c *= 21; break;
-                case "星河入梦": Squad.Add((300108, 100)); Squad.Add((300109, 50)); Squad.Add((300110, 100));
-                    Squad.Add((100100, 100)); t = 3;
-                    addedAttrForGroup = addedAttr = MergeByte(3, 2); break;
-                case "星愿水晶球": id = 110002; 
-                    //if(Aoe4DataConfig.Get(52,2,u.Group) == null)
-                    //    Squad.Add((100104, 45));
-                    //else
-                    //    Squad.Add((200052, 100));
-                    //Squad.Add((200050, 100)); Squad.Add((300049, 100)); Squad.Add((200053, 100)); t = 3;
-                    //addedAttr = global::InteractionGame.Utils.MergeByte(20, 100);
-                    //addedAttrForGroup = global::InteractionGame.Utils.MergeByte(6, 40);
-                    break;
-                case "花式夸夸": id = 110012; t = 1; c *= 350;addedAttr = MergeByte(3, 5);break;
-                case "打call":
-                    {
-                        if(u.HpMultiple + c > 255)
-                        {
-                            var sub = u.HpMultiple + c - 255;
-                            DB.DBMgr.Instance.AddGiftItem(u.Id,giftName, sub);
-                            c -= sub;
-                        }
-                        t = -1;
-                        if (c > 0)
-                        {
-                            var v = u.AddHpMultiple(1 * c);
-                            InitCtx.PrintGameMsg($"{u.NameColored}后续部队增加{v * 10}%血量");
-                        }
-                        break;
-                    }
-                case "小蝴蝶":
-                    {
-                        if (u.DamageMultiple + c > 255)
-                        {
-                            var sub = u.DamageMultiple + c - 255;
-                            DB.DBMgr.Instance.AddGiftItem(u.Id, giftName, sub);
-                            c -= sub;
-                        }
-                        t = -1;
-                        if (c > 0)
-                        {
-                            var v = u.AddDamageMultiple(1 * c);
-                            InitCtx.PrintGameMsg($"{u.NameColored}后续部队增加{v * 10}%伤害");
-                        }
-                        break;
-                    }
-                case "为你打call":
-                    {
-                        int count = c;
-                        id = 100098; t = 1; c *= 160;
-                        if (isRealGift)
-                        {
-                            var r = DB.DBMgr.Instance.AddLimitedItemEx(u.Id, Aoe4DataConfig.JianZhang, 33, 9999, TimeSpan.FromDays(1 * count));
-                            if (r > 0)
-                                InitCtx.PrintGameMsg($"{u.NameColored}获得{1 * count}天舰长3倍体验卡,下局生效");
-                            AddGift(u, Aoe4DataConfig.NiuWa, 30 * count);
-                        }
-                        break;
-                    }
-                case "泡泡机":
-                    {
-                        AddGift(u, Aoe4DataConfig.XiaoFuDie, 9 * c);
-                        transHonorfactor = -1.0f;
-                        t = -1;
-                        break;
-                    }
-                default:
-                    if (transHonorfactor < 0.0)
-                        return (0,0);
-                    transHonorfactor = 1.0f;
-                    //c *= (battery * 20);
-                    t = -1;
-                    break;
-            }
-            int upLevelGold = 0; ;
-            int giveHonor = 0;
-            int giveHonorMult = global::InteractionGame.Utils.GetNewYearActivity() > 0 ? 2 : 1;
-            if (transHonorfactor > 0.0f && battery > 0)
-            {
-                if (t > 0)
-                {
-                    upLevelGold = (int)(battery * giftCount * _config.HonorGoldFactor);
-                    giveHonor = 0;// (int)Math.Ceiling(transHonorfactor * battery * giftCount * giveHonorMult);
-                }
-                else {
-                    //GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(u.Group, (int)(battery * giftCount * Aoe4DataConfig.HonorGoldFactor));
-                    var v = (long)Math.Ceiling(transHonorfactor * battery * giftCount * giveHonorMult);
-                    AddHonor(u, v);
-                }
-            }
-            Action spawnOneSquad = () =>
-            {
-                var sd = Aoe4DataConfig.GetSquadBySid(id,u.Group);
-                InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
-                SendSpawnSquadQueue(u, id, c, sd,battery,giftName,giftCount,giveHonor:giveHonor,upLevelgold:upLevelGold,attribute: addedAttr,priority:10);
-            };
-            if(t > 0 && !Aoe4DataConfig.CanSpawnSquad(u.Id,Aoe4DataConfig.SpawnSquadType.Gift))
-            {
-                AddGift(u, giftName, giftCount);
-                goto End;
-            }
-            switch (t)
-            {
-                case 0:
-                    InitCtx.PrintGameMsg($"{u.NameColored}获得{c}个金矿");
-                    InitCtx.GetResourceMgr().AddResource(u.Id, c);
-                    break;
-                case 1:
-                    {
-                        spawnOneSquad();
-                        break;
-                    }
-                case 3:
-                    {
-                        if (Squad.Count > 0)
-                        {
-                            SquadGroup squad = null;
-                            SpawnManySquadQueue(u.Id, squad = SquadGroup.FromData(Squad, u.Group).SetAddedAttr(addedAttrForGroup), c, battery, giftName,
-                                giftCount, giveHonor: giveHonor, upLevelgold: upLevelGold,priority:10);
-                            InitCtx.PrintGameMsg($"{u.NameColored}出了{giftName}*{c}");
-                        }
-                        if (id >= 0)
-                        {
-                            var sd = Aoe4DataConfig.GetSquadBySid(id, u.Group);
-                            InitCtx.PrintGameMsg($"{u.NameColored}出了{c}个{sd.Name}");
-                            SendSpawnSquadQueue(u, id, c, sd, 0, null, 0, giveHonor: 0, upLevelgold: 0, attribute: addedAttr, priority: 10);
-                        }
-                        break;
-                    }
-            }
-            End:
-            ObjPoolMgr.Instance.Get<List<(int,int)>>().Return(Squad);*/
-            return (0, 0);
         }
 
         private void AddHonor(UserData u, long v,bool hasAddition = true)

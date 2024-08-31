@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using BililiveDebugPlugin.DB.Model2;
-using BililiveDebugPlugin.InteractionGame.Data;
 using Utils;
 using UserData = InteractionGame.UserData;
 
 namespace BililiveDebugPlugin.DB
 {
-    using SettlementData = UserData;
     public partial class DBMgr2 : Singleton<DBMgr2>
     {
         private IFreeSql m_fsql;

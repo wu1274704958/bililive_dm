@@ -13,17 +13,18 @@ namespace InteractionGame.plugs.bar
     public class SlotData
     {
         public int Slot;
-        public SquadData 
+        public SquadData Squad;
     }
-    public class SyncGameStartConfigData
+    public class SyncSquadConfigData
     {
-        
+        public List<SlotData> Slots = new List<SlotData>();
     }
     class BarSquadMgr : IPlug<EGameAction>,ISquadMgr
     {
         private ConcurrentDictionary<int,Pair<List<SquadData>,int>> SlotDict = new ConcurrentDictionary<int, Pair<List<SquadData>,int>>();
         private ConcurrentDictionary<int,SquadData> SlotMap = new ConcurrentDictionary<int, SquadData>();
         private Random random;
+        private IContext _context;
         public bool CanSpawnSquad(string uid, SpawnSquadType type)
         {
             return true;
@@ -45,7 +46,7 @@ namespace InteractionGame.plugs.bar
         {
             switch (m)
             {
-                case EGameAction.GameStart:
+                case EGameAction.GamePreStart:
                     RandomSlot();
                     SendSlotToOverlay();
                     break;
@@ -57,7 +58,17 @@ namespace InteractionGame.plugs.bar
 
         private void SendSlotToOverlay()
         {
-
+            var data = new SyncSquadConfigData();
+            foreach(var it in  SlotMap)
+            {
+                data.Slots.Add(new SlotData
+                {
+                    Slot = it.Key,
+                    Squad = it.Value
+                });
+            }
+            data.Slots.Sort((a,b) => b.Slot - a.Slot);
+            _context.SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, data);
         }
 
         private void RandomSlot()
@@ -87,7 +98,14 @@ namespace InteractionGame.plugs.bar
         public override void Init()
         {
             base.Init();
+            Locator.Instance.Deposit<ISquadMgr>(this);
             LoadSquad();
+        }
+
+        public override void Start()
+        {
+            base.Start();
+            _context = Locator.Instance.Get<IContext>();
         }
 
         private void LoadSquad()

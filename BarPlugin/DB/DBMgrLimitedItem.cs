@@ -1,10 +1,7 @@
 ﻿using BililiveDebugPlugin.DB.Model;
-using BililiveDebugPlugin.InteractionGame.Data;
+using InteractionGame.plugs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Utils;
 using UserData = InteractionGame.UserData;
 
@@ -53,9 +50,9 @@ namespace BililiveDebugPlugin.DB
         public int AddGiftItem(SettlementData data, string name, int num)
         {
             int ret = 0;
-            if (!Aoe4DataConfig.ItemDatas.TryGetValue(name, out var item))
+            if (!Locator.Instance.Get<IGiftMgr>().GetItem(name, out var item))
                 return 0;
-            var newItem = ItemData.Create(item, num, data.Id);
+            var newItem = ItemData.Create(item,num,data.Id);
             var d = GetUserOrCreate(data.Id, data.Name, data.Icon, out var isNew);
             if (isNew)
             {
@@ -76,7 +73,7 @@ namespace BililiveDebugPlugin.DB
         public int AddGiftItem(string id, string name, int num)
         {
             int ret = 0;
-            if (!Aoe4DataConfig.ItemDatas.TryGetValue(name, out var item))
+            if (!Locator.Instance.Get<IGiftMgr>().GetItem(name, out var item))
                 return 0;
 
 

@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using BililiveDebugPlugin.InteractionGame.Data;
-using conf.Squad;
 using InteractionGame;
 using InteractionGame.Context;
 using InteractionGame.plugs.config;
-using ProtoBuf;
 using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.plugs

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using BililiveDebugPlugin.DB.Model;
-using BililiveDebugPlugin.InteractionGame.Data;
 using Utils;
 using UserData = InteractionGame.UserData;
 

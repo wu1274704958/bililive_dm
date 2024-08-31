@@ -1,7 +1,6 @@
 ﻿using InteractionGame;
 using System;
 using System.Collections.Concurrent;
-using BililiveDebugPlugin.InteractionGame.Data;
 using Utils;
 using InteractionGame.Resource;
 using InteractionGame.plugs.config;

@@ -10,14 +10,10 @@ using InteractionGame;
 using Utils;
 using SettlementData = InteractionGame.UserData;
 
-namespace BililiveDebugPlugin.InteractionGame.Data
+namespace BililiveDebugPlugin.InteractionGame
 {
     public class Aoe4DataConfig
     {
-        public static readonly ConcurrentDictionary<int, SquadData> RandomSquad = new ConcurrentDictionary<int, SquadData>();
-
-
-
         public static readonly string NiuWa = "牛哇牛哇";
         public static readonly string GanBao = "干杯";
         public static readonly string BbTang = "棒棒糖";
@@ -42,37 +38,5 @@ namespace BililiveDebugPlugin.InteractionGame.Data
         public static readonly string GoDuck = "冲鸭";
         public static readonly string DaCallForYou = "为你打call";
         public static readonly string MovieTicket = "电影票";
-
-        public static readonly Dictionary<string, ItemData> ItemDatas = new Dictionary<string, ItemData>()
-        {
-            {NiuWa,         ItemData.Create(NiuWa         ,EItemType.Gift,1) },
-            {GanBao  ,      ItemData.Create(GanBao        ,EItemType.Gift,299) },
-            {BbTang ,       ItemData.Create(BbTang         ,EItemType.Gift,2) },
-            {ZheGe    ,     ItemData.Create(ZheGe          ,EItemType.Gift,10) },
-            {XiaoCake ,     ItemData.Create(XiaoCake      ,EItemType.Gift,15) },
-            {XiaoFuDie,     ItemData.Create(XiaoFuDie     ,EItemType.Gift,6) },
-            {QingShu  ,     ItemData.Create(QingShu        ,EItemType.Gift,52) },
-            {Gaobai   ,     ItemData.Create(Gaobai         ,EItemType.Gift,220) },
-            {ShuiJing ,     ItemData.Create(ShuiJing       ,EItemType.Gift,20) },
-            {Xinghe ,       ItemData.Create(Xinghe           ,EItemType.Gift,199) },
-            {PPJ ,           ItemData.Create(PPJ              ,EItemType.Gift,50) },
-            //{FriendShip ,    ItemData.Create(FriendShip       ,EItemType.Gift,52) },
-            {DaCall,        ItemData.Create(DaCall          ,EItemType.Gift,5)     },
-            {KuaKua ,        ItemData.Create(KuaKua         ,EItemType.Gift,330)  },
-            {ShuiJingBall , ItemData.Create(ShuiJingBall    ,EItemType.Gift,1000)  },
-            {SignTicket ,   ItemData.Create(SignTicket      ,EItemType.Ticket,200)  },
-            {DaCallForYou , ItemData.Create(DaCallForYou ,  EItemType.Gift,99)  },
-            {MovieTicket ,  ItemData.Create(MovieTicket ,   EItemType.Gift,20)  },
-            //{ GoDuck , ItemData.Create(GoDuck               ,EItemType.Gift,99) },
-        };
-
-        
-
-        
-
-
-
-       
-
     }
 }

@@ -6,7 +6,6 @@ using InteractionGame;
 using UserData = InteractionGame.UserData;
 using ProtoBuf;
 using Utils;
-using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame.Context;
 using InteractionGame.plugs.config;
 using BililiveDebugPlugin.InteractionGame.mode;

@@ -16,10 +16,7 @@ namespace BililiveDebugPlugin.DB.Model
     [Flags]
     public enum EItemType : uint
     {
-        None = 0,
-        Gift = 1,
-        Ticket = 2,
-        LimitedTime = 4,
+        None = 0, Gift = 1, Ticket = 2, LimitedTime = 4, SpecialGift = 8, LimitedMonth = 16,
     }
     [ProtoBuf.ProtoContract]
     public class UserData
@@ -75,11 +72,11 @@ namespace BililiveDebugPlugin.DB.Model
         {
             return new ItemData(){ Name = name, Type = type, Price = price, Ext = ext, Count = count , OwnerId = ownerId };
         }
-        public static ItemData Create(ItemData data,int count,string ownerId)
+        public static ItemData Create(conf.Gift.GiftItem data,int count,string ownerId)
         {
-            return new ItemData(){ Name = data.Name, Type = data.Type, Price = data.Price, Ext = data.Ext, Count = count , OwnerId = ownerId };
+            return new ItemData(){ Name = data.Id, Type = (EItemType)data.ItemType, Price = data.Price, Ext = data.Ext, Count = count , OwnerId = ownerId };
         }
-        
+
         public override string ToString()
         {
             return $"Id = {Id} OwnerId = {OwnerId} Name = {Name} Count = {Count} Type = {Type} Price = {Price} Ext = {Ext}\n";

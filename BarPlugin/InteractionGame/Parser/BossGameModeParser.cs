@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Interop;
 using BilibiliDM_PluginFramework;
-using BililiveDebugPlugin.InteractionGame.Data;
+
 using BililiveDebugPlugin.InteractionGame.mode;
 using BililiveDebugPlugin.InteractionGame.plugs;
 using BililiveDebugPlugin.InteractionGameUtils;

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Windows;
-using BililiveDebugPlugin.InteractionGame;
-using BililiveDebugPlugin.InteractionGame.Data;
 using BililiveDebugPlugin.InteractionGame.Parser;
 using conf.Squad;
 using InteractionGame;

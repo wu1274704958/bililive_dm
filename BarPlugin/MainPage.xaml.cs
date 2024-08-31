@@ -2,18 +2,16 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
-using BililiveDebugPlugin.InteractionGame.Data;
 using System.Text.RegularExpressions;
 using BilibiliDM_PluginFramework;
 using conf;
 using Utils;
-using BililiveDebugPlugin.InteractionGame.plugs;
 using UserData = BililiveDebugPlugin.DB.Model.UserData;
 using conf.Squad;
 using BililiveDebugPlugin.InteractionGameUtils;
-using BililiveDebugPlugin.InteractionGame.Settlement;
-using BililiveDebugPlugin.InteractionGame;
 using InteractionGame.Context;
+using BililiveDebugPlugin.InteractionGame;
+using InteractionGame.plugs;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -187,7 +185,7 @@ namespace BililiveDebugPlugin
                 if (m.CommentText[0] == '给')
                 {
                     m.GiftName = m.CommentText.Substring(1);
-                    if (Aoe4DataConfig.ItemDatas.TryGetValue(m.GiftName, out var it))
+                    if (Locator.Instance.Get<IGiftMgr>().GetItem(m.GiftName, out var it))
                     {
                         m.GiftPrice = it.Price * 100;
                         m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GiftSend;

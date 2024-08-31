@@ -67,6 +67,7 @@
     <Compile Include="InteractionGame\conf\Squad\SettingMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataMgr.cs" />
+    <Compile Include="InteractionGame\conf\Technology\TechnologyDataMgr.cs" />
     <Compile Include="InteractionGame\Context\BarContext.cs" />
     <Compile Include="InteractionGame\Context\BaseContext.cs" />
     <Compile Include="InteractionGame\Context\IContext.cs" />
@@ -87,21 +88,22 @@
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
-    <Compile Include="InteractionGame\plugs\BarSquadMgr.cs" />
+    <Compile Include="InteractionGame\plugs\bar\BarSquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarGameState.cs" />
     <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\bar\GameCommPlug.cs" />
+    <Compile Include="InteractionGame\plugs\bar\GiftMgr.cs" />
     <Compile Include="InteractionGame\plugs\bar\OverlayCommPlug.cs" />
     <Compile Include="InteractionGame\plugs\config\IConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
+    <Compile Include="InteractionGame\plugs\IGiftMgr.cs" />
     <Compile Include="InteractionGame\plugs\ISquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />
     <Compile Include="InteractionGame\plugs\SquadCapacityUIPlug.cs" />
     <Compile Include="InteractionGame\plugs\SyncGameConfig.cs" />
     <Compile Include="InteractionGame\Resource\Aoe4BaoBingResMgr.cs" />
-    <Compile Include="InteractionGame\Resource\Aoe4ResMgr.cs" />
     <Compile Include="InteractionGame\Resource\IResourceMgr.cs" />
     <Compile Include="InteractionGame\Settlement\BarSettlement.cs" />
     <Compile Include="InteractionGame\Settlement\ISettlement.cs" />
@@ -152,7 +154,9 @@
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="excel\Gift.xlsx" />
     <None Include="excel\Squad.xlsx" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

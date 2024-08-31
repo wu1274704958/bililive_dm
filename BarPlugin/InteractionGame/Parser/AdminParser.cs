@@ -1,7 +1,7 @@
 ﻿using System;
 using BilibiliDM_PluginFramework;
 using BililiveDebugPlugin.DB.Model;
-using BililiveDebugPlugin.InteractionGame.Data;
+
 using InteractionGame;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser

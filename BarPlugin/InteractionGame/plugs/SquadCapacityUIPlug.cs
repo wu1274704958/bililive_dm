@@ -1,5 +1,4 @@
-﻿using BililiveDebugPlugin.InteractionGame.Data;
-using InteractionGame;
+﻿using InteractionGame;
 using InteractionGame.Context;
 using InteractionGame.plugs.config;
 using Utils;

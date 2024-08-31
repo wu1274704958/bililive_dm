@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Drawing.Design;
 using System.Text;
 using System.Windows.Documents;
-using BililiveDebugPlugin.InteractionGame.Data;
+
 using BililiveDebugPlugin.InteractionGame.mode;
 using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame;

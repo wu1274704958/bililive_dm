@@ -1,5 +1,4 @@
 ﻿using BililiveDebugPlugin.DB;
-using BililiveDebugPlugin.InteractionGame.Data;
 using InteractionGame;
 using InteractionGame.Context;
 using InteractionGame.plugs.config;
@@ -10,7 +9,6 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 {
     public class SelfSaleGuardPlug : IPlug<EGameAction>, IPlayerPreJoinObserver
     {
-        public static readonly string[] GuardLevelName = new string[]{ "","",Aoe4DataConfig.TiDu,Aoe4DataConfig.JianZhang };
         private IConstConfig _config;
         public override void Start()
         {

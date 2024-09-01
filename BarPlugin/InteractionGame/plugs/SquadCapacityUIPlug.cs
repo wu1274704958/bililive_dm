@@ -20,24 +20,19 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public override void Tick()
         {
-            var gst = Locator.Instance.Get<IGameState>();
-            if (gst == null) return;
-            for (int i = 0;i < gst.GroupCount;++i)
-            {
-                var c = gst.GetSquadCount(i);
-                SquadCountChanged(i, 0, c);
-            }
+            
         }
 
         public override void Init()
         {
             base.Init();
-            //Locator.Instance.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>().AddObserver(this);
+            
         }
 
         public override void Start()
         {
             base.Start();
+            Locator.Instance.Get<IGameState>().AddObserver(this);
             Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged, new GroupSquadCapacityUIData() { Group = -1, Count = Locator.Instance.Get<IConstConfig>().SquadCountLimit });
         }
 

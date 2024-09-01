@@ -265,7 +265,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(_upLevelgold > 0)
             {
                 var v = Math.Ceiling(res * _upLevelgold * GetPercentageScale());
-                Locator.Instance.Get<IContext>().GetMsgParser().GetSubMsgParse<GroupUpLevel>().NotifyDepleteGold(user.Group, (int)v);
+                Locator.Instance.Get<IContext>().GetMsgParser().GetSubMsgParse<GroupUpLevel>()?.NotifyDepleteGold(user.Group, (int)v);
             }
         }
 

@@ -17,6 +17,15 @@ namespace InteractionGame.plugs.bar
             this.args = args;
         }
     }
+    public class OverlayBaseMsgNoArgs
+    {
+        public int cmd;
+
+        public OverlayBaseMsgNoArgs(int cmd)
+        {
+            this.cmd = cmd;
+        }
+    }
     public class OverlayCommPlug : IPlug<EGameAction>
     {
         private LocalMemComm comm;
@@ -52,7 +61,12 @@ namespace InteractionGame.plugs.bar
 
         public void SendMsgToOverlay<T>(short id, T msg)
         {
-            string jsonString = JsonConvert.SerializeObject(new OverlayBaseMsg<T>(id,msg), Formatting.Indented);
+            string jsonString = null;
+            if(typeof(T) == typeof(NoArgs))
+                jsonString = JsonConvert.SerializeObject(new OverlayBaseMsgNoArgs(id), Formatting.None);
+            else
+                jsonString = JsonConvert.SerializeObject(new OverlayBaseMsg<T>(id, msg), Formatting.None);
+            
             if(jsonString != null && jsonString.Length > 0) {
                 comm.Send(jsonString);
             }

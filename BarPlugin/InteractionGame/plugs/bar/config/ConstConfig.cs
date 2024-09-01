@@ -122,12 +122,12 @@ namespace InteractionGame.plugs.bar.config
         {
             base.Init();
             Locator.Instance.Deposit<IConstConfig>(this);
+            InitData();
         }
 
         public override void Start()
         {
             base.Start();
-            InitData();
         }
 
         public override void Dispose()

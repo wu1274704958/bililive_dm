@@ -100,12 +100,17 @@ namespace InteractionGame.plugs.bar
             base.Init();
             Locator.Instance.Deposit<ISquadMgr>(this);
             LoadSquad();
+            
         }
 
         public override void Start()
         {
             base.Start();
             _context = Locator.Instance.Get<IContext>();
+
+            //test
+            RandomSlot();
+            SendSlotToOverlay();
         }
 
         private void LoadSquad()

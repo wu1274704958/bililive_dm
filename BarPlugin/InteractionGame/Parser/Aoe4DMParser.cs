@@ -53,7 +53,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             AddSubMsgParse(new AutoSpawnSquadSubMsgParser());
             AddSubMsgParse(new SignInSubMsgParser());
-            AddSubMsgParse(new GroupUpLevel());
+            //AddSubMsgParse(new GroupUpLevel());
             AddSubMsgParse(new AdminParser());
             AddSubMsgParse(new BossGameModeParser());
             base.Init(it);

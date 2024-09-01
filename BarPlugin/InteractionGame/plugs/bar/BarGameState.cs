@@ -97,6 +97,7 @@ namespace InteractionGame.plugs.bar
                 for(int i = 0;i < _groupCount;i++)
                 {
                     _squadCountDict.TryAdd(i, 0);
+                    NotifySquadCountChanged(i, 0);
                 }
             }
         }

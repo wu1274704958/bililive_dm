@@ -46,6 +46,7 @@ namespace InteractionGame.Context
         public static readonly string BPreStart = "preStart";
         public static readonly string BStart = "start";
         public static readonly string BEnd = "end";
+        public static readonly string BFinish = "finish";
         public static readonly string BUnitReward = "unitReward";
         public static readonly string BUnitDestroyed = "unitDestroyed";
 
@@ -59,7 +60,7 @@ namespace InteractionGame.Context
     {
         public string Msg;
     }
-    public class GameEndData
+    public class GameFinishData
     {
         public int winner;
     }
@@ -109,13 +110,20 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(-1, new BarGameState());
             m_PlugMgr.Add(-1, new BarSquadMgr());
             m_PlugMgr.Add(-1, new GiftMgr());
+            m_PlugMgr.Add(-1, new KillUnitRewardPlug());
 
             RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
             RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BStart, OnGameStart);
-            RegisterOnRecvGameMsg<GameEndData>(EGameMsg.BEnd, OnGameEnd);
+            RegisterOnRecvGameMsg<GameFinishData>(EGameMsg.BFinish, OnGameFinish);
+            RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BEnd, OnGameEnd);
 
             settlement = new BarSettlement<BarContext>();
             messageDispatcher.Init(this);
+        }
+
+        private void OnGameEnd(string arg1, object arg2)
+        { 
+            m_PlugMgr.Notify(EGameAction.GameStop);
         }
 
         private void OnGamePreStart(string arg1, object arg2)
@@ -129,14 +137,14 @@ namespace InteractionGame.Context
             m_PlugMgr.Notify(EGameAction.GameStart);
         }
 
-        private void OnGameEnd(string arg1, object arg2)
+        private void OnGameFinish(string arg1, object arg2)
         {
-            if(arg2 is GameEndData data)
+            
+            if(arg2 is GameFinishData data)
             {
                 SendMsgToGame<NoArgs>("restart", null);
                 gameState = EGameState.Ended;
-
-                DoSettlement(data.winner);
+                DoSettlement(data.winner,false);
             }
         }
 
@@ -144,7 +152,6 @@ namespace InteractionGame.Context
         {
             settlement.ShowSettlement(this, winner);
             messageDispatcher.Clear();
-            m_PlugMgr.Notify(EGameAction.GameStop);
             if (sleep) 
                 Thread.Sleep((int)Locator.Instance.Get<IConstConfig>().EndDelay);
         }

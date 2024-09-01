@@ -83,6 +83,7 @@
     <Compile Include="InteractionGame\Parsers.cs" />
     <Compile Include="InteractionGame\Parser\AdminParser.cs" />
     <Compile Include="InteractionGame\Parser\Aoe4DMParser.cs" />
+    <Compile Include="InteractionGame\Parser\AutoSpawnSquadSubMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\bar\PlayerMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\BossGameModeParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="InteractionGame\plugs\bar\config\ConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\bar\GameCommPlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\GiftMgr.cs" />
+    <Compile Include="InteractionGame\plugs\bar\KillUnitRewardPlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\OverlayCommPlug.cs" />
     <Compile Include="InteractionGame\plugs\config\IConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />

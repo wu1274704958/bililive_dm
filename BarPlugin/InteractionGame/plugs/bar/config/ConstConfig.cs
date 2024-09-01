@@ -114,18 +114,20 @@ namespace InteractionGame.plugs.bar.config
 
         public override void Notify(EGameAction m)
         {
-            switch(m)
-            {
-                case EGameAction.GameStart:
-                    InitData();
-                    break;
-            }
+            if(m == EGameAction.GameStop)
+                InitData();
         }
 
         public override void Init()
         {
             base.Init();
             Locator.Instance.Deposit<IConstConfig>(this);
+        }
+
+        public override void Start()
+        {
+            base.Start();
+            InitData();
         }
 
         public override void Dispose()

@@ -13,6 +13,7 @@ namespace InteractionGameUtils
         private DateTime _safeStartTime = DateTime.Now;
         public DateTime StartTime => _safeStartTime;
         private IConstConfig _config;
+        private IContext _context;
         public override void Init()
         {
             base.Init();
@@ -22,10 +23,11 @@ namespace InteractionGameUtils
         {
             base.Start();
             _config = Locator.Instance.Get<IConstConfig>();
+            _context = Locator.Instance.Get<IContext>();
         }
         public override void Tick()
         {
-            if(DateTime.Now - _startTime > _config.OneTimesGameTime)
+            if(_context.IsGameStart() == EGameState.Started && DateTime.Now - _startTime > _config.OneTimesGameTime)
             {
                 Locator.Instance.Get<IContext>().GetBridge().ForceFinish();
                 _startTime = DateTime.Now;

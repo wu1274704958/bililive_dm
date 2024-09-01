@@ -21,6 +21,16 @@ namespace InteractionGame.plugs.bar
             this.args = args;
         }
     }
+
+    public class GameBaseMsgNoArgs
+    {
+        public string cmd;
+
+        public GameBaseMsgNoArgs(string cmd)
+        {
+            this.cmd = cmd;
+        }
+    }
     public class GameCommPlug : IPlug<EGameAction>
     {
         private LocalMemComm comm;
@@ -114,7 +124,11 @@ namespace InteractionGame.plugs.bar
 
         public void SendMsgToGame<T>(string id, T msg)
         {
-            string jsonString = JsonConvert.SerializeObject(new GameBaseMsg<T>(id,msg), Formatting.None);
+            string jsonString = null;
+            if (typeof(T) == typeof(NoArgs))
+                jsonString = JsonConvert.SerializeObject(new GameBaseMsgNoArgs(id), Formatting.None);
+            else
+                jsonString = JsonConvert.SerializeObject(new GameBaseMsg<T>(id,msg), Formatting.None);
             if(jsonString != null && jsonString.Length > 0) {
                 comm.Send(jsonString);
             }

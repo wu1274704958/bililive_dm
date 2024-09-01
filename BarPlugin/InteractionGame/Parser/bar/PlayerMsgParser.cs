@@ -62,11 +62,13 @@ namespace InteractionGame.Parser.bar
                 {
                     InitCtx.PrintGameMsg($"{uName}请先发“j”，加入游戏");
                 }
+                return -1;
             }
             else
             {
                 g = GetGroupById(uid);
-                TryParseChangTarget(uid, con, uName, false);
+                if (TryParseChangTarget(uid, con, uName, false))
+                    return -1;
             }
 
             return g;

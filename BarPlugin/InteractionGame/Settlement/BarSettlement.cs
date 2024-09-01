@@ -115,20 +115,6 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             return rankList;
         }
 
-        private bool SingleGameScoreRankContain(List<SingleGameScoreData> rankList, string id, out int idx)
-        {
-            for(int i = 0;i < rankList.Count;++i)
-            {
-                if (rankList[i].id == id)
-                {
-                    idx = i;
-                    return true;
-                }
-            }
-            idx = -1;
-            return false;
-        }
-
         private List<DB.Model.UserData> ConveToSettlementSingleRankData(List<SingleGameScoreData> rankList)
         {
             var data = _tmpSingleGameScoreRank;
@@ -243,8 +229,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public long CalculatHonorSettlement(UserData user, bool win, bool isLeastGroup, int rank)
         {
             var config = Locator.Instance.Get<IConstConfig>();
-            var f = (win ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0)
-                 + (rank < 3 ? 0.0005 * (3 - rank) : 0.0);
+            var f = (win ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0);
             if (user.FansLevel > 0) f += (user.FansLevel / 1000);
             if (user.GuardLevel > 0) f += f * config.GetPlayerHonorAdditionForSettlement(user.GuardLevel);
             f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, win);

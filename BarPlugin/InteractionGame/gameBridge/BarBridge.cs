@@ -60,7 +60,7 @@ namespace InteractionGame.gameBridge
 
         public void ForceFinish()
         {
-            _context.SendMsgToGame<NoArgs>(EGameMsg.SSpawn, null);
+            _context.SendMsgToGame<NoArgs>(EGameMsg.SForceFinish, null);
         }
 
         public void Init(IContext it)

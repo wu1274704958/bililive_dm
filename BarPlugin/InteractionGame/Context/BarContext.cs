@@ -119,6 +119,7 @@ namespace InteractionGame.Context
 
             settlement = new BarSettlement<BarContext>();
             messageDispatcher.Init(this);
+            settlement.Init();
         }
 
         private void OnGameEnd(string arg1, object arg2)
@@ -178,6 +179,7 @@ namespace InteractionGame.Context
 
         public override void OnDestroy()
         {
+            settlement.Dispose();
             gameComm = null;
             overlayComm = null;
             dMPlugin.ReceivedDanmaku -= OnReceivedDanmaku;

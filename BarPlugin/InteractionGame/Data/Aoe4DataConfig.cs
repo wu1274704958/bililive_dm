@@ -38,5 +38,6 @@ namespace BililiveDebugPlugin.InteractionGame
         public static readonly string GoDuck = "冲鸭";
         public static readonly string DaCallForYou = "为你打call";
         public static readonly string MovieTicket = "电影票";
+        public static readonly string PopularityTicket = "人气票";
     }
 }

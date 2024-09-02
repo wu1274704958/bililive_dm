@@ -53,6 +53,8 @@ namespace InteractionGame.plugs.bar.config
         public int SquadCountLimit => _squadCountLimit;
         public int AutoSquadCountLimit => _autoSquadCountLimit;
 
+        public int WinGroupAddedScore => 500;
+
         public int GetGroupIdByName(string name)
         {
             if (GroupNameMap.TryGetValue(name, out var id)) return id;

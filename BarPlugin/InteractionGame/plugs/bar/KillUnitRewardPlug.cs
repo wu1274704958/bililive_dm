@@ -59,6 +59,17 @@ namespace InteractionGame.plugs.bar
             }
         }
 
+        public List<(string,int)> GetCurrentKillListSorted()
+        {
+            List<(string, int)> res = new List<(string, int)> ();
+            foreach(var it in KillUnitCountDict)
+            {
+                res.Add((it.Key, it.Value));
+            }
+            res.Sort((a,b) => b.Item2 - a.Item2);
+            return res;
+        }
+
         public override void Tick()
         {
             throw new NotImplementedException();

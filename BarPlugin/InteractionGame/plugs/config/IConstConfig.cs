@@ -32,5 +32,6 @@ namespace InteractionGame.plugs.config
         int OneTimesSpawnSquadCount { get; }
         int SquadCountLimit { get; }
         int AutoSquadCountLimit { get; }
+        int WinGroupAddedScore { get; }
     }
 }

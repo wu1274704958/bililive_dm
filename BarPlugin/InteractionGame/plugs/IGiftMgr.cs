@@ -1,4 +1,5 @@
-﻿using System;
+﻿using conf.Gift;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +15,6 @@ namespace InteractionGame.plugs
         bool ApplyGift(Dictionary<string,int> gifts, UserData user);
         bool GiveGift(Dictionary<string, int> gifts, UserData user);
         bool GetItem(string gift,out conf.Gift.GiftItem item);
+        void EnumerateGifts(Action<GiftItem> func);
     }
 }

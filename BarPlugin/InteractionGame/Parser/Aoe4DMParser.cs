@@ -52,10 +52,11 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public override void Init(IContext it)
         {
             AddSubMsgParse(new AutoSpawnSquadSubMsgParser());
-            AddSubMsgParse(new SignInSubMsgParser());
+            AddSubMsgParse(new SignInSubMsgParser(),false);
             //AddSubMsgParse(new GroupUpLevel());
-            AddSubMsgParse(new AdminParser());
+            AddSubMsgParse(new AdminParser(),false);
             AddSubMsgParse(new BossGameModeParser());
+            AddSubMsgParse(new PopularityTicketActivityParser(), false);
             base.Init(it);
             _config = Locator.Instance.Get<IConstConfig>();
             InitCtx.GetPlayerParser().AddObserver(this);

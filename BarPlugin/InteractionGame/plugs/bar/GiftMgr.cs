@@ -150,5 +150,13 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             return giftItemMgr.Dict.TryGetValue(gift, out item);
         }
+
+        public void EnumerateGifts(Action<GiftItem> func)
+        {
+            foreach (var item in giftItemMgr.Dict)
+            {
+                func.Invoke(item.Value);
+            }
+        }
     }
 }

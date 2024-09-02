@@ -6,5 +6,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
     {
         void ShowSettlement(IT it,int winGroup);
         long CalculatHonorSettlement(UserData user, bool win, bool isLeastGroup, int rank);
+        void Init();
+        void Dispose();
     }
 }

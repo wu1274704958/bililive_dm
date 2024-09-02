@@ -87,6 +87,7 @@
     <Compile Include="InteractionGame\Parser\bar\PlayerMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\BossGameModeParser.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
+    <Compile Include="InteractionGame\Parser\PopularityTicketActivityParser.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarSquadMgr.cs" />
@@ -115,12 +116,15 @@
     <Compile Include="InteractionGame\Utils\JsonParseAttribute.cs" />
     <Compile Include="InteractionGame\Utils\LargeTips.cs" />
     <Compile Include="InteractionGame\Utils\SpawnSquadQueue.cs" />
+    <Compile Include="InteractionGame\Utils\SysDBSortListDescending.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="Utils\Comm.cs" />
+    <Compile Include="Utils\IDataCanSort.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />
     <Compile Include="Utils\LocalMemComm.cs" />
     <Compile Include="Utils\Locator.cs" />
     <Compile Include="Utils\ObjectPool.cs" />
+    <Compile Include="Utils\SortedList.cs" />
     <Compile Include="Utils\TickTags.cs" />
     <Compile Include="Utils\TimeLinerInteger.cs" />
     <Compile Include="Utils\Utils.cs" />

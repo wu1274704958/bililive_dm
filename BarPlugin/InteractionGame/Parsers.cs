@@ -11,6 +11,7 @@ using BililiveDebugPlugin.InteractionGame.mode;
 using conf.Squad;
 using InteractionGame.plugs.config;
 using InteractionGame.plugs;
+using BililiveDebugPlugin.DB;
 
 namespace InteractionGame
 {
@@ -342,16 +343,21 @@ namespace InteractionGame
         protected ConcurrentDictionary<string,UserData> UserDataDict = new ConcurrentDictionary<string,UserData>();
         public IContext InitCtx { get;protected set; }
         protected List<ISubMsgParser> subMsgParsers = new List<ISubMsgParser>();
-        
+        protected List<ISubMsgParser> subMsgParsersNotTick = new List<ISubMsgParser>();
+
         public virtual void Init(IContext it)
         {
             InitCtx = it;
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.Init(this);
+            foreach (var subMsgParser in subMsgParsersNotTick)
+                subMsgParser.Init(this);
         }
         public virtual void Start()
         {
             foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.Start();
+            foreach (var subMsgParser in subMsgParsersNotTick)
                 subMsgParser.Start();
         }
 
@@ -359,10 +365,14 @@ namespace InteractionGame
         {
             foreach (var subMsgParser in subMsgParsers)
                 subMsgParser.OnStartGame();
+            foreach (var subMsgParser in subMsgParsersNotTick)
+                subMsgParser.OnStartGame();
         }
         public virtual void Stop()
         {
             foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.Stop();
+            foreach (var subMsgParser in subMsgParsersNotTick)
                 subMsgParser.Stop();
             InitCtx = null;
             UserDataDict.Clear();
@@ -378,6 +388,14 @@ namespace InteractionGame
                         ++n;
                 }
             }
+            lock (subMsgParsersNotTick)
+            {
+                foreach (var subMsgParser in subMsgParsersNotTick)
+                {
+                    if (subMsgParser.Parse(msgOrigin))
+                        ++n;
+                }
+            }
             return (n,0);
         }
         public abstract bool Demand(Msg msg, MsgType barType);
@@ -385,11 +403,11 @@ namespace InteractionGame
         public virtual void Clear()
         {
             UserDataDict.Clear();
-            lock (subMsgParsers)
-            {
-                foreach (var subMsgParser in subMsgParsers)
-                    subMsgParser.OnClear();
-            }
+
+            foreach (var subMsgParser in subMsgParsers)
+                subMsgParser.OnClear();
+            foreach (var subMsgParser in subMsgParsersNotTick)
+                subMsgParser.OnClear();
         }
         public List<UserData> GetSortedUserData()
         {
@@ -443,18 +461,36 @@ namespace InteractionGame
                     subMsgParser.OnTick(delat);
             }
         }
-        public void AddSubMsgParse(ISubMsgParser msgParser)
+        public void AddSubMsgParse(ISubMsgParser msgParser,bool needTick = true)
         {
-            lock (subMsgParsers)
+            if (needTick)
             {
-                subMsgParsers.Add(msgParser);
+                lock (subMsgParsers)
+                {
+                    subMsgParsers.Add(msgParser);
+                }
+            }
+            else
+            {
+                lock (subMsgParsersNotTick)
+                {
+                    subMsgParsersNotTick.Add(msgParser);
+                }
             }
         }
         public void RmSubMsgParse(ISubMsgParser msgParser)
         {
+            bool removed = false;
             lock (subMsgParsers)
             {
-                subMsgParsers.Remove(msgParser);
+                removed = subMsgParsers.Remove(msgParser);
+            }
+            if(!removed)
+            {
+                lock (subMsgParsersNotTick)
+                {
+                    removed = subMsgParsersNotTick.Remove(msgParser);
+                }
             }
         }
         public T GetSubMsgParse<T>()
@@ -465,6 +501,16 @@ namespace InteractionGame
                 foreach (var subMsgParser in subMsgParsers)
                 {
                     if(subMsgParser is T)
+                    {
+                        return (T)subMsgParser;
+                    }
+                }
+            }
+            lock (subMsgParsersNotTick)
+            {
+                foreach (var subMsgParser in subMsgParsersNotTick)
+                {
+                    if (subMsgParser is T)
                     {
                         return (T)subMsgParser;
                     }
@@ -512,6 +558,7 @@ namespace InteractionGame
         [ProtoMember(9)]
         public int RealGuardLevel { get; protected set; } = 0;
         public int FansLevel;
+        public int Rank;
         //public DateTime JoinTime;
 
 
@@ -523,7 +570,16 @@ namespace InteractionGame
             Group = group;
             SetGuardLevel(guardLvl);
             FansLevel = fansLevel;
+            Rank = TryGetRank();
             //JoinTime = DateTime.Now;
+        }
+
+        private int TryGetRank()
+        {
+            var user = DBMgr.Instance.GetUser(Id);
+            if(user != null)
+                return user.Rank;
+            return 0;
         }
 
         public void SetGuardLevel(int guardLvl)

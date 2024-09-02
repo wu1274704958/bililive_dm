@@ -48,6 +48,10 @@ namespace BililiveDebugPlugin.DB.Model
         public DateTime  SignTime { get;set;}
         [ProtoMember(11)]
         public DateTime  UpdateTime { get;set;}
+        [ProtoMember(12)]
+        public int Rank { get; set; }
+        [ProtoMember(13)]
+        public int Ext2 { get; set; }
 
         public override string ToString()
         {

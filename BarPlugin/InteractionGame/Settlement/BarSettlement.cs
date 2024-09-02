@@ -23,7 +23,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public int Rank;
         public long Score;
         public string GetId() => UserId;
-        public int GetSortVal() => (int)Score;
+        public long GetSortVal() => Score;
         public void Reset()
         {
             Name = Icon = null;

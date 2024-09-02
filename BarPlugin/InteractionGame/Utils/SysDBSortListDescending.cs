@@ -37,7 +37,7 @@ namespace BarPlugin.InteractionGame.Utils
 
         protected override int SortFunc(IDataCanSort a, IDataCanSort b)
         {
-            return b.GetSortVal() - a.GetSortVal();
+            return (int)(b.GetSortVal() - a.GetSortVal());
         }
         protected virtual DateTime GetExpiredTime()
         {

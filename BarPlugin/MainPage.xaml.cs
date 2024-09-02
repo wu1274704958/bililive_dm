@@ -12,6 +12,7 @@ using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame.Context;
 using BililiveDebugPlugin.InteractionGame;
 using InteractionGame.plugs;
+using InteractionGame.plugs.bar;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -157,6 +158,11 @@ namespace BililiveDebugPlugin
                     TransfarSys();
                     return;
                 }
+                if (TestIn.Text == "SendSquad")
+                {
+                    (Locator.Instance.Get<ISquadMgr>() as BarSquadMgr)?.TestSendSlot();
+                    return;
+                }
 
                 if (TestIn.Text == "Reload")
                 {
@@ -232,9 +238,11 @@ namespace BililiveDebugPlugin
             {
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
                 m.OpenID = i.ToString();
-                m.CommentText = "加塔";
+                m.CommentText = "j";
                 m.UserName = $"name_{i}";
                 m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
+                m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
+                m.CommentText = new Random().Next(0, 10).ToString();
                 m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
             }
             

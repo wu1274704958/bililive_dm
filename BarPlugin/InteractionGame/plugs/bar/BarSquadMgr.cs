@@ -107,10 +107,13 @@ namespace InteractionGame.plugs.bar
         {
             base.Start();
             _context = Locator.Instance.Get<IContext>();
+        }
 
-            //test
-            //RandomSlot();
-            //SendSlotToOverlay();
+        public void TestSendSlot()
+        {
+            if(SlotMap.Count == 0)
+                RandomSlot();
+            SendSlotToOverlay();
         }
 
         private void LoadSquad()

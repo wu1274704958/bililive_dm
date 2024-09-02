@@ -25,6 +25,9 @@ namespace InteractionGame.plugs.bar
         private ConcurrentDictionary<int,SquadData> SlotMap = new ConcurrentDictionary<int, SquadData>();
         private Random random;
         private IContext _context;
+
+        public int SlotCount => SlotMap.Count;
+
         public bool CanSpawnSquad(string uid, SpawnSquadType type)
         {
             return true;
@@ -118,13 +121,18 @@ namespace InteractionGame.plugs.bar
 
         private void LoadSquad()
         {
-            foreach(var it in SquadDataMgr.GetInstance().Dict)
+            foreach (var it in SquadDataMgr.GetInstance().Dict)
             {
-                var slot = it.Value.Slot;
-                if (!SlotDict.ContainsKey(slot))
-                    SlotDict[slot] = new Pair<List<SquadData>, int>( new List<SquadData>(),0 );
-                SlotDict[slot].first.Add(it.Value);
-                SlotDict[slot].second += it.Value.RandomProbability;
+                switch (it.Value.Type_e)
+                {
+                    case EType.Normal:
+                        var slot = it.Value.Slot;
+                        if (!SlotDict.ContainsKey(slot))
+                            SlotDict[slot] = new Pair<List<SquadData>, int>(new List<SquadData>(), 0);
+                        SlotDict[slot].first.Add(it.Value);
+                        SlotDict[slot].second += it.Value.RandomProbability;
+                        break;
+                }
             }
         }
 

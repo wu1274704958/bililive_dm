@@ -242,7 +242,7 @@ namespace BililiveDebugPlugin
                 m.UserName = $"name_{i}";
                 m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
                 m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
-                m.CommentText = new Random().Next(0, 10).ToString();
+                m.CommentText = new Random().Next(0, Locator.Instance.Get<ISquadMgr>().SlotCount).ToString();
                 m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
             }
             

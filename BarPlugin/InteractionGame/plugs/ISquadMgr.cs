@@ -22,5 +22,6 @@ namespace InteractionGame.plugs
         SquadData GetSquadById(int id);
         bool ValidSlot(int slot,UserData user);
         bool CanSpawnSquad(string uid, SpawnSquadType type);
+        int SlotCount { get; }
     }
 }

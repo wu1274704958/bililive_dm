@@ -16,13 +16,14 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
     class SettlementUser : IDataCanSort,IDataWithId<string, SettlementUser>
     {
-        public string UserId;
+        public string Id;
         public string Name;
         public string Icon;
         public int Group;
         public int Rank;
         public long Score;
-        public string GetId() => UserId;
+        public long Added;
+        public string GetId() => Id;
         public long GetSortVal() => Score;
         public void Reset()
         {
@@ -185,6 +186,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             {
                 var ud = GetSettlementUserByUser(item);
                 ud.Score = (long)item.Score;
+                ud.Added = item.Honor;
                 res.Add(ud);
             }
             return res;
@@ -195,6 +197,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         private SettlementUser GetSettlementUserByUser(UserData item)
         {
             var user = userPool.Get();
+            user.Id = item.Id;
             user.Name = item.Name;
             user.Icon = item.Icon;
             user.Group = item.Group;

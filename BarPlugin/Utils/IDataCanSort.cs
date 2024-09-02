@@ -8,6 +8,6 @@ namespace Utils
 {
     public interface IDataCanSort
     {
-        int SortVal { get; }
+        int GetSortVal();
     }
 }

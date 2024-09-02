@@ -199,7 +199,13 @@ namespace BililiveDebugPlugin.DB
                 return now > d.SignTime && (now.Day != d.SignTime.Day || now.Year != d.SignTime.Year);
             }
         }
-        
+
+        public SystemData GetSystemData(long id)
+        {
+            var r = m_fsql.Select<Model.SystemData>().Where((a) => a.Id == id).ToOne();
+            return r;
+        }
+
         public SystemData GetSystemDataOrCreate(long id,out bool isNew)
         {
             var r = m_fsql.Select<Model.SystemData>().Where((a) => a.Id == id).ToOne();

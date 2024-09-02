@@ -10,23 +10,42 @@ using InteractionGame.Context;
 using InteractionGame.plugs.config;
 using BililiveDebugPlugin.InteractionGame.mode;
 using InteractionGame.plugs.bar;
+using BarPlugin.InteractionGame.Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
-    class SettlementUser
+    class SettlementUser : IDataCanSort,IDataWithId<string, SettlementUser>
     {
+        public string UserId;
         public string Name;
         public string Icon;
         public int Group;
         public int Rank;
         public long Score;
-
+        public string GetId() => UserId;
+        public int GetSortVal() => (int)Score;
         public void Reset()
         {
             Name = Icon = null;
             Group = -1;
             Rank = 0;
             Score = 0;
+        }
+        public void SetValue(SettlementUser oth)
+        {
+            Name = oth.Name;
+            Icon = oth.Icon;
+            Group = oth.Group;
+            Rank = oth.Rank;
+            Score = oth.Score;
+        }
+        public void AddValue(SettlementUser oth)
+        {
+            Name = oth.Name;
+            Icon = oth.Icon;
+            Group = oth.Group;
+            Rank = oth.Rank;
+            Score += oth.Score;
         }
     }
     class RankMsg
@@ -58,14 +77,32 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             }
         }
         public static readonly int Max = 20;
-        private List<DB.Model.UserData> _tmpSingleGameScoreRank = new List<DB.Model.UserData>();
-        private List<SingleGameScoreData> _tmpOriginSingleGameScoreRank = new List<SingleGameScoreData>();
         private Dictionary<string, (long, int)> _tmpLLDict = new Dictionary<string, (long, int)>();
+
+        private SysDBSortListDescending<SettlementUser> _monthlyCumulativeScoreList = 
+            new SysDBSortListDescending<SettlementUser>(
+                ESysDataTy.MonthlyCumulativeScoreRank,
+                ESysDataTy.MonthlyCumulativeScoreRankExpiredTime,
+                1,Max);
+        private SysDBSortListDescending<SettlementUser> _monthlyCumulativeKillList =
+            new SysDBSortListDescending<SettlementUser>(
+                ESysDataTy.MonthlyCumulativeKillRank,
+                ESysDataTy.MonthlyCumulativeKillRankExpiredTime,
+                1,Max);
+        private SysDBSortListDescending<SettlementUser> _monthlySingleScoreRank =
+            new SysDBSortListDescending<SettlementUser>(
+                ESysDataTy.MonthlySingleScoreRank,
+                ESysDataTy.MonthlySingleScoreRankExpiredTime,
+                1, Max);
+        private SysDBSortListDescending<SettlementUser> _monthlySingleKillRank =
+            new SysDBSortListDescending<SettlementUser>(
+                ESysDataTy.MonthlySingleKillRank,
+                ESysDataTy.MonthlySingleKillRankExpiredTime,
+                1, Max);
+
         private IConstConfig _config;
         private IContext _context;
         private IDyMsgParser _msgParser;
-
-        private List<(string,int)> _tmpCurrentKillListSorted;
 
         public void ShowSettlement(IT it,int winGroup)
         {
@@ -73,129 +110,46 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             if(winGroup >= 0 && winGroup < Locator.Instance.Get<IGameState>().GroupCount)
                 it.GetMsgParser().AddWinScore(winGroup, _config.WinGroupAddedScore);
             var data = it.GetMsgParser().GetSortedUserData();
-            PreSettlement(it,data);
+            //PreSettlement(it,data);
             var leastGroupList = it.GetPlayerParser().GetLeastGroupList();
             DB.DBMgr.Instance.OnSettlement(data, winGroup,
                 (user,rank) => CalculatHonorSettlement(user, winGroup == user.Group, leastGroupList.Contains(user.Group), rank));
             //todo show settlement
-            AfterSettlement();
             SendSettlement( data, winGroup - 1);
-
-            
         }
 
-        private void AfterSettlement()
+        private void HandleDBSortList(SysDBSortListDescending<SettlementUser> list,List<SettlementUser> appendList,bool useAdd = true)
         {
-            _tmpSingleGameScoreRank = ConveToSettlementSingleRankData(_tmpOriginSingleGameScoreRank);
-        }
-
-        private void PreSettlement(IT it, List<UserData> data)
-        {
-            if(IsNewSeason(it))
+            list.Load();
+            if (appendList.Count > 0 &&
+                list.TestBeNecessaryAddAndReSort(appendList[0]))
             {
-                DB.DBMgr.Instance.ClearAllUserScore();
+                list.Append(appendList,useAdd);
+                list.Sort();
+                list.Save();
             }
-            _tmpOriginSingleGameScoreRank = RefreshSingleGameScoreRank(data);
         }
 
-        private List<SingleGameScoreData> RefreshSingleGameScoreRank(List<UserData> data)
-        {
-            var rankList = GetSingleGameScoreRank();
-            if (data.Count > 0)
-            {
-                var isChange = true;
-                if (rankList.Count >= Max && rankList[rankList.Count - 1].score > data[0].Score)
-                    isChange = false;
-                if (isChange)
-                {
-                    _tmpLLDict.Clear();
-                    for (int i = 0;i < rankList.Count;++i)
-                        _tmpLLDict.Add(rankList[i].id, (rankList[i].score,i));
-                    foreach (var d in data)
-                    {
-                        if (_config.IsTestId(d.Id))
-                            continue;
-                        if (_tmpLLDict.TryGetValue(d.Id, out var oldScore))
-                        {
-                            if(d.Score > oldScore.Item1)
-                                rankList[oldScore.Item2].score = (long)d.Score;
-                        }
-                        else
-                            rankList.Add(new SingleGameScoreData(d.Id, (long)d.Score));
-                    }
-                }
-                if (isChange)
-                {
-                    rankList.Sort((a, b) => b.score.CompareTo(a.score));
-                    while(rankList.Count > Max)
-                        rankList.RemoveAt(rankList.Count - 1);
-                    SaveSingleGameScoreRank(rankList);
-                }
-            }
-            return rankList;
-        }
-
-        private List<DB.Model.UserData> ConveToSettlementSingleRankData(List<SingleGameScoreData> rankList)
-        {
-            var data = _tmpSingleGameScoreRank;
-            data.Clear();
-            foreach (SingleGameScoreData s in rankList)
-            {
-                if (string.IsNullOrEmpty(s.id))
-                    continue;
-                var ud = DB.DBMgr.Instance.GetUser(s.id);
-                if (ud == null) continue;
-                ud.Honor = s.score;
-                data.Add(ud);
-            }
-            return data;
-        }
-
-        private void SaveSingleGameScoreRank(List<SingleGameScoreData> rankList)
-        {
-            DB.DBMgr.Instance.SetListForSys<SingleGameScoreData>((long)ESysDataTy.SingleScoreRank, rankList);
-        }
-
-        private List<SingleGameScoreData> GetSingleGameScoreRank()
-        {
-            var ls = DB.DBMgr.Instance.GetListForSys<SingleGameScoreData>((long)ESysDataTy.SingleScoreRank);
-            if(ls == null)
-                ls = new List<SingleGameScoreData>();
-            return ls;
-        }
-
-        private bool IsNewSeason(IT it)
-        {
-            var now = DateTime.Now;
-            var last = GetLastSavedSeasonTime();
-            if(now.Day == 1 && now.AddMonths(-3).Month == last.Month)
-            {
-                DB.DBMgr.Instance.SetSysValue((long)ESysDataTy.SeasonTime, new DateTime(now.Year,now.Month,1), out _);
-                it.Log($"Is new season {now}");   
-                return true;
-            }
-            return false;
-        }
-
-        private DateTime GetLastSavedSeasonTime()
-        {
-            var d = DB.DBMgr.Instance.GetSystemDataOrCreate((long)ESysDataTy.SeasonTime, out var isNew);
-            if(isNew)
-            {
-                var now = DateTime.Now;
-                d.DateTimeValue = new DateTime(now.Year, now.Month, 1);
-                DB.DBMgr.Instance.SetSysValue((long)ESysDataTy.SeasonTime, d.DateTimeValue, out _);
-            }
-            return d.DateTimeValue;
-        }
         private void SendSettlement( List<UserData> data,int win)
         {
+            var currentScoreRank = GetCurrentScoreRank(data);
+            var currentKillRank = GetCurrentKillRank();
+
+            HandleDBSortList(_monthlyCumulativeScoreList, currentScoreRank);
+            HandleDBSortList(_monthlyCumulativeKillList, currentKillRank);
+            HandleDBSortList(_monthlySingleScoreRank, currentScoreRank,false);
+            HandleDBSortList(_monthlySingleKillRank, currentKillRank,false);
+
             RankMsg rankMsg = new RankMsg()
             {
                 Title = win >= 0 ? $"{Locator.Instance.Get<IConstConfig>().GetGroupName(win + 1)}方获胜" : "平局",
                 WinGroup = win,
-                CurrentScoreRank = GetCurrentScoreRank(data),
-                CurrentKillRank = GetCurrentKillRank(),
+                CurrentScoreRank = currentScoreRank,
+                CurrentKillRank = currentKillRank,
+                MonthlyCumulativeScoreRank = _monthlyCumulativeScoreList.Datas,
+                MonthlyCumulativeKillRank = _monthlyCumulativeKillList.Datas,
+                MonthlySingleScoreRank = _monthlySingleScoreRank.Datas,
+                MonthlySingleKillRank = _monthlySingleKillRank.Datas,
             };
             Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.Settlement, rankMsg);
             RecycleSettlementMsg(rankMsg);
@@ -203,9 +157,9 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
         private List<SettlementUser> GetCurrentKillRank()
         {
-            _tmpCurrentKillListSorted = Locator.Instance.Get<KillUnitRewardPlug>().GetCurrentKillListSorted();
+            var tmpCurrentKillListSorted = Locator.Instance.Get<KillUnitRewardPlug>().GetCurrentKillListSorted();
             List<SettlementUser> res = new List<SettlementUser>();
-            foreach(var item in _tmpCurrentKillListSorted)
+            foreach(var item in tmpCurrentKillListSorted)
             {
                 var it = GetSettlementUserByUser(_msgParser.GetUserData(item.Item1));
                 it.Score = item.Item2;

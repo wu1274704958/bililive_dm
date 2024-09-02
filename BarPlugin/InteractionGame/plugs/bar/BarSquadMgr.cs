@@ -67,7 +67,7 @@ namespace InteractionGame.plugs.bar
                     Squad = it.Value
                 });
             }
-            data.Slots.Sort((a,b) => b.Slot - a.Slot);
+            data.Slots.Sort((a,b) => a.Slot - b.Slot);
             _context.SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, data);
         }
 
@@ -109,8 +109,8 @@ namespace InteractionGame.plugs.bar
             _context = Locator.Instance.Get<IContext>();
 
             //test
-            RandomSlot();
-            SendSlotToOverlay();
+            //RandomSlot();
+            //SendSlotToOverlay();
         }
 
         private void LoadSquad()

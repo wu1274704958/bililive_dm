@@ -120,11 +120,12 @@
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="Utils\Comm.cs" />
     <Compile Include="Utils\IDataCanSort.cs" />
+    <Compile Include="Utils\IDataWithId.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />
     <Compile Include="Utils\LocalMemComm.cs" />
     <Compile Include="Utils\Locator.cs" />
     <Compile Include="Utils\ObjectPool.cs" />
-    <Compile Include="Utils\SortedList.cs" />
+    <Compile Include="Utils\PersistentSortedList.cs" />
     <Compile Include="Utils\TickTags.cs" />
     <Compile Include="Utils\TimeLinerInteger.cs" />
     <Compile Include="Utils\Utils.cs" />

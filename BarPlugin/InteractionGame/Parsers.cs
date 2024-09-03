@@ -50,7 +50,6 @@ namespace InteractionGame
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
             _gameState = Locator.Instance.Get<IGameState>();
-            SetupGroupCount();
         }
 
         private void SetupGroupCount()
@@ -59,6 +58,11 @@ namespace InteractionGame
             {
                 GroupCount.TryAdd(i, 0);
             }
+        }
+
+        public virtual void OnStartGame()
+        {
+            SetupGroupCount();
         }
 
         public virtual void OnClear()

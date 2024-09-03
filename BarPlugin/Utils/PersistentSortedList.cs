@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Utils
 {
     public abstract class PersistentSortedList<T,IDT>
-        where T : IDataCanSort, IDataWithId<IDT,T>
+        where T : IDataCanSort, IDataWithId<IDT,T>, ICloneable
         where IDT : IEquatable<IDT>
     {
         private List<T> datas;
@@ -54,7 +54,7 @@ namespace Utils
                 if (j != null)
                 {
                     if(useAdd)
-                        j.AddValue(it);
+                        j.AddValue((T)it.Clone());
                     else
                         j.SetValue(it);
                 }

@@ -11,7 +11,7 @@ namespace InteractionGame.plugs.bar
 {
     public class KillUnitRewardData
     {
-        public string uid;
+        public string id;
         public int reward = 0;
         public int killCount = 0;
     }
@@ -47,7 +47,7 @@ namespace InteractionGame.plugs.bar
         {
             if(arg2 is KillUnitRewardData data)
             {
-                var user = _context.GetMsgParser().GetUserData(data.uid);
+                var user = _context.GetMsgParser().GetUserData(data.id);
                 if(user != null)
                 {
                     _context.GetResourceMgr().AddResource(user.Id, data.reward);

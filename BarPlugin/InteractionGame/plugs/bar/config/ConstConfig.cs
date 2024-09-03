@@ -18,7 +18,7 @@ namespace InteractionGame.plugs.bar.config
         public uint OverlayCommSize => 1024 * 1024 * 20;
         public uint GameCommSize => 1024 * 1024 * 10;
 
-        public uint EndDelay => 14000;
+        public uint EndDelay => 28000;
 
         public Dictionary<string, int> GroupNameMap { get; } = new Dictionary<string, int>
         {

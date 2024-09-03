@@ -10,7 +10,7 @@ using Utils;
 namespace BarPlugin.InteractionGame.Utils
 {
     public class SysDBSortListDescending<T> : PersistentSortedList<T,string>
-        where T : IDataCanSort, IDataWithId<string,T>    {
+        where T : IDataCanSort, IDataWithId<string, T>, ICloneable    {
         protected ESysDataTy _dataTy;
         protected ESysDataTy _dataExpireTime;
         protected int _durationMonth;

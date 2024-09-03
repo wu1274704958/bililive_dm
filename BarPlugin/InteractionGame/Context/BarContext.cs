@@ -125,6 +125,7 @@ namespace InteractionGame.Context
         private void OnGameEnd(string arg1, object arg2)
         { 
             m_PlugMgr.Notify(EGameAction.GameStop);
+            Thread.Sleep((int)Locator.Instance.Get<IConstConfig>().EndDelay);
         }
 
         private void OnGamePreStart(string arg1, object arg2)
@@ -136,6 +137,7 @@ namespace InteractionGame.Context
         {
             gameState = EGameState.Started;
             m_PlugMgr.Notify(EGameAction.GameStart);
+            messageDispatcher.OnStartGame();
         }
 
         private void OnGameFinish(string arg1, object arg2)

@@ -12,7 +12,7 @@ using Utils;
 
 namespace InteractionGame
 {
-    public class Utils
+    public class Utility
     {
         public static int CharToInt(char c)
         {

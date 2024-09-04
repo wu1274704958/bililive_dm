@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Utils;
 
-namespace BarPlugin.InteractionGame.Utils
+namespace InteractionGame.Utils
 {
     public class SysDBSortListDescending<T> : PersistentSortedList<T,string>
         where T : IDataCanSort, IDataWithId<string,T>    {

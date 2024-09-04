@@ -3,6 +3,7 @@ using conf.Gift;
 using conf.plugin;
 using InteractionGame;
 using InteractionGame.Context;
+using InteractionGame.Parser;
 using InteractionGame.plugs;
 using Newtonsoft.Json.Linq;
 using System;
@@ -35,18 +36,36 @@ namespace BarPlugin.InteractionGame.plugs.bar
 
         private bool AddHonor(UserData data, AnyArray array)
         {
-            var honor = 0;
+            int honor = 0;
 
             if(array.Count == 1 && array.TryGet<int>(0,out var v))
                 honor = v;
             if (array.Count == 2 && array.TryGet<int>(0, out var b) && array.TryGet<int>(1, out var e))
                 honor = _random.Next(b,e);
-
-            if(honor > 0)
+            if (TryGetMultiplyingPower(data, array, 3, out var multiplying))
+                honor = (int)(multiplying * honor);
+            if (honor > 0)
             {
                 _context.PrintGameMsg($"{data.NameColored}获得了{honor}功勋");
                 DBMgr.Instance.AddHonor(data.Id, honor);
                 return true;
+            }
+            return false;
+        }
+
+        private bool TryGetMultiplyingPower(UserData data, AnyArray array, int idx, out float multiplying)
+        {
+            multiplying = 1.0f;
+            if (data.RealGuardLevel <= 0)
+                return false;
+            if(array.Count > idx && array.TryGet<string>(idx,out var id))
+            {
+                if (Locator.Instance.Get<IGlobalConfig>().GetConfig<Dictionary<int, float>>(id, out var config) &&
+                    config.TryGetValue(data.RealGuardLevel, out var res))
+                {
+                    multiplying = res;
+                    return true;
+                }
             }
             return false;
         }
@@ -71,6 +90,8 @@ namespace BarPlugin.InteractionGame.plugs.bar
                 gold = v;
             if (args.Count == 2 && args.TryGet<int>(0, out var b) && args.TryGet<int>(1, out var e))
                 gold = _random.Next(b, e);
+            if (TryGetMultiplyingPower(user, args, 3, out var multiplying))
+                gold = (int)(multiplying * gold);
             if (gold > 0)
             {
                 _context.GetResourceMgr().AddResource(user.Id, gold);

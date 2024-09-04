@@ -13,6 +13,7 @@ namespace conf
             conf.Squad.SettingMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "Setting.dat")));
             conf.Reinforcements.ReinforcementsDataMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "ReinforcementsData.dat")));
             conf.Gift.GiftItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "GiftItem.dat")));
+            conf.CommonConfig.CommonConfigMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "CommonConfig.dat")));
             conf.Reinforcements.ReinforcementsDataMgr.GetInstance().OnLoaded();
         }
 

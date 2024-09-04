@@ -6,6 +6,7 @@ using BililiveDebugPlugin.InteractionGame.Resource;
 using BililiveDebugPlugin.InteractionGame.Settlement;
 using conf;
 using InteractionGame.gameBridge;
+using InteractionGame.Parser;
 using InteractionGame.Parser.bar;
 using InteractionGame.plugs.bar;
 using InteractionGame.plugs.bar.config;
@@ -87,11 +88,12 @@ namespace InteractionGame.Context
         public override void OnInit()
         {
             base.OnInit();
+
+            ConfigMgr.Init();
+            var _ = BililiveDebugPlugin.DB.DBMgr.Instance;
+            Locator.Instance.Deposit<IGlobalConfig>(new GlobalConfig());
             
             dMPlugin.ReceivedDanmaku += OnReceivedDanmaku;
-            
-            var _ = BililiveDebugPlugin.DB.DBMgr.Instance;
-            ConfigMgr.Init();
 
             messageDispatcher = new MessageDispatcherType();
             
@@ -186,6 +188,7 @@ namespace InteractionGame.Context
             overlayComm = null;
             dMPlugin.ReceivedDanmaku -= OnReceivedDanmaku;
             BililiveDebugPlugin.DB.DBMgr.Instance.Dispose();
+            Locator.Instance.Remove<IGlobalConfig>();
             base.OnDestroy();
         }
 

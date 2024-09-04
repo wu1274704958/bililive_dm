@@ -58,6 +58,7 @@
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4GameContext.cs" />
+    <Compile Include="InteractionGame\conf\CommonConfig\CommonConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\Gift\GiftItemMgr.cs" />
     <Compile Include="InteractionGame\conf\plugins\AnyArray.cs.cs" />
@@ -86,7 +87,9 @@
     <Compile Include="InteractionGame\Parser\AutoSpawnSquadSubMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\bar\PlayerMsgParser.cs" />
     <Compile Include="InteractionGame\Parser\BossGameModeParser.cs" />
+    <Compile Include="InteractionGame\Parser\GlobalConfig.cs" />
     <Compile Include="InteractionGame\Parser\GroupUpLevel.cs" />
+    <Compile Include="InteractionGame\Parser\IGlobalConfig.cs" />
     <Compile Include="InteractionGame\Parser\PopularityTicketActivityParser.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />

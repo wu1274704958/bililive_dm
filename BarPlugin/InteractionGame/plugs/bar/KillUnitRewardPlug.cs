@@ -12,7 +12,7 @@ namespace InteractionGame.plugs.bar
     public class KillUnitRewardData
     {
         public string id;
-        public int reward = 0;
+        public float reward = 0;
         public int killCount = 0;
     }
     public class KillUnitRewardPlug : IPlug<EGameAction>

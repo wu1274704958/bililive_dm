@@ -158,6 +158,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CoreCLR-NCalc">
+      <Version>3.1.253</Version>
+    </PackageReference>
     <PackageReference Include="FreeSql" Version="3.2.806" />
     <PackageReference Include="FreeSql.DbContext" Version="3.2.806" />
     <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.806" />

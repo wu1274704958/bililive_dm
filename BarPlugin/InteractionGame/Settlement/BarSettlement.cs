@@ -14,7 +14,7 @@ using InteractionGame.Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
-    class SettlementUser : IDataCanSort,IDataWithId<string, SettlementUser>
+    class SettlementUser : IDataCanSort,IDataWithId<string, SettlementUser>,ICloneable
     {
         public string Id;
         public string Name;
@@ -22,7 +22,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public int Group;
         public int Rank;
         public long Score;
-        public long Added;
+        public long Added = 0;
         public string GetId() => Id;
         public long GetSortVal() => Score;
         public void Reset()
@@ -47,6 +47,20 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             Group = oth.Group;
             Rank = oth.Rank;
             Score += oth.Score;
+        }
+
+        public object Clone()
+        {
+            return new SettlementUser
+            {
+                Id = Id,
+                Name = Name,
+                Icon = Icon,
+                Group = Group,
+                Rank = Rank,
+                Score = Score,
+                Added = Added,
+            };
         }
     }
     class RankMsg
@@ -116,7 +130,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             DB.DBMgr.Instance.OnSettlement(data, winGroup,
                 (user,rank) => CalculatHonorSettlement(user, winGroup == user.Group, leastGroupList.Contains(user.Group), rank));
             //todo show settlement
-            SendSettlement( data, winGroup - 1);
+            SendSettlement( data, winGroup);
         }
 
         private void HandleDBSortList(SysDBSortListDescending<SettlementUser> list,List<SettlementUser> appendList,bool useAdd = true)
@@ -127,6 +141,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             {
                 list.Append(appendList,useAdd);
                 list.Sort();
+                foreach (SettlementUser item in list.Datas)
+                    item.Added = 0;
                 list.Save();
             }
         }
@@ -173,10 +189,10 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         {
             RecycleSettlementUser(rankMsg.CurrentKillRank);
             RecycleSettlementUser(rankMsg.MonthlySingleKillRank);
-            RecycleSettlementUser(rankMsg.MonthlyCumulativeKillRank);
-            RecycleSettlementUser(rankMsg.CurrentScoreRank);
-            RecycleSettlementUser(rankMsg.MonthlySingleScoreRank);
-            RecycleSettlementUser(rankMsg.MonthlyCumulativeScoreRank);
+            //RecycleSettlementUser(rankMsg.MonthlyCumulativeKillRank);
+            //RecycleSettlementUser(rankMsg.CurrentScoreRank);
+            //RecycleSettlementUser(rankMsg.MonthlySingleScoreRank);
+            //RecycleSettlementUser(rankMsg.MonthlyCumulativeScoreRank);
         }
 
         private List<SettlementUser> GetCurrentScoreRank(List<UserData> data)
@@ -241,7 +257,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         }
 
 
-        private static long LoseSettlementHonorAdd = 3;
+        private static long LoseSettlementHonorAdd = 5;
         private static long WinSettlementHonorAdd = 10;
         private static double LoseSettlementHonorFactor = 0.0005;
         private static double WinSettlementHonorFactor = 0.0012;

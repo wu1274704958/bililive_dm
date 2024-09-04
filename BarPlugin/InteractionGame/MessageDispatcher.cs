@@ -64,6 +64,7 @@ namespace InteractionGame
         public void OnStartGame()
         {
             mp.OnStartGame();
+            pp.OnStartGame();
         }
 
         private void SetupGlobalKeyMapListener()

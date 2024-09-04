@@ -216,7 +216,7 @@ namespace InteractionGame.Parser
             {
                 if (!needAdd) squad.Reset();
                 squad.StringTag = str;
-                Utils.StringToDictAndForeach(str.Substring(0,1), (item) =>
+                Utility.StringToDictAndForeach(str.Substring(0,1), (item) =>
                 {
                     var u = m_Owner.InitCtx.GetMsgParser().GetUserData(uid);
                     var sd = _squadMgr.GetSquadBySlot(item.Key, u);

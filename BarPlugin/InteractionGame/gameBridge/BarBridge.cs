@@ -26,9 +26,25 @@ namespace InteractionGame.gameBridge
         public int Target = -1;
         public List<UnitData> SquadGroup = new List<UnitData>();
     }
+    class ChangeTowerData
+    {
+        public string id;
+        public string tower;
+    }
     public class BarBridge : IGameBridge
     {
         private IContext _context;
+
+        public void ChangeTower(UserData user, SquadData squad, object op = null)
+        {
+            var data = new ChangeTowerData
+            {
+                id = user.Id,
+                tower = squad.GetBlueprint(user.Group)
+            };
+            _context.SendMsgToGame<ChangeTowerData>(EGameMsg.SChangeTower, data);
+        }
+
         public int ExecSpawnGroup(UserData user, List<(SquadData, int)> group, int target = -1, double multiple = 1, object opt = null)
         {
             var data = new SpawnSquadData

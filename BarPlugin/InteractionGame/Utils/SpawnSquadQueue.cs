@@ -385,7 +385,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 fallback.PercentageScale = multiple;
                 fallback.SetPercentage(_Percentage); 
             }
-            _attribute = global::InteractionGame.Utils.AttrMult(_attribute, multiple);
+            _attribute = Utility.AttrMult(_attribute, multiple);
             return null;
         }
 
@@ -533,7 +533,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 _Percentage = _specialPercentage * _constSpecialPercentage + _normalPercentage * (1.0 - _constSpecialPercentage);
                 fallback.SetPercentage(_Percentage);
             }
-            _Squad.AddedAttr = global::InteractionGame.Utils.AttrMult(_Squad.AddedAttr, multiple);
+            _Squad.AddedAttr = Utility.AttrMult(_Squad.AddedAttr, multiple);
             return null;
         }
 

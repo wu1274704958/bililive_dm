@@ -164,7 +164,7 @@ namespace InteractionGame
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
                 InitCtx.GetResourceMgr().AddAutoResourceById(uid, Locator.Instance.Get<IConstConfig>().GetOnPlayerJoinGoldAddition(msgOrigin.msg.GuardLevel));
-                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utils.GetFansLevel(msgOrigin)), g);
+                OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utility.GetFansLevel(msgOrigin)), g);
             }
             return g;
         }
@@ -630,8 +630,8 @@ namespace InteractionGame
         }
         public long AppendSquadAttribute(ushort attr,byte configAddHp,byte configAddDamage)
         {
-            var oph = Utils.AddByte(Op1Heigh, configAddHp,16);
-            oph |= Utils.AddByte(Op1Heigh, configAddDamage, 24);
+            var oph = Utility.AddByte(Op1Heigh, configAddHp,16);
+            oph |= Utility.AddByte(Op1Heigh, configAddDamage, 24);
             return ((long)oph << 32) | (long)(Op1 | attr);
         }
     }
@@ -689,7 +689,7 @@ namespace InteractionGame
             squad.specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             var squadMgr = Locator.Instance.Get<ISquadMgr>();
             var user = Locator.Instance.Get<IContext>().GetMsgParser().GetUserData(uid);
-            Utils.StringToDictAndForeach(s, (item) =>
+            Utility.StringToDictAndForeach(s, (item) =>
             {
                 var sd = squadMgr.GetSquadBySlot(item.Key, user);
                 if (sd == null) return;

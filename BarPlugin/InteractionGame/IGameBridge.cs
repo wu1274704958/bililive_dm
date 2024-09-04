@@ -11,6 +11,7 @@ namespace InteractionGame
         void OnClear();
         void ExecSpawnSquad(UserData user, SquadData squad, int count, int target = -1, object opt = null);
         int ExecSpawnGroup(UserData user, List<(SquadData, int)> group, int target = -1, double multiple = 1, object opt = null);
+        void ChangeTower(UserData user, SquadData squad, object op = null);
         void ForceFinish();
     }
 }

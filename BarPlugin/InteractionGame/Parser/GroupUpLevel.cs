@@ -181,7 +181,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
         private (int,int,int) GetGiftMultiplier()
         {
-            if(global::InteractionGame.Utils.GetNewYearActivity() > 0)
+            if(Utility.GetNewYearActivity() > 0)
                 return (2,1,1);
             return (1,1,1);
         }

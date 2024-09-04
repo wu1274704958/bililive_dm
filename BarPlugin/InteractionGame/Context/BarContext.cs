@@ -53,7 +53,7 @@ namespace InteractionGame.Context
         public static readonly string SJoin = "join";
         public static readonly string SSpawn = "spawn";
         public static readonly string SForceFinish = "forceFinish";
-
+        public static readonly string SChangeTower = "changeTower";
     }
 
     public class EventCueData

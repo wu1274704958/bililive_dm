@@ -4,8 +4,10 @@ using conf.plugin;
 using InteractionGame;
 using InteractionGame.Context;
 using InteractionGame.plugs;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Windows.Documents;
 using Utils;
 
 namespace BarPlugin.InteractionGame.plugs.bar
@@ -16,32 +18,72 @@ namespace BarPlugin.InteractionGame.plugs.bar
         public enum EFuncId : int
         {
             AddGold = 1,
-            
+            ChangeTower = 2,
+            AddHonor = 3,
         }
         protected Dictionary<EFuncId, Func<UserData, AnyArray,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray, bool>>();
+        protected Random _random = new Random();
 
         public override void Init()
         {
             Locator.Instance.Deposit<IGiftMgr>(this);
             base.Init();
             AddApplyFunc(EFuncId.AddGold, AddGoldFunc);
+            AddApplyFunc(EFuncId.ChangeTower, ChangeTower);
+            AddApplyFunc(EFuncId.AddHonor, AddHonor);
         }
 
-        public override void Start()
+        private bool AddHonor(UserData data, AnyArray array)
         {
-            base.Start();
-            _context = Locator.Instance.Get<IContext>();
+            var honor = 0;
+
+            if(array.Count == 1 && array.TryGet<int>(0,out var v))
+                honor = v;
+            if (array.Count == 2 && array.TryGet<int>(0, out var b) && array.TryGet<int>(1, out var e))
+                honor = _random.Next(b,e);
+
+            if(honor > 0)
+            {
+                _context.PrintGameMsg($"{data.NameColored}获得了{honor}功勋");
+                DBMgr.Instance.AddHonor(data.Id, honor);
+                return true;
+            }
+            return false;
         }
 
+        private bool ChangeTower(UserData user, AnyArray args)
+        {
+            if (args.TryGet<int>(0, out var towerUnit))
+            {
+                var tower = Locator.Instance.Get<ISquadMgr>().GetSquadById(towerUnit);
+                if (tower == null)
+                    return false;
+                _context.PrintGameMsg($"{user.NameColored}更换了{tower.Name}");
+                _context.GetBridge().ChangeTower(user, tower);
+                return true;
+            }
+            return false;
+        }
         private bool AddGoldFunc(UserData user, AnyArray args)
         {
-            if(args.TryGet<int>(0,out var gold))
+            var gold = 0;
+            if (args.Count == 1 && args.TryGet<int>(0, out var v))
+                gold = v;
+            if (args.Count == 2 && args.TryGet<int>(0, out var b) && args.TryGet<int>(1, out var e))
+                gold = _random.Next(b, e);
+            if (gold > 0)
             {
                 _context.GetResourceMgr().AddResource(user.Id, gold);
                 _context.PrintGameMsg($"{user.NameColored}获得{gold}g");
                 return true;
             }
             return false;
+        }
+
+        public override void Start()
+        {
+            base.Start();
+            _context = Locator.Instance.Get<IContext>();
         }
 
         public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, bool> func)

@@ -32,11 +32,11 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public DanmakuModel OnPreJoin(DanmakuModel m)
         {
-            var id = global::InteractionGame.Utils.TryTransfarUserData(m.UserName, m.OpenID);
+            var id = Utility.TryTransfarUserData(m.UserName, m.OpenID);
             _cxt.Log($"迁移{id}:{m.UserName}>>{m.OpenID}");
             if(id > 0)
             {
-                int count = global::InteractionGame.Utils.TryTransfarItems(id, m.OpenID);
+                int count = Utility.TryTransfarItems(id, m.OpenID);
                 _cxt.Log($"迁移物品{id}:{m.UserName}>>{m.OpenID}x{count}");
             }
             return m;

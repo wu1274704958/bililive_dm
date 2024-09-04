@@ -4,25 +4,15 @@ using InteractionGame;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Collections.Concurrent;
 using System.Text;
 using BililiveDebugPlugin.DB;
-using BililiveDebugPlugin.InteractionGame.Resource;
-using System.Threading;
-using System.Linq;
 using BililiveDebugPlugin.DB.Model;
 using BililiveDebugPlugin.InteractionGameUtils;
 using conf.Squad;
 using Utils;
-using static InteractionGame.Utils;
-using ProtoBuf.WellKnownTypes;
 using UserData = InteractionGame.UserData;
-using BililiveDebugPlugin.InteractionGame.plugs;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using InteractionGame.plugs.config;
 using InteractionGame.plugs;
-using BarPlugin.InteractionGame.plugs;
-using System.Windows.Documents;
 using InteractionGame.Parser;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser

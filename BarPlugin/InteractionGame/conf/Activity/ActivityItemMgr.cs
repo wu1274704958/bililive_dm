@@ -12,7 +12,7 @@ public enum EItemType {Settlement = 1,SignIn = 2,}public enum ECyclePeriodType {
 public  partial class ActivityItem
             {
 [ProtoMember(1)] public System.String Id { get; private set; }
-[ProtoMember(2)] public System.Boolean Cumulative  { get; private set; }
+[ProtoMember(2)] public System.Boolean Cumulative { get; private set; }
 [ProtoMember(3)] public System.Int32 Priority { get; private set; }
 [ProtoMember(4)] public System.Int32 Type { get; private set; }
 public EItemType Type_e => (EItemType)Type;

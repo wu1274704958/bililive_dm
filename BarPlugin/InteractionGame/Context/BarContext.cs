@@ -8,6 +8,7 @@ using conf;
 using InteractionGame.gameBridge;
 using InteractionGame.Parser;
 using InteractionGame.Parser.bar;
+using InteractionGame.plugs;
 using InteractionGame.plugs.bar;
 using InteractionGame.plugs.bar.config;
 using InteractionGame.plugs.config;
@@ -113,6 +114,7 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(-1, new BarSquadMgr());
             m_PlugMgr.Add(-1, new GiftMgr());
             m_PlugMgr.Add(-1, new KillUnitRewardPlug());
+            m_PlugMgr.Add(1000 * 60,new ActivityMgrPlug());
 
             RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
             RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BStart, OnGameStart);
@@ -149,6 +151,7 @@ namespace InteractionGame.Context
             {
                 SendMsgToGame<NoArgs>("restart", null);
                 gameState = EGameState.Ended;
+                m_PlugMgr.Notify(EGameAction.PreSettlement);
                 DoSettlement(data.winner,false);
             }
         }

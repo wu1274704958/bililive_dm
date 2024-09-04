@@ -14,6 +14,7 @@ namespace conf
             conf.Reinforcements.ReinforcementsDataMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "ReinforcementsData.dat")));
             conf.Gift.GiftItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "GiftItem.dat")));
             conf.CommonConfig.CommonConfigMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "CommonConfig.dat")));
+            conf.Activity.ActivityItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "ActivityItem.dat")));
             conf.Reinforcements.ReinforcementsDataMgr.GetInstance().OnLoaded();
         }
 

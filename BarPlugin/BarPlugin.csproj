@@ -58,6 +58,7 @@
     <Compile Include="DB\Model\SysDataTable.cs" />
     <Compile Include="DB\Model\UserData.cs" />
     <Compile Include="InteractionGame\Aoe4GameContext.cs" />
+    <Compile Include="InteractionGame\conf\Activity\ActivityItemMgr.cs" />
     <Compile Include="InteractionGame\conf\CommonConfig\CommonConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\ConfigMgr.cs" />
     <Compile Include="InteractionGame\conf\Gift\GiftItemMgr.cs" />
@@ -92,6 +93,7 @@
     <Compile Include="InteractionGame\Parser\IGlobalConfig.cs" />
     <Compile Include="InteractionGame\Parser\PopularityTicketActivityParser.cs" />
     <Compile Include="InteractionGame\Parser\SignInSubMsgParser.cs" />
+    <Compile Include="InteractionGame\plugs\ActivityMgrPlug.cs" />
     <Compile Include="InteractionGame\plugs\AutoDownLivePlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarSquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\bar\BarGameState.cs" />
@@ -104,6 +106,7 @@
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
     <Compile Include="InteractionGame\plugs\GameModeManager.cs" />
+    <Compile Include="InteractionGame\plugs\IActivityMgr.cs" />
     <Compile Include="InteractionGame\plugs\IGiftMgr.cs" />
     <Compile Include="InteractionGame\plugs\ISquadMgr.cs" />
     <Compile Include="InteractionGame\plugs\SelfSaleGuardPlug.cs" />

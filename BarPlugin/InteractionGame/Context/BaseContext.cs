@@ -10,6 +10,7 @@ namespace InteractionGame.Context
     {
         GamePreStart,
         GameStart,
+        PreSettlement,
         GameStop,
     }
     public abstract class BaseContext : IContext

@@ -21,9 +21,11 @@ namespace BarPlugin.InteractionGame.plugs.bar
             AddGold = 1,
             ChangeTower = 2,
             AddHonor = 3,
+            RandomGift = 4,
         }
         protected Dictionary<EFuncId, Func<UserData, AnyArray,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray, bool>>();
         protected Random _random = new Random();
+        private IGlobalConfig _globalConfig;
 
         public override void Init()
         {
@@ -32,6 +34,62 @@ namespace BarPlugin.InteractionGame.plugs.bar
             AddApplyFunc(EFuncId.AddGold, AddGoldFunc);
             AddApplyFunc(EFuncId.ChangeTower, ChangeTower);
             AddApplyFunc(EFuncId.AddHonor, AddHonor);
+            AddApplyFunc(EFuncId.RandomGift, RandomGift);
+        }
+
+        private bool RandomGift(UserData data, AnyArray array)
+        {
+            if(array.Count >= 2 && array.TryGet<string>(0,out var giftKey) && array.TryGet<string>(1, out var randKey))
+            {
+                if(_globalConfig.GetConfig<List<string>>(giftKey,out var gifts) && _globalConfig.GetConfig<List<int>>(randKey, out var probability))
+                {
+                    if(gifts.Count != probability.Count)
+                    {
+                        _context.Log($"Random Gift gifts.Count != probability.Count {giftKey} {randKey}");
+                        return false;
+                    }
+                    var gift = RandomGift(gifts, probability);
+                    if(gift == null)
+                    {
+                        _context.Log($"Random Gift return null {giftKey} {randKey}");
+                        return false;
+                    }
+                    array.TryGet<bool>(array.Count - 1, out var apply, false);
+                    int count = 1;
+                    if (array.Count >= 3 && array.TryGet<string>(2, out var countKey) && _globalConfig.GetConfig<Dictionary<string, int>>(countKey, out var countMap) &&
+                        countMap.TryGetValue(gift, out var c))
+                        count = c;
+                    if (array.Count >= 4 && array.TryGet<string>(2, out var minKey) && array.TryGet<string>(3, out var maxKey) && _globalConfig.GetConfig<Dictionary<string, int>>(minKey, out var minMap) &&
+                        _globalConfig.GetConfig<Dictionary<string, int>>(maxKey, out var maxMap) && minMap.TryGetValue(gift, out var min) && maxMap.TryGetValue(gift, out var max))
+                        count = _random.Next(min, max);
+                    if (count > 0)
+                    {
+                        if (apply)
+                            ApplyGift(gift, data, count);
+                        else
+                            GiveGift(gift, data, count);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private string RandomGift(List<string> gifts, List<int> probability)
+        {
+            var allProb = 0;
+            foreach (var it in probability)
+                allProb += it;
+            var rand = _random.Next(allProb);
+            if (rand == 0) return gifts[0];
+            if (rand == allProb - 1) return gifts[gifts.Count - 1];
+            for (int i = 0;i < gifts.Count;++i)
+            {
+                if(allProb <= 0)
+                    return gifts[i];
+                allProb -= probability[i];
+            }
+            return null;
         }
 
         private bool GetValueByAnyArray(UserData data,AnyArray array,out int res)
@@ -78,7 +136,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
                 return false;
             if(array.Count > idx && array.TryGet<string>(idx,out var id))
             {
-                if (Locator.Instance.Get<IGlobalConfig>().GetConfig<Dictionary<int, float>>(id, out var config) &&
+                if (_globalConfig.GetConfig<Dictionary<int, float>>(id, out var config) &&
                     config.TryGetValue(data.RealGuardLevel, out var res))
                 {
                     multiplying = res;
@@ -116,6 +174,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             base.Start();
             _context = Locator.Instance.Get<IContext>();
+            _globalConfig = Locator.Instance.Get<IGlobalConfig>();
         }
 
         public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, bool> func)

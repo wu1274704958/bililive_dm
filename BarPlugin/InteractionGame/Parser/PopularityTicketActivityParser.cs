@@ -14,6 +14,7 @@ namespace InteractionGame.Parser
     {
         IGiftMgr _giftMgr;
         IContext _context;
+        private IActivityMgr _activityMgr;
         private IDyMsgParser _owner;
         private ConcurrentDictionary<string,(int,int)> SendTicketNumDict = new ConcurrentDictionary<string,(int,int)>();
         public static string PopularityTicket => Aoe4DataConfig.PopularityTicket;
@@ -26,6 +27,7 @@ namespace InteractionGame.Parser
             _owner = owner;
             _giftMgr = Locator.Instance.Get<IGiftMgr>();
             _context = Locator.Instance.Get<IContext>();
+            _activityMgr = Locator.Instance.Get<IActivityMgr>();
 
             InitData();
         }
@@ -85,7 +87,7 @@ namespace InteractionGame.Parser
                     {
                         satisfy = c;
                         _context.PrintGameMsg($"{user.NameColored}触发满{PopularityTicket}*{c}");
-                        _giftMgr.ApplyGift($"{PopularityTicket}{c}", user);
+                        _giftMgr.ApplyGift(_activityMgr.GetOverride(conf.Activity.EItemType.PopularityTicket,user,$"{PopularityTicket}{c}"), user);
                     }
                 }
             }

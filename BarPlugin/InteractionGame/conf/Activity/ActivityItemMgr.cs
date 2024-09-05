@@ -7,7 +7,7 @@ using System.IO;
             
 namespace conf.Activity
             {
-public enum EItemType {Settlement = 1,SignIn = 2,DoLike = 3,}public enum ECyclePeriodType {None = 0,Daily = 1,Monthly = 2,Annually = 3,Always = 4,}
+public enum EItemType {Settlement = 1,SignIn = 2,DoLike = 3,Gift = 4,PopularityTicket = 5,}public enum ECyclePeriodType {None = 0,Daily = 1,Monthly = 2,Annually = 3,Always = 4,}
 [ProtoContract]
 public  partial class ActivityItem
             {

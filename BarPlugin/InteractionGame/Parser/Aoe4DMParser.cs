@@ -114,7 +114,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)
             {
                 if (user == null) return(0,0);
-                _giftMgr.ApplyGift(_activityMgr.GetOverride(conf.Activity.EItemType.DoLike, user, "点赞"), user, 1);
+                _activityMgr.ApplyActivity(conf.Activity.EItemType.DoLike, user);
                 return (0,0);
             }
             if (msgOrigin.barType == MsgTypeEnum.GuardBuy)
@@ -125,7 +125,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     {
                         if(i.Key == msgOrigin.msg.UserGuardLevel)
                         {
-                            _giftMgr.ApplyGift(i.Value,user,1);
+                            _giftMgr.ApplyGift(_activityMgr.GetOverride(conf.Activity.EItemType.Gift,user,i.Value),user,1);
                             break;
                         }
                     }
@@ -173,7 +173,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 {
                     if (DB.DBMgr.Instance.DepleteItem(ud.Id, item.Id, c, out var rest) > 0)
                     {
-                        _giftMgr.ApplyGift(item.Id,ud, c);
+                        _giftMgr.ApplyGift(_activityMgr.GetOverride(conf.Activity.EItemType.Gift,ud,item.Id),ud, c);
                         InitCtx.PrintGameMsg($"{ud.NameColored}使用了{c}个{it.Key}，剩余{rest}个");
                     }
                     else

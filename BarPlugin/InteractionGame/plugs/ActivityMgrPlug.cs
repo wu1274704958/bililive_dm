@@ -1,5 +1,6 @@
 ﻿using conf.Activity;
 using InteractionGame.Context;
+using InteractionGame.Parser;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,7 +16,11 @@ namespace InteractionGame.plugs
     {
         private ConcurrentDictionary<EItemType, ConcurrentBag<conf.Activity.ActivityItem>> 
             activities = new ConcurrentDictionary<EItemType, ConcurrentBag<ActivityItem>>();
+        private ConcurrentDictionary<EItemType, DateTime>
+            activityUpdateTime = new ConcurrentDictionary<EItemType, DateTime>();
         private IGiftMgr giftMgr = null;
+        private IGlobalConfig globalConfig = null;
+        private static readonly TimeSpan UpdateTimeSpan = TimeSpan.FromMinutes(30);
 
         public override void Init()
         {
@@ -25,25 +30,64 @@ namespace InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            giftMgr = Locator.Instance.Get<IGiftMgr>(); 
+            giftMgr = Locator.Instance.Get<IGiftMgr>();
+            globalConfig = Locator.Instance.Get<IGlobalConfig>();
+        }
+
+        private bool GetConfigByGuardLevelTable<T>(Dictionary<int, string> tab, UserData user, out T res)
+        {
+            string key = null;
+            res = default(T);
+            if(!tab.TryGetValue(user.RealGuardLevel,out key))
+            {
+                if (!tab.TryGetValue(0, out key))
+                    return false;
+            }
+            if(key != null)
+            {
+                return globalConfig.GetConfig<T>(key, out res);
+            }
+            return false;
         }
         public int ApplyActivity(EItemType type, UserData user)
         {
+            TryUpdateActivity(type);
             if (activities.TryGetValue(type,out var v))
             {
                 int count = 0;
                 foreach(var it in v)
                 {
-                    giftMgr.ApplyGift(it.Gifts, user);
-                    count++;
+                    if (it.Gifts != null && GetConfigByGuardLevelTable<Dictionary<string,int>>(it.Gifts, user, out var gifts))
+                    {
+                        giftMgr.ApplyGift(gifts, user);
+                        count++;
+                    }
                 }
                 return count;
             }
             return 0;
         }
 
+        private void TryUpdateActivity(EItemType type)
+        {
+            if(activityUpdateTime.TryGetValue(type,out var t))
+            {
+                if(DateTime.Now - t > UpdateTimeSpan)
+                {
+                    RefreshActivity(type);
+                    activityUpdateTime[type] = DateTime.Now;
+                }
+            }
+            else
+            {
+                RefreshActivity(type);
+                activityUpdateTime[type] = DateTime.Now;
+            }
+        }
+
         public bool GetMultiplier(EItemType type, UserData user,out float res)
         {
+            TryUpdateActivity(type);
             res = 0.0f;
             if (activities.TryGetValue(type,out var v))
             {
@@ -63,6 +107,11 @@ namespace InteractionGame.plugs
             {
                 r = v;
                 return true;
+            }else
+            if (it.Multiplier != null && it.Multiplier.TryGetValue(0, out v))
+            {
+                r = v;
+                return true;
             }
             r = 0.0f;
             return false;
@@ -73,10 +122,8 @@ namespace InteractionGame.plugs
             switch (m)
             {
                 case EGameAction.PreSettlement:
-                    RefreshActivity(EItemType.Settlement);
                     break;
                 case EGameAction.GameStart:
-                    RefreshActivity(EItemType.SignIn);
                     break;
             }
         }
@@ -180,7 +227,24 @@ namespace InteractionGame.plugs
 
         public override void Tick()
         {
-            RefreshActivity(EItemType.SignIn);
+            throw new NotImplementedException();
+        }
+
+        public string GetOverride(EItemType type, UserData user,string str)
+        {
+            TryUpdateActivity(type);
+            if (activities.TryGetValue(type, out var v))
+            {
+                foreach (var it in v)
+                {
+                    if (it.OverrideGifts != null && GetConfigByGuardLevelTable<Dictionary<string, string>>(it.OverrideGifts, user, out var overrideTable))
+                    {
+                        if (overrideTable.TryGetValue(str, out var @override))
+                            return @override;
+                    }
+                }
+            }
+            return str;
         }
     }
 }

@@ -25,6 +25,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
     {
         private IConstConfig _config;
         private ISquadMgr _squadMgr;
+        private IActivityMgr _activityMgr;
         private IGiftMgr _giftMgr;
         public ObjectPool<List<(string, int)>> SquadListPool { get; private set; } = new ObjectPool<List<(string, int)>>(
             () => new List<(string, int)>(), (a) => a.Clear());
@@ -55,6 +56,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
             _giftMgr = Locator.Instance.Get<IGiftMgr>();
             _squadMgr = Locator.Instance.Get<ISquadMgr>();
+            _activityMgr = Locator.Instance.Get<IActivityMgr>();
         }
 
         public override void OnTick(float delat)
@@ -112,9 +114,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)
             {
                 if (user == null) return(0,0);
-                var gold = user.FansLevel * 2 + 15;
-                InitCtx.GetResourceMgr().AddResource(uid, gold);
-                InitCtx.PrintGameMsg($"{user.NameColored}点赞获得{gold}金");
+                _giftMgr.ApplyGift(_activityMgr.GetOverride(conf.Activity.EItemType.DoLike, user, "点赞"), user, 1);
                 return (0,0);
             }
             if (msgOrigin.barType == MsgTypeEnum.GuardBuy)

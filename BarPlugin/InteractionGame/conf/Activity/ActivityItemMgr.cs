@@ -7,7 +7,7 @@ using System.IO;
             
 namespace conf.Activity
             {
-public enum EItemType {Settlement = 1,SignIn = 2,}public enum ECyclePeriodType {None = 0,Daily = 1,Monthly = 2,Annually = 3,Always = 4,}
+public enum EItemType {Settlement = 1,SignIn = 2,DoLike = 3,}public enum ECyclePeriodType {None = 0,Daily = 1,Monthly = 2,Annually = 3,Always = 4,}
 [ProtoContract]
 public  partial class ActivityItem
             {
@@ -16,13 +16,14 @@ public  partial class ActivityItem
 [ProtoMember(3)] public System.Int32 Priority { get; private set; }
 [ProtoMember(4)] public System.Int32 Type { get; private set; }
 public EItemType Type_e => (EItemType)Type;
-[ProtoMember(5)] public System.Collections.Generic.Dictionary<System.String,System.Int32> Gifts { get; private set; }
-[ProtoMember(6)] public System.Collections.Generic.Dictionary<System.Int32,System.Single> Multiplier { get; private set; }
-[ProtoMember(7)] public System.Boolean LunarCalendar { get; private set; }
-[ProtoMember(8)] public System.Int32 CyclePeriodType { get; private set; }
+[ProtoMember(5)] public System.Collections.Generic.Dictionary<System.Int32,System.String> Gifts { get; private set; }
+[ProtoMember(6)] public System.Collections.Generic.Dictionary<System.Int32,System.String> OverrideGifts { get; private set; }
+[ProtoMember(7)] public System.Collections.Generic.Dictionary<System.Int32,System.Single> Multiplier { get; private set; }
+[ProtoMember(8)] public System.Boolean LunarCalendar { get; private set; }
+[ProtoMember(9)] public System.Int32 CyclePeriodType { get; private set; }
 public ECyclePeriodType CyclePeriodType_e => (ECyclePeriodType)CyclePeriodType;
-[ProtoMember(9)] public System.DateTime StartTime { get; private set; }
-[ProtoMember(10)] public System.DateTime EndTime { get; private set; }
+[ProtoMember(10)] public System.DateTime StartTime { get; private set; }
+[ProtoMember(11)] public System.DateTime EndTime { get; private set; }
 }
 
 [ProtoContract]

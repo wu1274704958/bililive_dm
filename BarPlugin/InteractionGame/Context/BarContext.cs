@@ -114,7 +114,7 @@ namespace InteractionGame.Context
             m_PlugMgr.Add(-1, new BarSquadMgr());
             m_PlugMgr.Add(-1, new GiftMgr());
             m_PlugMgr.Add(-1, new KillUnitRewardPlug());
-            m_PlugMgr.Add(1000 * 60,new ActivityMgrPlug());
+            m_PlugMgr.Add(-1,new ActivityMgrPlug());
 
             RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
             RegisterOnRecvGameMsg<NoArgs>(EGameMsg.BStart, OnGameStart);

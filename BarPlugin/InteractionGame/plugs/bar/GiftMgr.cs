@@ -34,17 +34,35 @@ namespace BarPlugin.InteractionGame.plugs.bar
             AddApplyFunc(EFuncId.AddHonor, AddHonor);
         }
 
+        private bool GetValueByAnyArray(UserData data,AnyArray array,out int res)
+        {
+            res = 0;
+            if (array == null || array.Count == 0)
+                return false;
+            int honor = 0;
+            int v = 0;
+            int v2 = 0;
+            string expr = null;
+            if (array.Count == 1 && array.TryGet<int>(0, out v))
+                honor = v;
+            if (array.Count == 2 && array.TryGet<int>(0, out v) && array.TryGet<int>(1, out v2))
+                honor = _random.Next((int)v, (int)v2);
+            if (array.Count == 1 && array.TryGet<string>(0, out expr))
+                honor = expr.EvaluateExpr<int>(data);
+            if (array.Count == 2 && array.TryGet<int>(0, out v) && array.TryGet<string>(1, out expr))
+                honor = expr.EvaluateExpr<int>(data, v);
+            if (array.Count == 3 && array.TryGet<int>(0, out v) && array.TryGet<int>(1, out v2) && array.TryGet<string>(2, out expr))
+                honor = expr.EvaluateExpr<int>(data, _random.Next(v, v2));
+
+            if (TryGetMultiplyingPower(data, array, array.Count - 1, out var multiplying))
+                honor = (int)(multiplying * honor);
+            res = honor;
+            return true;
+        }
+
         private bool AddHonor(UserData data, AnyArray array)
         {
-            int honor = 0;
-
-            if(array.Count == 1 && array.TryGet<int>(0,out var v))
-                honor = v;
-            if (array.Count == 2 && array.TryGet<int>(0, out var b) && array.TryGet<int>(1, out var e))
-                honor = _random.Next(b,e);
-            if (TryGetMultiplyingPower(data, array, 3, out var multiplying))
-                honor = (int)(multiplying * honor);
-            if (honor > 0)
+            if (GetValueByAnyArray(data,array,out int honor))
             {
                 _context.PrintGameMsg($"{data.NameColored}获得了{honor}功勋");
                 DBMgr.Instance.AddHonor(data.Id, honor);
@@ -85,14 +103,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
         }
         private bool AddGoldFunc(UserData user, AnyArray args)
         {
-            var gold = 0;
-            if (args.Count == 1 && args.TryGet<int>(0, out var v))
-                gold = v;
-            if (args.Count == 2 && args.TryGet<int>(0, out var b) && args.TryGet<int>(1, out var e))
-                gold = _random.Next(b, e);
-            if (TryGetMultiplyingPower(user, args, 3, out var multiplying))
-                gold = (int)(multiplying * gold);
-            if (gold > 0)
+            if (GetValueByAnyArray(user,args,out var gold))
             {
                 _context.GetResourceMgr().AddResource(user.Id, gold);
                 _context.PrintGameMsg($"{user.NameColored}获得{gold}g");

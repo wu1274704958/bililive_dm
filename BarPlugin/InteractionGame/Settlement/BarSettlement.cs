@@ -11,6 +11,7 @@ using InteractionGame.plugs.config;
 using BililiveDebugPlugin.InteractionGame.mode;
 using InteractionGame.plugs.bar;
 using InteractionGame.Utils;
+using InteractionGame.plugs;
 
 namespace BililiveDebugPlugin.InteractionGame.Settlement
 {
@@ -271,9 +272,11 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             if (user.GuardLevel > 0) f += f * config.GetPlayerHonorAdditionForSettlement(user.GuardLevel);
             f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, win);
             var r = (long)Math.Floor(user.Score * f) + (win ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
-            var activityMult = Utility.GetNewYearActivity() > 0 ? 2 : 1;
+            var activityMult = 1.0f;
+            if(Locator.Instance.Get<IActivityMgr>().GetMultiplier(conf.Activity.EItemType.Settlement,user,out var v))
+                activityMult = v;
 
-            return r * activityMult;
+            return (int)(r * activityMult);
         }
 
         public void Init()

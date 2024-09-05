@@ -12,5 +12,6 @@ namespace InteractionGame.plugs
         int ApplyActivity(EItemType type,UserData user);
         bool GetMultiplier(EItemType type,UserData user,out float v);
         void RefreshActivity(EItemType type);
+        string GetOverride(EItemType type, UserData user,string str);
     }
 }

@@ -4,6 +4,8 @@ using BilibiliDM_PluginFramework;
 
 using BililiveDebugPlugin.InteractionGameUtils;
 using InteractionGame;
+using InteractionGame.plugs;
+using Utils;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -13,11 +15,13 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         private IDyMsgParser m_Owner;
         private Random rand;
+        private IActivityMgr activity;
 
         public void Init(IDyMsgParser owner)
         {
             m_Owner = owner;
             rand = new Random((int)DateTime.Now.Ticks);
+            activity = Locator.Instance.Get<IActivityMgr>();
         }
 
         public bool Parse(DyMsgOrigin msg)
@@ -29,16 +33,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                     var u = m_Owner.InitCtx.GetMsgParser().GetUserData(msg.msg.OpenID);
                     if (DB.DBMgr.Instance.SignIn(u) || DB.DBMgr.Instance.DepleteItem(msg.msg.OpenID, Aoe4DataConfig.SignTicket, 1, out _) > 0)
                     {
-
-                        var c = rand.Next(130 + msg.msg.FansMedalLevel, 250 + (u.GuardLevel > 0 ? (4 - u.GuardLevel) * 50 : 0) + u.FansLevel * 2);
-                        if (c > 0 && DB.DBMgr.Instance.AddHonor(u, c) > 0)
-                        {
-                            if (c > 100)
-                                LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{u.Name}", "签到成功")
-                                    .SetBottom($"获得{c}功勋").SetLeftColor(LargeTips.GetGroupColor(u.Group)).SetRightColor(LargeTips.Yellow).SetBottomColor(LargeTips.Cyan).SetShowTime(3.6f));
-                            else
-                                m_Owner.InitCtx.PrintGameMsg($"恭喜{u.NameColored}签到成功获得{c}功勋");
-                        }
+                        activity.ApplyActivity(conf.Activity.EItemType.SignIn,u);
                     }
                     else
                     {

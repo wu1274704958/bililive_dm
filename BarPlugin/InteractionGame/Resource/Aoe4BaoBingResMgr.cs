@@ -13,7 +13,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         ConcurrentDictionary<string, TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, TimeLinerInteger>();
         public override void AddAutoResourceById(string id, float addFactor = 1f)
         {
-            var config = Locator.Instance.Get<IConstConfig>();
+            var config = Locator.Get<IConstConfig>();
             TimeLinerInteger v = null;
             AutoAddMap.TryAdd(id, v = new TimeLinerInteger(config.OriginResource, config.AddResFactor, config.AutoGoldLimit));
             v.AddFactor = addFactor;

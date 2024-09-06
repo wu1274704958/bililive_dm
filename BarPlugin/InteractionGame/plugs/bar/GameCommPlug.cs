@@ -46,7 +46,7 @@ namespace InteractionGame.plugs.bar
         public override void Start()
         {
             base.Start();
-            var conf = Locator.Instance.Get<IConstConfig>();
+            var conf = Locator.Get<IConstConfig>();
             comm.Init(conf.GameCommKey, conf.GameCommSize);
         }
 
@@ -64,7 +64,7 @@ namespace InteractionGame.plugs.bar
                     break;
                 case EGameAction.GameStop:
                     comm.Release();
-                    var conf = Locator.Instance.Get<IConstConfig>();
+                    var conf = Locator.Get<IConstConfig>();
                     comm.Init(conf.GameCommKey, conf.GameCommSize);
                     break;
             }
@@ -83,7 +83,7 @@ namespace InteractionGame.plugs.bar
             JObject obj = JObject.Parse(json);
             if(obj == null || !json.Contains("cmd"))
             {
-                Locator.Instance.Get<IContext>().Log($"Game comm recv msg parse failed!!! msg = {json}");
+                Locator.Get<IContext>().Log($"Game comm recv msg parse failed!!! msg = {json}");
                 return;
             }
             string key = (string)obj["cmd"];
@@ -102,14 +102,14 @@ namespace InteractionGame.plugs.bar
                     var msgArgs = JsonConvert.DeserializeObject(json,msgTy);
                     if(msgArgs == null)
                     {
-                        Locator.Instance.Get<IContext>().Log($"Game comm recv msg deserialize failed!!! msg = {json}");
+                        Locator.Get<IContext>().Log($"Game comm recv msg deserialize failed!!! msg = {json}");
                         return;
                     }
                     var argsField = msgTy.GetField("args");
                     var args = argsField.GetValue(msgArgs);
                     if (msgArgs == null)
                     {
-                        Locator.Instance.Get<IContext>().Log($"Game comm recv msg get args failed!!! msg = {json}");
+                        Locator.Get<IContext>().Log($"Game comm recv msg get args failed!!! msg = {json}");
                         return;
                     }
                     foreach (var it in v.Item2)
@@ -118,7 +118,7 @@ namespace InteractionGame.plugs.bar
             }
             else
             {
-                Locator.Instance.Get<IContext>().Log($"Game comm recv msg not listener!! msg = {json}");
+                Locator.Get<IContext>().Log($"Game comm recv msg not listener!! msg = {json}");
             }
         }
 

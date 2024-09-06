@@ -32,19 +32,19 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IGameState>().AddObserver(this);
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged, new GroupSquadCapacityUIData() { Group = -1, Count = Locator.Instance.Get<IConstConfig>().SquadCountLimit });
+            Locator.Get<IGameState>().AddObserver(this);
+            Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged, new GroupSquadCapacityUIData() { Group = -1, Count = Locator.Get<IConstConfig>().SquadCountLimit });
         }
 
         public override void Dispose()
         {
-            //Locator.Instance.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>().RemoveObserver(this);
+            //Locator.Get<IGameStateObserver<EAoe4State, Aoe4StateData>>().RemoveObserver(this);
             base.Dispose();
         }
 
         public void SquadCountChanged(int g, int old, int n)
         {
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = g,Count = n});
+            Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged,new GroupSquadCapacityUIData(){  Group = g,Count = n});
         }
     }
 }

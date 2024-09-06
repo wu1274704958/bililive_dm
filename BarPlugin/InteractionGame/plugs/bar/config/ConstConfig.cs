@@ -123,7 +123,7 @@ namespace InteractionGame.plugs.bar.config
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit<IConstConfig>(this);
+            Locator.Deposit<IConstConfig>(this);
             InitData();
         }
 
@@ -134,7 +134,7 @@ namespace InteractionGame.plugs.bar.config
 
         public override void Dispose()
         {
-            Locator.Instance.Remove<IConstConfig>();
+            Locator.Remove<IConstConfig>();
             base.Dispose();
         }
 

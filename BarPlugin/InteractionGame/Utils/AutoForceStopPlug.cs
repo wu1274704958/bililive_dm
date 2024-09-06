@@ -17,19 +17,19 @@ namespace InteractionGameUtils
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit(this);
+            Locator.Deposit(this);
         }
         public override void Start()
         {
             base.Start();
-            _config = Locator.Instance.Get<IConstConfig>();
-            _context = Locator.Instance.Get<IContext>();
+            _config = Locator.Get<IConstConfig>();
+            _context = Locator.Get<IContext>();
         }
         public override void Tick()
         {
             if(_context.IsGameStart() == EGameState.Started && DateTime.Now - _startTime > _config.OneTimesGameTime)
             {
-                Locator.Instance.Get<IContext>().GetBridge().ForceFinish();
+                Locator.Get<IContext>().GetBridge().ForceFinish();
                 _startTime = DateTime.Now;
             }
         }

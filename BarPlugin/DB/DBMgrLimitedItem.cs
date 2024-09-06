@@ -50,7 +50,7 @@ namespace BililiveDebugPlugin.DB
         public int AddGiftItem(SettlementData data, string name, int num)
         {
             int ret = 0;
-            if (!Locator.Instance.Get<IGiftMgr>().GetItem(name, out var item))
+            if (!Locator.Get<IGiftMgr>().GetItem(name, out var item))
                 return 0;
             var newItem = ItemData.Create(item,num,data.Id);
             var d = GetUserOrCreate(data.Id, data.Name, data.Icon, out var isNew);
@@ -73,7 +73,7 @@ namespace BililiveDebugPlugin.DB
         public int AddGiftItem(string id, string name, int num)
         {
             int ret = 0;
-            if (!Locator.Instance.Get<IGiftMgr>().GetItem(name, out var item))
+            if (!Locator.Get<IGiftMgr>().GetItem(name, out var item))
                 return 0;
 
 

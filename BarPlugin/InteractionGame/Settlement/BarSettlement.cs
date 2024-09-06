@@ -123,7 +123,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         public void ShowSettlement(IT it,int winGroup)
         {
             //PrintGameMsg($"{GetColorById(d.g)}方获胜！！!");
-            if(winGroup >= 0 && winGroup < Locator.Instance.Get<IGameState>().GroupCount)
+            if(winGroup >= 0 && winGroup < Locator.Get<IGameState>().GroupCount)
                 it.GetMsgParser().AddWinScore(winGroup, _config.WinGroupAddedScore);
             var data = it.GetMsgParser().GetSortedUserData();
             //PreSettlement(it,data);
@@ -160,7 +160,7 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
             RankMsg rankMsg = new RankMsg()
             {
-                Title = win >= 0 ? $"{Locator.Instance.Get<IConstConfig>().GetGroupName(win + 1)}方获胜" : "平局",
+                Title = win >= 0 ? $"{Locator.Get<IConstConfig>().GetGroupName(win + 1)}方获胜" : "平局",
                 WinGroup = win,
                 CurrentScoreRank = currentScoreRank,
                 CurrentKillRank = currentKillRank,
@@ -169,13 +169,13 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
                 MonthlySingleScoreRank = _monthlySingleScoreRank.Datas,
                 MonthlySingleKillRank = _monthlySingleKillRank.Datas,
             };
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.Settlement, rankMsg);
+            Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.Settlement, rankMsg);
             RecycleSettlementMsg(rankMsg);
         }
 
         private List<SettlementUser> GetCurrentKillRank()
         {
-            var tmpCurrentKillListSorted = Locator.Instance.Get<KillUnitRewardPlug>().GetCurrentKillListSorted();
+            var tmpCurrentKillListSorted = Locator.Get<KillUnitRewardPlug>().GetCurrentKillListSorted();
             List<SettlementUser> res = new List<SettlementUser>();
             foreach(var item in tmpCurrentKillListSorted)
             {
@@ -266,14 +266,14 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
         public long CalculatHonorSettlement(UserData user, bool win, bool isLeastGroup, int rank)
         {
-            var config = Locator.Instance.Get<IConstConfig>();
+            var config = Locator.Get<IConstConfig>();
             var f = (win ? WinSettlementHonorFactor : LoseSettlementHonorFactor) + (isLeastGroup ? LeastGroupSettlementHonorFactor : 0.0);
             if (user.FansLevel > 0) f += (user.FansLevel / 1000);
             if (user.GuardLevel > 0) f += f * config.GetPlayerHonorAdditionForSettlement(user.GuardLevel);
-            f += f * Locator.Instance.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, win);
+            f += f * Locator.Get<IGameMode>().GetSettlementHonorMultiplier(user.Id, win);
             var r = (long)Math.Floor(user.Score * f) + (win ? WinSettlementHonorAdd : LoseSettlementHonorAdd);
             var activityMult = 1.0f;
-            if(Locator.Instance.Get<IActivityMgr>().GetMultiplier(conf.Activity.EItemType.Settlement,user,out var v))
+            if(Locator.Get<IActivityMgr>().GetMultiplier(conf.Activity.EItemType.Settlement,user,out var v))
                 activityMult = v;
 
             return (int)(r * activityMult);
@@ -281,8 +281,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
 
         public void Init()
         {
-            _config = Locator.Instance.Get<IConstConfig> ();
-            _context = Locator.Instance.Get<IContext>();
+            _config = Locator.Get<IConstConfig> ();
+            _context = Locator.Get<IContext>();
             _msgParser = _context.GetMsgParser ();
         }
 

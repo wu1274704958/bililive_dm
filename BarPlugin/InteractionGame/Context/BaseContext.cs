@@ -35,14 +35,14 @@ namespace InteractionGame.Context
             Interlocked.Exchange(ref State, 1);
 
             m_PlugMgr.Init();
-            Locator.Instance.Deposit<IContext>(this);
-            Locator.Instance.Deposit<PlugMgr<EGameAction>>(m_PlugMgr);
+            Locator.Deposit<IContext>(this);
+            Locator.Deposit<PlugMgr<EGameAction>>(m_PlugMgr);
         }
 
         public virtual void OnDestroy()
         {
-            Locator.Instance.Remove<IContext>();
-            Locator.Instance.Remove<PlugMgr<EGameAction>>();
+            Locator.Remove<IContext>();
+            Locator.Remove<PlugMgr<EGameAction>>();
             m_PlugMgr.Dispose();
             Debug.Assert(State == 1);
             Interlocked.Exchange(ref State, 0);

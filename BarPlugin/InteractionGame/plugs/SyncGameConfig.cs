@@ -46,12 +46,12 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
 
         public void SendMsg()
         {
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.StartGame, new SyncGameConfigData()
+            Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.StartGame, new SyncGameConfigData()
             {
-                GroupCount = Locator.Instance.Get<IGameState>().GroupCount,
-                MapName = Locator.Instance.Get<IGameState>().MapName,
+                GroupCount = Locator.Get<IGameState>().GroupCount,
+                MapName = Locator.Get<IGameState>().MapName,
                 StartTime = DateTime.Now.ToSecond(),
-                GameTime = (int)Locator.Instance.Get<IConstConfig>().OneTimesGameTime.TotalSeconds
+                GameTime = (int)Locator.Get<IConstConfig>().OneTimesGameTime.TotalSeconds
             });
         }
     }

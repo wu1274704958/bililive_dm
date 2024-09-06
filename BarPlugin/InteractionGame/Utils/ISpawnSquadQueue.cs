@@ -32,7 +32,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         protected ISpawnFallback _fallback;
 #if DEBUG
         private IContext _context;
-        private IContext context => _context == null ? (_context = Locator.Instance.Get<IContext>()) : _context;
+        private IContext context => _context == null ? (_context = Locator.Get<IContext>()) : _context;
 #endif
 
         public virtual SpawnResult Spawn(int max)
@@ -96,7 +96,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             
             var a = new LinkedList<int>();
-            //var gs = Locator.Instance.Get<Aoe4GameState>();
+            //var gs = Locator.Get<Aoe4GameState>();
             var group = action.GetGroup();
             //if (gs.HasCheckSquadCountTask(group, this))
             //    return;
@@ -104,7 +104,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var remaining = RemainingQuantity(group);
                 var count = action.GetCount();
                 bool limit = remaining <= 0 ? true : IsGroupLimit(count, remaining);
-                //Locator.Instance.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
+                //Locator.Get<IContext>().Log($"AppendAction g={group},remaining={remaining},count={count},limit={limit}");
                 if (limit)
                 {
                     AppendActionByPriority(action, action.GetPriority());
@@ -197,7 +197,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (!IsGameEnd() && (remaining = RemainingQuantity(group)) > 0 &&
             !(limit = IsGroupLimit(count = action.Action.GetCount(), remaining)))
             {
-                //Locator.Instance.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
+                //Locator.Get<IContext>().Log($"Squad Queue tick g={group},remaining={remaining},count={count},limit={limit},{action.Action.GetType().Name}");
                 SpawnInQueue(action, remaining);
             }
         }

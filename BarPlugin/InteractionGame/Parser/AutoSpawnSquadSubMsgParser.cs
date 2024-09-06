@@ -31,14 +31,14 @@ namespace InteractionGame.Parser
         {
             m_Owner = owner;
             m_Owner.InitCtx.GetPlayerParser().AddObserver(this);
-            _config = Locator.Instance.Get<IConstConfig>();
-            _squadMgr = Locator.Instance.Get<ISquadMgr>();
+            _config = Locator.Get<IConstConfig>();
+            _squadMgr = Locator.Get<ISquadMgr>();
         }
 
         public void OnTick(float delat)
         {
 
-            var gameState = Locator.Instance.Get<IGameState>();
+            var gameState = Locator.Get<IGameState>();
             foreach (var it in m_Dict.Keys)
             {
                 if (_squadMgr.CanSpawnSquad(it, SpawnSquadType.Auto) && m_Dict.TryGetValue(it, out var v))

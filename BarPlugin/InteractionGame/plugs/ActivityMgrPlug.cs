@@ -25,13 +25,13 @@ namespace InteractionGame.plugs
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit<IActivityMgr>(this);
+            Locator.Deposit<IActivityMgr>(this);
         }
         public override void Start()
         {
             base.Start();
-            giftMgr = Locator.Instance.Get<IGiftMgr>();
-            globalConfig = Locator.Instance.Get<IGlobalConfig>();
+            giftMgr = Locator.Get<IGiftMgr>();
+            globalConfig = Locator.Get<IGlobalConfig>();
         }
 
         private bool GetConfigByGuardLevelTable<T>(Dictionary<int, string> tab, UserData user, out T res)

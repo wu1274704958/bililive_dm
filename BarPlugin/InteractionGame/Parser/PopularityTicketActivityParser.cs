@@ -25,9 +25,9 @@ namespace InteractionGame.Parser
         public void Init(IDyMsgParser owner)
         {
             _owner = owner;
-            _giftMgr = Locator.Instance.Get<IGiftMgr>();
-            _context = Locator.Instance.Get<IContext>();
-            _activityMgr = Locator.Instance.Get<IActivityMgr>();
+            _giftMgr = Locator.Get<IGiftMgr>();
+            _context = Locator.Get<IContext>();
+            _activityMgr = Locator.Get<IActivityMgr>();
 
             InitData();
         }

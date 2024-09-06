@@ -31,7 +31,7 @@ namespace BililiveDebugPlugin
         public override void Admin()
         {
             base.Admin();
-            mp = new MainPage(Locator.Instance.Get<IContext>());
+            mp = new MainPage(Locator.Get<IContext>());
             mp.Show();
             //SendSettlement("蓝方获胜", new List<UserData>
             //{

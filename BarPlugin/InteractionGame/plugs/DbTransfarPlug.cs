@@ -17,8 +17,8 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IContext>().GetPlayerParser().AddPreJoinObserver(this);
-            _cxt = Locator.Instance.Get<IContext>();
+            Locator.Get<IContext>().GetPlayerParser().AddPreJoinObserver(this);
+            _cxt = Locator.Get<IContext>();
         }
         public override void Notify(EGameAction m)
         {

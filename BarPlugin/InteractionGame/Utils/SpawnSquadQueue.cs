@@ -25,7 +25,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 var mult = Math.Min(count / 200, 5);
                 var rest = action.Merge(mult);
                 var user = action.GetUser() as UserData;
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{user.NameColored}触发合批x{mult}倍属性");
+                Locator.Get<IContext>().PrintGameMsg($"{user.NameColored}触发合批x{mult}倍属性");
                 if (rest != null)
                     base.AppendAction(rest);
             }
@@ -53,25 +53,25 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 func.Invoke(g, action);
             }
         }
-        private IGameState GameState => _gameState ?? (_gameState = Locator.Instance.Get<IGameState>());
+        private IGameState GameState => _gameState ?? (_gameState = Locator.Get<IGameState>());
         private IGameState _gameState = null;
         private ConcurrentDictionary<int, CheckSCCxt> _checkSCCxtMap = new ConcurrentDictionary<int, CheckSCCxt>();
         public override bool IsGameEnd()
         {
-            if(debugPlugin == null) debugPlugin = Locator.Instance.Get<IContext>();
+            if(debugPlugin == null) debugPlugin = Locator.Get<IContext>();
             return debugPlugin.IsGameStart() != EGameState.Started;
         }
 
         protected override bool IsGroupLimit(int count, int remaining)
         {
-            if(count < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
+            if(count < Locator.Get<IConstConfig>().OneTimesSpawnSquadCount)
                 return count > remaining;
-            return remaining < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount;
+            return remaining < Locator.Get<IConstConfig>().OneTimesSpawnSquadCount;
         }
 
         protected override int RemainingQuantity(int group)
         {
-            return Locator.Instance.Get<IConstConfig>().SquadCountLimit - GameState.GetSquadCount(group);
+            return Locator.Get<IConstConfig>().SquadCountLimit - GameState.GetSquadCount(group);
         }
 
         
@@ -116,7 +116,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (_honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, _honor);
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{_honor}功勋");
+                Locator.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{_honor}功勋");
             }
         }
 
@@ -170,14 +170,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (count > 0)
             {
                 DB.DBMgr.Instance.AddGiftItem(_user.Id, Gift, count);
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{count}个{Gift}");
+                Locator.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{count}个{Gift}");
             }
 
             int honor = (int)((_count - count) * _price);
             if (honor > 0)
             {
                 DB.DBMgr.Instance.AddHonor(_user.Id, honor);
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{honor}功勋");
+                Locator.Get<IContext>().PrintGameMsg($"{_user.NameColored}补偿了{honor}功勋");
             }
         }
 
@@ -197,15 +197,15 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         public static void SendSpawnSquad(this ISpawnSquadAction a, UserData u, int c, SquadData sd, ushort attribute = 0,
             bool log = false,double scoreScale = 1)
         {
-            var cxt = Locator.Instance.Get<IContext>();
+            var cxt = Locator.Get<IContext>();
             var target = u.Id_int < 0 ? -1 : cxt.GetPlayerParser().GetTarget(u.Id);
             var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
-            Locator.Instance.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
+            Locator.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
             cxt.GetBridge().ExecSpawnSquad(u, sd, c, target);
             if(u.Id_int > 0)
                 cxt.GetMsgParser().UpdateUserData(u.Id,sd.Score * c * scoreScale,c);
             if (false)
-                Locator.Instance.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
+                Locator.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
 
         public static int GetAttackType(this SquadData self)
@@ -226,18 +226,18 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             var rc = 0;
             if (group.Count == 0) return 0;
-            var cxt = Locator.Instance.Get<IContext>();
+            var cxt = Locator.Get<IContext>();
             var target = u.Id_int < 0 ? -1 : cxt.GetPlayerParser().GetTarget(u.Id);
             var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
             
             var op = u?.AppendSquadAttribute(attribute) ?? 0;
             rc = cxt.GetBridge().ExecSpawnGroup(u, group,target, multiple);
             if(rc > 0)
-                Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
+                Locator.Get<IGameState>().OnSpawnSquad(self, rc);
             if (u.Id_int > 0)
                 cxt.GetMsgParser().UpdateUserData(u.Id,(int)(score * multiple * scoreScale) ,rc);
             if (false)
-                Locator.Instance.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
+                Locator.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
             return rc;
         }
         
@@ -265,7 +265,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(_upLevelgold > 0)
             {
                 var v = Math.Ceiling(res * _upLevelgold * GetPercentageScale());
-                Locator.Instance.Get<IContext>().GetMsgParser().GetSubMsgParse<GroupUpLevel>()?.NotifyDepleteGold(user.Group, (int)v);
+                Locator.Get<IContext>().GetMsgParser().GetSubMsgParse<GroupUpLevel>()?.NotifyDepleteGold(user.Group, (int)v);
             }
         }
 
@@ -283,9 +283,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         private void AddHonor(UserData u, long v)
         {
             if (u.GuardLevel > 0) 
-                v += (long)Math.Ceiling(v * Locator.Instance.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
+                v += (long)Math.Ceiling(v * Locator.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
             if (DB.DBMgr.Instance.AddHonor(u, v) > 0)
-                Locator.Instance.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
+                Locator.Get<IContext>().PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }
 
         protected override void OnSpawnedAll()
@@ -294,7 +294,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             {
                 var user = GetUser() as UserData;
                 if (user == null) return;
-                Locator.Instance.Get<IContext>().GetResourceMgr().AddResource(user.Id, _restGold);
+                Locator.Get<IContext>().GetResourceMgr().AddResource(user.Id, _restGold);
             }
         }
 
@@ -337,14 +337,14 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             while (count > 0 && max > 0)
             {
                 SpawnInternalStep(ref count, ref max, ref @out);
-                if (!IsGreedy && @out >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
+                if (!IsGreedy && @out >= Locator.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / (double)_count;
         }
         protected void SpawnInternalStep(ref int count,ref int max,ref int @out)
         {
-            var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
+            var sc = Math.Min(count, Locator.Get<IConstConfig>().OneTimesSpawnSquadCount);
             if (sc > max) sc = max;
             this.SendSpawnSquad(_user, sc, _squad, _attribute, true,scoreScale:GetPercentageScale());
             count -= sc;
@@ -439,7 +439,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if(count > 0)
                 specialPercentage = SpawnSpecialCount(ref max, ref count,ref sumOut);
             count = (int)(_Squad.normalCount * _normalPercentage * _count);
-            if(count > 0 && max > 0 && (IsGreedy || sumOut < Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount))
+            if(count > 0 && max > 0 && (IsGreedy || sumOut < Locator.Get<IConstConfig>().OneTimesSpawnSquadCount))
                 normalPercentage = SpawnNormalCount(ref max, ref count,ref sumOut);
             _specialPercentage -= specialPercentage;
             _normalPercentage -= normalPercentage;
@@ -452,7 +452,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var @out = 0;
             while (count > 0 && max > 0)
             {
-                var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
+                var sc = Math.Min(count, Locator.Get<IConstConfig>().OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.specialCount;                
                 if (c <= 0) break;
@@ -470,7 +470,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 max -= rc;
                 @out += rc;
                 sumOut += rc;
-                if (!IsGreedy && sumOut >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
+                if (!IsGreedy && sumOut >= Locator.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / all;
@@ -481,7 +481,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var @out = 0;
             while (count > 0 && max > 0)
             {
-                var sc = Math.Min(count, Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount);
+                var sc = Math.Min(count, Locator.Get<IConstConfig>().OneTimesSpawnSquadCount);
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
@@ -493,7 +493,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 max -= rc;
                 @out += rc;
                 sumOut += rc;
-                if (!IsGreedy && sumOut >= Locator.Instance.Get<IConstConfig>().OneTimesSpawnSquadCount)
+                if (!IsGreedy && sumOut >= Locator.Get<IConstConfig>().OneTimesSpawnSquadCount)
                     break;
             }
             return (double)@out / all;

@@ -33,7 +33,7 @@ namespace InteractionGame.Parser.bar
         public override void Init(IContext it)
         {
             base.Init(it);
-            _config = Locator.Instance.Get<IConstConfig>();
+            _config = Locator.Get<IConstConfig>();
         }
 
         public override int Parse(DyMsgOrigin msgOrigin)

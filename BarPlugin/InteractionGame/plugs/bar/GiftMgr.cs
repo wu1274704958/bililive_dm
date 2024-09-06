@@ -29,7 +29,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
 
         public override void Init()
         {
-            Locator.Instance.Deposit<IGiftMgr>(this);
+            Locator.Deposit<IGiftMgr>(this);
             base.Init();
             AddApplyFunc(EFuncId.AddGold, AddGoldFunc);
             AddApplyFunc(EFuncId.ChangeTower, ChangeTower);
@@ -150,7 +150,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             if (args.TryGet<int>(0, out var towerUnit))
             {
-                var tower = Locator.Instance.Get<ISquadMgr>().GetSquadById(towerUnit);
+                var tower = Locator.Get<ISquadMgr>().GetSquadById(towerUnit);
                 if (tower == null)
                     return false;
                 _context.PrintGameMsg($"{user.NameColored}更换了{tower.Name}");
@@ -173,8 +173,8 @@ namespace BarPlugin.InteractionGame.plugs.bar
         public override void Start()
         {
             base.Start();
-            _context = Locator.Instance.Get<IContext>();
-            _globalConfig = Locator.Instance.Get<IGlobalConfig>();
+            _context = Locator.Get<IContext>();
+            _globalConfig = Locator.Get<IGlobalConfig>();
         }
 
         public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, bool> func)

@@ -92,7 +92,7 @@ namespace InteractionGame.Context
 
             ConfigMgr.Init();
             var _ = BililiveDebugPlugin.DB.DBMgr.Instance;
-            Locator.Instance.Deposit<IGlobalConfig>(new GlobalConfig());
+            Locator.Deposit<IGlobalConfig>(new GlobalConfig());
             
             dMPlugin.ReceivedDanmaku += OnReceivedDanmaku;
 
@@ -129,7 +129,7 @@ namespace InteractionGame.Context
         private void OnGameEnd(string arg1, object arg2)
         { 
             m_PlugMgr.Notify(EGameAction.GameStop);
-            Thread.Sleep((int)Locator.Instance.Get<IConstConfig>().EndDelay);
+            Thread.Sleep((int)Locator.Get<IConstConfig>().EndDelay);
         }
 
         private void OnGamePreStart(string arg1, object arg2)
@@ -161,7 +161,7 @@ namespace InteractionGame.Context
             settlement.ShowSettlement(this, winner);
             messageDispatcher.Clear();
             if (sleep) 
-                Thread.Sleep((int)Locator.Instance.Get<IConstConfig>().EndDelay);
+                Thread.Sleep((int)Locator.Get<IConstConfig>().EndDelay);
         }
 
         
@@ -191,7 +191,7 @@ namespace InteractionGame.Context
             overlayComm = null;
             dMPlugin.ReceivedDanmaku -= OnReceivedDanmaku;
             BililiveDebugPlugin.DB.DBMgr.Instance.Dispose();
-            Locator.Instance.Remove<IGlobalConfig>();
+            Locator.Remove<IGlobalConfig>();
             base.OnDestroy();
         }
 

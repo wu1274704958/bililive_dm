@@ -29,8 +29,8 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Start()
         {
-            _gameModeMgr = Locator.Instance.Get<GameModeManager>();
-            _cxt = Locator.Instance.Get<IContext>();
+            _gameModeMgr = Locator.Get<GameModeManager>();
+            _cxt = Locator.Get<IContext>();
         }
 
         public void OnStartGame()
@@ -68,7 +68,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public bool Parse(DyMsgOrigin msg)
         {
-            var ud = Locator.Instance.Get<IContext>().GetMsgParser().GetUserData(msg.msg.OpenID);
+            var ud = Locator.Get<IContext>().GetMsgParser().GetUserData(msg.msg.OpenID);
             if (_state != 2 && (
                 (msg.barType == MsgTypeEnum.GiftSend && IsStartBossGift(msg.msg.GiftName)) || 
                 (ud != null && ud.GuardLevel == 2 && msg.msg.CommentText == "boss")

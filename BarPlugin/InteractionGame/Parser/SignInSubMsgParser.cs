@@ -21,7 +21,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         {
             m_Owner = owner;
             rand = new Random((int)DateTime.Now.Ticks);
-            activity = Locator.Instance.Get<IActivityMgr>();
+            activity = Locator.Get<IActivityMgr>();
         }
 
         public bool Parse(DyMsgOrigin msg)

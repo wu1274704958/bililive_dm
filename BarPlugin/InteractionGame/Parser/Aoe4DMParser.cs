@@ -49,14 +49,14 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             AddSubMsgParse(new BossGameModeParser());
             AddSubMsgParse(new PopularityTicketActivityParser(), false);
             base.Init(it);
-            _config = Locator.Instance.Get<IConstConfig>();
+            _config = Locator.Get<IConstConfig>();
             InitCtx.GetPlayerParser().AddObserver(this);
-            Locator.Instance.Deposit(this,m_SpawnSquadQueue = new SpawnSquadQueue());
-            Locator.Instance.Deposit(this);
+            Locator.Deposit(this,m_SpawnSquadQueue = new SpawnSquadQueue());
+            Locator.Deposit(this);
 
-            _giftMgr = Locator.Instance.Get<IGiftMgr>();
-            _squadMgr = Locator.Instance.Get<ISquadMgr>();
-            _activityMgr = Locator.Instance.Get<IActivityMgr>();
+            _giftMgr = Locator.Get<IGiftMgr>();
+            _squadMgr = Locator.Get<ISquadMgr>();
+            _activityMgr = Locator.Get<IActivityMgr>();
         }
 
         public override void OnTick(float delat)
@@ -136,7 +136,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         
         private void AddInitAttr(UserData ud,StringBuilder sb = null)
         {
-            var addAttr = Locator.Instance.Get<IConstConfig>().GetOnPlayerJoinAttributeAddition(ud.RealGuardLevel);
+            var addAttr = Locator.Get<IConstConfig>().GetOnPlayerJoinAttributeAddition(ud.RealGuardLevel);
             if (addAttr > 0)
             {
                 var dv = ud.AddDamageMultiple(addAttr);
@@ -216,7 +216,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         private void AddHonor(UserData u, long v,bool hasAddition = true)
         {
             if (hasAddition && u.GuardLevel > 0) 
-                v += (long)Math.Ceiling(v * Locator.Instance.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
+                v += (long)Math.Ceiling(v * Locator.Get<IConstConfig>().GetPlayerHonorAddition(u.RealGuardLevel));
             if (DB.DBMgr.Instance.AddHonor(u,v) > 0)
                 InitCtx.PrintGameMsg($"{u.NameColored}获得{v}功勋");
         }
@@ -231,7 +231,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var target = InitCtx.GetPlayerParser().GetTarget(u.Id);
             var self = InitCtx.GetPlayerParser().GetGroupById(u.Id);
             InitCtx.GetBridge().ExecSpawnSquad(u,  sd , c, target);
-            Locator.Instance.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
+            Locator.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
         }
         
         public override void SendSpawnSquadQueue(UserData u, int sid, int c, SquadData sd,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,
@@ -252,7 +252,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 action = new SpawnSingleSquadAction<EmptySpawnSquadFallback>(u,c,sd,null, restGold, upLevelgold, giveHonor,
                     attribute: attribute).SetPriority(priority);
             }
-            Locator.Instance.Get<ISpawnSquadQueue>(this).AppendAction(action);
+            Locator.Get<ISpawnSquadQueue>(this).AppendAction(action);
         }
 
 
@@ -262,7 +262,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             var target = InitCtx.GetPlayerParser().GetTarget(u.Id);
             var self = InitCtx.GetPlayerParser().GetGroupById(u.Id);
             int rc = InitCtx.GetBridge().ExecSpawnGroup(u, group, target,multiple);
-            Locator.Instance.Get<IGameState>().OnSpawnSquad(self, rc);
+            Locator.Get<IGameState>().OnSpawnSquad(self, rc);
             return rc;
         }
         
@@ -287,7 +287,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 action = new SpawnGroupSquadAction<EmptySpawnSquadFallback>(u,v,c,null, restGold, upLevelgold, giveHonor, notRecycle)
                     .SetPriority(priority);
             }
-            Locator.Instance.Get<ISpawnSquadQueue>(this).AppendAction(action);
+            Locator.Get<ISpawnSquadQueue>(this).AppendAction(action);
             //UpdateUserData(uid, v.score * c, v.num * c, null, null);
         }
 
@@ -299,7 +299,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
                 AddInitAttr(userData,sb);
                 if(sb.Length > 0)
                     sb = sb.Remove(sb.Length - 1,1);
-                LargeTips.Show(LargePopTipsDataBuilder.Create(userData.Name,$"加入{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方")
+                LargeTips.Show(LargePopTipsDataBuilder.Create(userData.Name,$"加入{Locator.Get<IConstConfig>().GetGroupName(g + 1)}方")
                     .SetBottom(sb.ToString()).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.Yellow).SetRightColor(LargeTips.GetGroupColor(g)));
             }
         }

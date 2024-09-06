@@ -79,7 +79,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         
         public static void Show(LargePopTipsData d)
         {
-            Locator.Instance.Get<IContext>().SendMsgToOverlay((short)EMsgTy.ShowLargeTips,d);
+            Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.ShowLargeTips,d);
         }
 
         public static int White => 0x00ff_ffff;

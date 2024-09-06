@@ -149,7 +149,7 @@ namespace BililiveDebugPlugin
                 //    if (int.TryParse(match.Groups[1].Value, out var lvl))
                 //    {
                 //        if(conf.Reinforcements.ReinforcementsDataMgr.GetInstance().Dict.TryGetValue(lvl, out var data))
-                //            Locator.Instance.Get<DefineKeepDamagedSpawnSquadPlug>().DoSpawnSquad(g, data);
+                //            Locator.Get<DefineKeepDamagedSpawnSquadPlug>().DoSpawnSquad(g, data);
                 //    }
                 //    return;
                 //}
@@ -160,7 +160,7 @@ namespace BililiveDebugPlugin
                 }
                 if (TestIn.Text == "SendSquad")
                 {
-                    (Locator.Instance.Get<ISquadMgr>() as BarSquadMgr)?.TestSendSlot();
+                    (Locator.Get<ISquadMgr>() as BarSquadMgr)?.TestSendSlot();
                     return;
                 }
 
@@ -172,7 +172,7 @@ namespace BililiveDebugPlugin
 
                 if (TestIn.Text == "Settlement")
                 {
-                    Locator.Instance.Get<BarContext>().DoSettlement(2,false);
+                    Locator.Get<BarContext>().DoSettlement(2,false);
                     return;
                 }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
@@ -191,7 +191,7 @@ namespace BililiveDebugPlugin
                 if (m.CommentText[0] == '给')
                 {
                     m.GiftName = m.CommentText.Substring(1);
-                    if (Locator.Instance.Get<IGiftMgr>().GetItem(m.GiftName, out var it))
+                    if (Locator.Get<IGiftMgr>().GetItem(m.GiftName, out var it))
                     {
                         m.GiftPrice = it.Price * 100;
                         m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.GiftSend;
@@ -242,7 +242,7 @@ namespace BililiveDebugPlugin
                 m.UserName = $"name_{i}";
                 m.MsgType = BilibiliDM_PluginFramework.MsgTypeEnum.Comment;
                 m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
-                m.CommentText = new Random().Next(0, Locator.Instance.Get<ISquadMgr>().SlotCount).ToString();
+                m.CommentText = new Random().Next(0, Locator.Get<ISquadMgr>().SlotCount).ToString();
                 m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = m });
             }
             

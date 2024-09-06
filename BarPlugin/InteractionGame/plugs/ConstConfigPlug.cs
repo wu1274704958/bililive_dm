@@ -25,12 +25,12 @@ namespace BarPlugin.InteractionGame.plugs
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit<IConstConfig>(new T());
+            Locator.Deposit<IConstConfig>(new T());
         }
 
         public override void Dispose()
         {
-            Locator.Instance.Remove<IConstConfig>();
+            Locator.Remove<IConstConfig>();
             base.Dispose();
         }
     }

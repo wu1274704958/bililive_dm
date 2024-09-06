@@ -99,7 +99,7 @@ namespace InteractionGame.plugs.bar
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit<ISquadMgr>(this);
+            Locator.Deposit<ISquadMgr>(this);
             LoadSquad();
             
         }
@@ -107,7 +107,7 @@ namespace InteractionGame.plugs.bar
         public override void Start()
         {
             base.Start();
-            _context = Locator.Instance.Get<IContext>();
+            _context = Locator.Get<IContext>();
         }
 
         public void TestSendSlot()

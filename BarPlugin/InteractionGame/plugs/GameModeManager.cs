@@ -22,7 +22,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             base.Init();
             foreach (var gm in GameModes)
                 gm.Value.Init();
-            Locator.Instance.Deposit(this);
+            Locator.Deposit(this);
         }
 
         public override void Start()
@@ -63,7 +63,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             {
                 v.OnResume(args);
                 CurrentGameMode = gameMode;
-                Locator.Instance.DepositOrExchange(v);
+                Locator.DepositOrExchange(v);
                 if (v.NextBackToDefault())
                     NextGameMode = (DefGameMode,null);
             }

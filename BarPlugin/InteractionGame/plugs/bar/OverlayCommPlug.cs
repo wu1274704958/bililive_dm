@@ -39,7 +39,7 @@ namespace InteractionGame.plugs.bar
         public override void Start()
         {
             base.Start();
-            var conf = Locator.Instance.Get<IConstConfig>();
+            var conf = Locator.Get<IConstConfig>();
             comm.Init(conf.OverlayCommKey, conf.OverlayCommSize);
         }
 

@@ -70,9 +70,9 @@ namespace InteractionGame.plugs.bar
         public override void Init()
         {
             base.Init();
-            Locator.Instance.Deposit<IGameState>(this);
-            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
-            Locator.Instance.Get<IContext>().RegisterOnRecvGameMsg<UnitDestroyedData>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
+            Locator.Deposit<IGameState>(this);
+            Locator.Get<IContext>().RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
+            Locator.Get<IContext>().RegisterOnRecvGameMsg<UnitDestroyedData>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
         }
 
         public override void Start()

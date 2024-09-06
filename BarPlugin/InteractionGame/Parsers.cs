@@ -49,7 +49,7 @@ namespace InteractionGame
             InitCtx = it;
             PlayerGroupMap = GetPlayerGroupMap();
             mSelectGrouRegex = SelectGrouRegex;
-            _gameState = Locator.Instance.Get<IGameState>();
+            _gameState = Locator.Get<IGameState>();
         }
 
         private void SetupGroupCount()
@@ -89,7 +89,7 @@ namespace InteractionGame
         }
         protected virtual Dictionary<string,int> GetPlayerGroupMap()
         {
-            return Locator.Instance.Get<IConstConfig>().GroupNameMap;
+            return Locator.Get<IConstConfig>().GroupNameMap;
         }
         public List<int> GetLeastGroupList()
         {
@@ -143,7 +143,7 @@ namespace InteractionGame
 
         public int ChooseGroupSystem(string uid, DyMsgOrigin msgOrigin)
         {
-            int g = Locator.Instance.Get<IGameMode>().GetPlayerGroup(uid);
+            int g = Locator.Get<IGameMode>().GetPlayerGroup(uid);
             if (g == -1)
             {
                 lock (m_LockChooseGroup)
@@ -163,7 +163,7 @@ namespace InteractionGame
             if (g > -1)
             {
                 msgOrigin.msg = OnPlayerPreJoin(msgOrigin.msg);
-                InitCtx.GetResourceMgr().AddAutoResourceById(uid, Locator.Instance.Get<IConstConfig>().GetOnPlayerJoinGoldAddition(msgOrigin.msg.GuardLevel));
+                InitCtx.GetResourceMgr().AddAutoResourceById(uid, Locator.Get<IConstConfig>().GetOnPlayerJoinGoldAddition(msgOrigin.msg.GuardLevel));
                 OnAddGroup(new UserData(uid, msgOrigin.msg.UserName, msgOrigin.msg.UserFace, g, msgOrigin.msg.GuardLevel, Utility.GetFansLevel(msgOrigin)), g);
             }
             return g;
@@ -176,7 +176,7 @@ namespace InteractionGame
             bool allSame = false;
             foreach (var it in GroupCount)
             {
-                var realVal = Locator.Instance.Get<IGameMode>().OverrideGetPlayerCount(it.Key, it.Value);
+                var realVal = Locator.Get<IGameMode>().OverrideGetPlayerCount(it.Key, it.Value);
                 if (realVal < v)
                 {
                     allSame = v == Int32.MaxValue;
@@ -244,7 +244,7 @@ namespace InteractionGame
         }
         public virtual void SetGroup(string id,int g)
         {
-            var c = Locator.Instance.Get<IGameMode>().GetSeatCountOfPlayer(id,g);
+            var c = Locator.Get<IGameMode>().GetSeatCountOfPlayer(id,g);
             if (!GroupDict.TryAdd(id, g))
             {
                 if(GroupDict[id] == g) return;
@@ -687,8 +687,8 @@ namespace InteractionGame
             squad.StringTag = s;
             squad.squad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
             squad.specialSquad = ObjPoolMgr.Instance.Get<List<(SquadData, int)>>(null, DefObjectRecycle.OnListRecycle).Get();
-            var squadMgr = Locator.Instance.Get<ISquadMgr>();
-            var user = Locator.Instance.Get<IContext>().GetMsgParser().GetUserData(uid);
+            var squadMgr = Locator.Get<ISquadMgr>();
+            var user = Locator.Get<IContext>().GetMsgParser().GetUserData(uid);
             Utility.StringToDictAndForeach(s, (item) =>
             {
                 var sd = squadMgr.GetSquadBySlot(item.Key, user);
@@ -714,7 +714,7 @@ namespace InteractionGame
             SquadGroup group = new SquadGroup();
             group.AddedAttr = addedAttr;
             group.Init();
-            var squadMgr = Locator.Instance.Get<ISquadMgr>();
+            var squadMgr = Locator.Get<ISquadMgr>();
             Action<(int, int)> f = (item) =>
             {
                 var sd = squadMgr.GetSquadBySlot(item.Item1, user);
@@ -743,7 +743,7 @@ namespace InteractionGame
             SquadGroup group = new SquadGroup();
             group.AddedAttr = addedAttr;
             group.Init();
-            var squadMgr = Locator.Instance.Get<ISquadMgr>();
+            var squadMgr = Locator.Get<ISquadMgr>();
             Action<int,int> f = (id,count) =>
             {
                 var sd = squadMgr.GetSquadBySlot(id, user);

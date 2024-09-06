@@ -111,9 +111,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void OnStartGame()
         {
-            for (int i = 0; i < Locator.Instance.Get<IGameState>().GroupCount; ++i)
+            for (int i = 0; i < Locator.Get<IGameState>().GroupCount; ++i)
             {
-                var level = Locator.Instance.Get<IGameMode>().StartGroupLevel(i);
+                var level = Locator.Get<IGameMode>().StartGroupLevel(i);
                 GroupLevel.TryAdd(i, new LevelCxt(){ All = 0, NowLevel = level + 1, NowConf = level  });
                 SendGroupLevel(i, level + 1,"",0.0f);
             }
@@ -191,7 +191,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             c.NowLevel = config.Price;
             c.NowConf++;
             var desc = config.GetDesc(goldMultiplier,damageMultiplier,hpMultiplier);
-            LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{Locator.Instance.Get<IConstConfig>().GetGroupName(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
+            LargeTips.Show(LargePopTipsDataBuilder.Create($"恭喜{Locator.Get<IConstConfig>().GetGroupName(g + 1)}方",$"升至{GetLevelStr(c.NowConf + 1)}本")
                 .SetBottom(desc).SetBottomColor(LargeTips.Cyan).SetLeftColor(LargeTips.GetGroupColor(g)).SetRightColor(LargeTips.Yellow));
             
             LiveGameUtils.ForeachUsersByGroup(m_Owner.InitCtx,g,(id) =>
@@ -236,7 +236,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
 
         public void Start()
         {
-            _cxt = Locator.Instance.Get<IContext>();
+            _cxt = Locator.Get<IContext>();
             m_Owner.InitCtx.GetPlayerParser().AddObserver(this);
         }
 

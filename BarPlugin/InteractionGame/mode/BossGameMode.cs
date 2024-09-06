@@ -15,8 +15,8 @@ namespace BililiveDebugPlugin.InteractionGame.mode
         public override void Start()
         {
             base.Start();
-            Locator.Instance.Get<IContext>().GetPlayerParser().AddObserver(this);
-            _cxt = Locator.Instance.Get<IContext>();
+            Locator.Get<IContext>().GetPlayerParser().AddObserver(this);
+            _cxt = Locator.Get<IContext>();
         }
 
         public void SetSeatCount(string oid, int v)

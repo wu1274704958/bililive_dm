@@ -22,8 +22,9 @@ namespace BarPlugin.InteractionGame.plugs.bar
             ChangeTower = 2,
             AddHonor = 3,
             RandomGift = 4,
+            RandomSquad = 5,
         }
-        protected Dictionary<EFuncId, Func<UserData, AnyArray,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray, bool>>();
+        protected Dictionary<EFuncId, Func<UserData, AnyArray, GiftItem,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray,GiftItem, bool>>();
         protected Random _random = new Random();
         private IGlobalConfig _globalConfig;
 
@@ -35,61 +36,109 @@ namespace BarPlugin.InteractionGame.plugs.bar
             AddApplyFunc(EFuncId.ChangeTower, ChangeTower);
             AddApplyFunc(EFuncId.AddHonor, AddHonor);
             AddApplyFunc(EFuncId.RandomGift, RandomGift);
+            AddApplyFunc(EFuncId.RandomSquad, RandomSquad);
         }
 
-        private bool RandomGift(UserData data, AnyArray array)
+        private bool RandomSquad(UserData data, AnyArray array,GiftItem giftItem)
         {
-            if(array.Count >= 2 && array.TryGet<string>(0,out var giftKey) && array.TryGet<string>(1, out var randKey))
+            Dictionary<int, int> squad = null;
+            Dictionary<int, KeyValuePair<int, int>> squadRandom = null;
+            Dictionary<int, int> probability = null;
+            if (array.TryGet<string>(0, out var squadKey) && _globalConfig.GetConfig<Dictionary<int, int>>(squadKey, out squad)) ;
+            if (array.TryGet<string>(0, out squadKey) && _globalConfig.GetConfig<Dictionary<int, KeyValuePair<int, int>>>(squadKey, out squadRandom)) ;
+            if (array.TryGet<string>(1, out var probabilityKey) && _globalConfig.GetConfig<Dictionary<int, int>>(probabilityKey, out probability)) ;
+            int squadId = 0;
+            int count = 0;
+            if (squad != null)
             {
-                if(_globalConfig.GetConfig<List<string>>(giftKey,out var gifts) && _globalConfig.GetConfig<List<int>>(randKey, out var probability))
-                {
-                    if(gifts.Count != probability.Count)
-                    {
-                        _context.Log($"Random Gift gifts.Count != probability.Count {giftKey} {randKey}");
-                        return false;
-                    }
-                    var gift = RandomGift(gifts, probability);
-                    if(gift == null)
-                    {
-                        _context.Log($"Random Gift return null {giftKey} {randKey}");
-                        return false;
-                    }
-                    array.TryGet<bool>(array.Count - 1, out var apply, false);
-                    int count = 1;
-                    if (array.Count >= 3 && array.TryGet<string>(2, out var countKey) && _globalConfig.GetConfig<Dictionary<string, int>>(countKey, out var countMap) &&
-                        countMap.TryGetValue(gift, out var c))
-                        count = c;
-                    if (array.Count >= 4 && array.TryGet<string>(2, out var minKey) && array.TryGet<string>(3, out var maxKey) && _globalConfig.GetConfig<Dictionary<string, int>>(minKey, out var minMap) &&
-                        _globalConfig.GetConfig<Dictionary<string, int>>(maxKey, out var maxMap) && minMap.TryGetValue(gift, out var min) && maxMap.TryGetValue(gift, out var max))
-                        count = _random.Next(min, max);
-                    if (count > 0)
-                    {
-                        if (apply)
-                            ApplyGift(gift, data, count);
-                        else
-                            GiveGift(gift, data, count);
-                        return true;
-                    }
-                }
+                var g = RandomGift(squad, probability);
+                squadId = g.Key;
+                count = g.Value;
+            }
+            else if (squadRandom != null)
+            {
+                var g = RandomGift(squadRandom, probability);
+                squadId = g.Key;
+                count = _random.Next(g.Value.Key, g.Value.Value);
+            }
+            var sd = Locator.Get<ISquadMgr>().GetSquadById(squadId);
+            if (sd == null)
+                return false;
+            _context.GetMsgParser().SendSpawnSquadQueue(data, sd, count, giftItem.Price, giftItem.Id, count);
+            return true;
+        }
+
+        private bool RandomGift(UserData data, AnyArray array, GiftItem giftItem)
+        {
+            Dictionary<string, int> gifts = null;
+            Dictionary<string, KeyValuePair<int, int>> giftRandom = null;
+            Dictionary<string, int> probability = null;
+            if (array.TryGet<bool>(0, out var apply, false)) ;
+            if (array.TryGet<string>(1, out var giftKey) && _globalConfig.GetConfig<Dictionary<string, int>>(giftKey, out gifts)) ;
+            if (array.TryGet<string>(1, out giftKey) && _globalConfig.GetConfig<Dictionary<string, KeyValuePair<int,int>>>(giftKey, out giftRandom)) ;
+            if (array.TryGet<string>(2, out var probabilityKey) && _globalConfig.GetConfig<Dictionary<string,int>>(probabilityKey, out probability)) ;
+            string gift = null;
+            int count = 0;
+            if(gifts != null)
+            {
+                var g = RandomGift(gifts, probability);
+                gift = g.Key;
+                count = g.Value;
+            }else if(giftRandom != null)
+            {
+                var g = RandomGift(giftRandom, probability);
+                gift = g.Key;
+                count = _random.Next(g.Value.Key, g.Value.Value);
+            }
+            if (gift != null && count > 0)
+            {
+                if (apply)
+                    ApplyGift(gift, data, count);
+                else
+                    GiveGift(gift, data, count);
+                return true;
             }
             return false;
         }
 
-        private string RandomGift(List<string> gifts, List<int> probability)
+        private int GetProbability<K>(K key,Dictionary<K,int> probability)
         {
-            var allProb = 0;
-            foreach (var it in probability)
-                allProb += it;
-            var rand = _random.Next(allProb);
-            if (rand == 0) return gifts[0];
-            if (rand == allProb - 1) return gifts[gifts.Count - 1];
-            for (int i = 0;i < gifts.Count;++i)
+            if (probability == null)
+                return 1;
+            if (probability.TryGetValue(key, out var v))
+                return v;
+            else
+                return 1;
+        }
+        private int GetAllProbability<K,V>(Dictionary<K, V> gifts, Dictionary<K, int> probability)
+        {
+            if (probability == null)
+                return gifts.Count;
+            else
             {
-                if(allProb <= 0)
-                    return gifts[i];
-                allProb -= probability[i];
+                var allProb = 0;
+                foreach (var it in gifts)
+                {
+                    if (probability.TryGetValue(it.Key, out var v))
+                        allProb += v;
+                    else
+                        allProb += 1;
+                }
+                return allProb;
             }
-            return null;
+        }
+
+        private KeyValuePair<K,V> RandomGift<K,V>(Dictionary<K,V> gifts, Dictionary<K,int> probability)
+        {
+            var allProb = GetAllProbability(gifts, probability);
+            var rand = _random.Next(allProb);
+            foreach (var it in gifts)
+            {
+                if (rand <= 0)
+                    return it;
+                rand -= GetProbability(it.Key, probability);
+            }
+            return default;
         }
 
         private bool GetValueByAnyArray(UserData data,AnyArray array,out int res)
@@ -118,7 +167,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return true;
         }
 
-        private bool AddHonor(UserData data, AnyArray array)
+        private bool AddHonor(UserData data, AnyArray array, GiftItem giftItem)
         {
             if (GetValueByAnyArray(data,array,out int honor))
             {
@@ -146,7 +195,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return false;
         }
 
-        private bool ChangeTower(UserData user, AnyArray args)
+        private bool ChangeTower(UserData user, AnyArray args, GiftItem giftItem)
         {
             if (args.TryGet<int>(0, out var towerUnit))
             {
@@ -159,7 +208,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             }
             return false;
         }
-        private bool AddGoldFunc(UserData user, AnyArray args)
+        private bool AddGoldFunc(UserData user, AnyArray args, GiftItem giftItem)
         {
             if (GetValueByAnyArray(user,args,out var gold))
             {
@@ -177,7 +226,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             _globalConfig = Locator.Get<IGlobalConfig>();
         }
 
-        public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, bool> func)
+        public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, GiftItem,bool> func)
         {
             FuncDict.Add(id, func);
         }
@@ -196,7 +245,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
                 {
                     foreach (var func in giftItem.Functions)
                     {
-                        ApplyFunction(func.Key,func.Value, user);
+                        ApplyFunction(func.Key,func.Value, user,giftItem);
                     }
                 }
                 return true;
@@ -204,11 +253,11 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return false;
         }
 
-        private bool ApplyFunction(int funcId,AnyArray args, UserData user)
+        private bool ApplyFunction(int funcId,AnyArray args, UserData user, GiftItem giftItem)
         {
             if(FuncDict.TryGetValue((EFuncId)funcId,out var func))
             {
-                return func(user,args);
+                return func(user,args,giftItem);
             }
             return false;
         }

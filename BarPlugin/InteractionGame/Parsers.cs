@@ -523,7 +523,7 @@ namespace InteractionGame
             return null;
         }
         public abstract void SendSpawnSquad(UserData u, int c, SquadData sd);
-        public abstract void SendSpawnSquadQueue(UserData u, int sid, int c, SquadData sd, int price = 0, string giftName = null, int giftCount = 0, int honor = 0,
+        public abstract void SendSpawnSquadQueue(UserData u, SquadData sd, int c, int price = 0, string giftName = null, int giftCount = 0, int honor = 0,
             int restGold = 0, int upLevelgold = 0, int giveHonor = 0, ushort attribute = 0, int priority = 0);
         public abstract int SendSpawnSquad(UserData u, List<(SquadData, int)> group, int groupCount, int multiple = 1);
         public abstract void SpawnManySquadQueue(string uid, SquadGroup v, int c, int price = 0, string giftName = null, int giftCount = 0, int honor = 0,

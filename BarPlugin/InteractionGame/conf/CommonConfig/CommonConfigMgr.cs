@@ -21,6 +21,8 @@ public  partial class CommonConfig
 [ProtoMember(8)] public System.Collections.Generic.List<System.String> ARRS { get; private set; }
 [ProtoMember(9)] public System.Collections.Generic.List<System.Int32> ARRI { get; private set; }
 [ProtoMember(10)] public System.Collections.Generic.List<System.Single> ARRF { get; private set; }
+[ProtoMember(11)] public System.Collections.Generic.Dictionary<System.String,System.Collections.Generic.KeyValuePair<System.Int32,System.Int32>> DictSII { get; private set; }
+[ProtoMember(12)] public System.Collections.Generic.Dictionary<System.Int32,System.Collections.Generic.KeyValuePair<System.Int32,System.Int32>> DictIII { get; private set; }
 }
 
 [ProtoContract]

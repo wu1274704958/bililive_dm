@@ -68,7 +68,7 @@ namespace InteractionGame.Parser
                     if ((DateTime.Now - lastSendGiftTime).TotalMinutes < 1.5)
                         continue;
                     var gold = m_Owner.InitCtx.GetResourceMgr().GetResource(it.Key);
-                    if (gold >= 3000)
+                    if (gold >= _config.AutoBoomSpawnGold)
                     {
                         AutoBoom(it.Key, it.Value);
                     }
@@ -80,7 +80,9 @@ namespace InteractionGame.Parser
         private void AutoBoom(string id, SquadGroup value)
         {
             var ud = m_Owner.GetUserData(id);
-            Boom(id, value, ud.NameColored, 999999, true, tag: "自动");
+            var group = value.Clone() as SquadGroup;
+            group.score = -1;
+            Boom(id, group, ud.NameColored, 999999, false, tag: "自动");
         }
 
         private DateTime GetSendGiftTime(string id)
@@ -152,9 +154,7 @@ namespace InteractionGame.Parser
                         squad.lastSpawnTime = DateTime.Now;
                         needAdd = true;
                     }
-                    var spawnTime = 0.0;
-                    var isEmpty = false;
-                    (spawnTime, isEmpty) = ParseStr2SquadGroup(match.Groups[1].Value, uid, needAdd, squad);
+                    var (spawnTime, isEmpty) = ParseStr2SquadGroup(match.Groups[1].Value, uid, needAdd, squad);
                     if (isEmpty)
                     {
                         if (m_Dict.TryRemove(uid, out var squadData))
@@ -285,7 +285,8 @@ namespace InteractionGame.Parser
                     {
                         m_Owner.InitCtx.PrintGameMsg($"{squad.uName}{(tag != null ? tag : "")}暴兵{squad.StringTag}x{c}组");
                         var ud = m_Owner.GetUserData(uid);
-                        m_Owner.SpawnManySquadQueue(tag != null ? (-(ud.Group + 1)).ToString() : uid, needClone ? squad.Clone() as SquadGroup : squad, c, upLevelgold: c * squad.price, notRecycle: false);
+
+                        m_Owner.SpawnManySquadQueue(uid, needClone ? squad.Clone() as SquadGroup : squad, c, upLevelgold: c * squad.price, notRecycle: false);
                         //m_Owner.GetSubMsgParse<GroupUpLevel<IT>>().NotifyDepleteGold(
                         //    m_Owner.m_MsgDispatcher.GetPlayerParser().GetGroupById(uid),c * squad.price);
                     }

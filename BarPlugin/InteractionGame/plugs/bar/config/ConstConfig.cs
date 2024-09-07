@@ -35,7 +35,7 @@ namespace InteractionGame.plugs.bar.config
                 new KeyValuePair<int, string>(3, "舰长")
             };
 
-        public long HonorGoldFactor => 20;
+        public long HonorGoldFactor => 80;
 
         public int AutoGoldLimit => 4000;
 
@@ -54,6 +54,8 @@ namespace InteractionGame.plugs.bar.config
         public int AutoSquadCountLimit => _autoSquadCountLimit;
 
         public int WinGroupAddedScore => 500;
+
+        public int AutoBoomSpawnGold => 3000;
 
         public int GetGroupIdByName(string name)
         {

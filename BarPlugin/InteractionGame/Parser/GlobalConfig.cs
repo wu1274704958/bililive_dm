@@ -15,7 +15,7 @@ namespace InteractionGame.Parser
             var c = CommonConfigMgr.GetInstance().Get(id);
             if (c == null)
                 return false;
-            var fields = c.GetType().GetFields();
+            var fields = c.GetType().GetProperties();
             foreach( var field in fields )
             {
                 var fieldValue = field.GetValue(c);

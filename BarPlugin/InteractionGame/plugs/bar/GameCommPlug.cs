@@ -72,7 +72,7 @@ namespace InteractionGame.plugs.bar
 
         public override void Tick()
         {
-            if(comm.Tick())
+            while(comm.Tick())
             {
                 RecvMsg(comm.PopRecv());
             }

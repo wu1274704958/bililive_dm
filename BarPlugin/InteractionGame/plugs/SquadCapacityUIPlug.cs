@@ -13,14 +13,23 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
     }
     public class SquadCapacityUIPlug : IPlug<EGameAction>,ISquadCountObserver
     {
+<<<<<<< HEAD
         public override void OnReceiveNotify(EGameAction m,object args = null)
+=======
+        private IGameState _gameState;
+        public override void Notify(EGameAction m)
+>>>>>>> c47f9f8 (Fix bug)
         {
             
         }
 
         public override void Tick()
         {
-            
+            for(int i = 0;i <_gameState.GroupCount;i++)
+            {
+                var c = _gameState.GetSquadCount(i);
+                SquadCountChanged(i,0,c);
+            }
         }
 
         public override void Init()
@@ -32,7 +41,8 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
         public override void Start()
         {
             base.Start();
-            Locator.Get<IGameState>().AddObserver(this);
+            _gameState = Locator.Get<IGameState>();
+            //Locator.Get<IGameState>().AddObserver(this);
             Locator.Get<IContext>().SendMsgToOverlay((short)EMsgTy.SquadCountChanged, new GroupSquadCapacityUIData() { Group = -1, Count = Locator.Get<IConstConfig>().SquadCountLimit });
         }
 

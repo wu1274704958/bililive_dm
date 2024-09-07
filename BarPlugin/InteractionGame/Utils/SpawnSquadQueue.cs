@@ -202,9 +202,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             var self = u.Id_int < 0 ? u.Group : cxt.GetPlayerParser().GetGroupById(u.Id);
             Locator.Get<IGameState>().OnSpawnSquad(self, c * sd.GetCountMulti());
             cxt.GetBridge().ExecSpawnSquad(u, sd, c, target);
-            if(u.Id_int > 0)
+            if(u.Id_int > 0 && sd.Score > 0)
                 cxt.GetMsgParser().UpdateUserData(u.Id,sd.Score * c * scoreScale,c);
-            if (false)
+            if (log)
                 Locator.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
 
@@ -234,9 +234,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             rc = cxt.GetBridge().ExecSpawnGroup(u, group,target, multiple);
             if(rc > 0)
                 Locator.Get<IGameState>().OnSpawnSquad(self, rc);
-            if (u.Id_int > 0)
+            if (u.Id_int > 0 && score > 0)
                 cxt.GetMsgParser().UpdateUserData(u.Id,(int)(score * multiple * scoreScale) ,rc);
-            if (false)
+            if (log)
                 Locator.Get<IContext>().Log($"--Spawn g = {self} num = {rc}");
             return rc;
         }

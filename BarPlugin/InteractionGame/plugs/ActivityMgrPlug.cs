@@ -138,6 +138,8 @@ namespace InteractionGame.plugs
             var cumulative = false;
             foreach (var it in conf.Activity.ActivityItemMgr.GetInstance().Dict)
             {
+                if (it.Value.Type_e != type)
+                    continue;
                 var checkTime = tmp.Count == 0 || it.Value.Priority > lastPriority || (cumulative && it.Value.Cumulative);
                 if(checkTime && InActivity(it.Value))
                 {

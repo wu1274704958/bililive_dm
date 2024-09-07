@@ -25,7 +25,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             RandomGift = 4,
             RandomSquad = 5,
         }
-        protected Dictionary<EFuncId, Func<UserData, AnyArray, GiftItem,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray,GiftItem, bool>>();
+        protected Dictionary<EFuncId, Func<UserData, AnyArray, GiftItem,int,bool>> FuncDict = new Dictionary<EFuncId, Func<UserData, AnyArray,GiftItem,int, bool>>();
         protected Random _random = new Random();
         private IGlobalConfig _globalConfig;
 
@@ -40,7 +40,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             AddApplyFunc(EFuncId.RandomSquad, RandomSquad);
         }
 
-        private bool RandomSquad(UserData data, AnyArray array,GiftItem giftItem)
+        private bool RandomSquad(UserData data, AnyArray array,GiftItem giftItem,int c)
         {
             Dictionary<int, int> squad = null;
             Dictionary<int, KeyValuePair<int, int>> squadRandom = null;
@@ -65,11 +65,11 @@ namespace BarPlugin.InteractionGame.plugs.bar
             var sd = Locator.Get<ISquadMgr>().GetSquadById(squadId);
             if (sd == null)
                 return false;
-            _context.GetMsgParser().SendSpawnSquadQueue(data, sd, count, giftItem.Price, giftItem.Id, count);
+            _context.GetMsgParser().SendSpawnSquadQueue(data, sd, count, giftItem.Price, giftItem.Id, count * c);
             return true;
         }
 
-        private bool RandomGift(UserData data, AnyArray array, GiftItem giftItem)
+        private bool RandomGift(UserData data, AnyArray array, GiftItem giftItem,int c)
         {
             Dictionary<string, int> gifts = null;
             Dictionary<string, KeyValuePair<int, int>> giftRandom = null;
@@ -94,9 +94,9 @@ namespace BarPlugin.InteractionGame.plugs.bar
             if (gift != null && count > 0)
             {
                 if (apply)
-                    ApplyGift(gift, data, count);
+                    ApplyGift(gift, data, count * c);
                 else
-                    GiveGift(gift, data, count);
+                    GiveGift(gift, data, count * c);
                 return true;
             }
             return false;
@@ -168,12 +168,12 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return true;
         }
 
-        private bool AddHonor(UserData data, AnyArray array, GiftItem giftItem)
+        private bool AddHonor(UserData data, AnyArray array, GiftItem giftItem, int count)
         {
             if (GetValueByAnyArray(data,array,out int honor))
             {
-                _context.PrintGameMsg($"{data.NameColored}获得了{honor}功勋");
-                DBMgr.Instance.AddHonor(data.Id, honor);
+                _context.PrintGameMsg($"{data.NameColored}获得了{honor * count}功勋");
+                DBMgr.Instance.AddHonor(data.Id, honor * count);
                 return true;
             }
             return false;
@@ -196,7 +196,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return false;
         }
 
-        private bool ChangeTower(UserData user, AnyArray args, GiftItem giftItem)
+        private bool ChangeTower(UserData user, AnyArray args, GiftItem giftItem, int count)
         {
             if (args.TryGet<int>(0, out var towerUnit))
             {
@@ -209,12 +209,12 @@ namespace BarPlugin.InteractionGame.plugs.bar
             }
             return false;
         }
-        private bool AddGoldFunc(UserData user, AnyArray args, GiftItem giftItem)
+        private bool AddGoldFunc(UserData user, AnyArray args, GiftItem giftItem,int count)
         {
             if (GetValueByAnyArray(user,args,out var gold))
             {
-                _context.GetResourceMgr().AddResource(user.Id, gold);
-                _context.PrintGameMsg($"{user.NameColored}获得{gold}g");
+                _context.GetResourceMgr().AddResource(user.Id, gold * count);
+                _context.PrintGameMsg($"{user.NameColored}获得{gold * count}g");
                 return true;
             }
             return false;
@@ -227,7 +227,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             _globalConfig = Locator.Get<IGlobalConfig>();
         }
 
-        public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, GiftItem,bool> func)
+        public void AddApplyFunc(EFuncId id, Func<UserData, AnyArray, GiftItem,int,bool> func)
         {
             FuncDict.Add(id, func);
         }
@@ -236,7 +236,24 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             if (giftItemMgr.Dict.TryGetValue(gift, out var giftItem))
             {
+<<<<<<< HEAD
                 return ApplyGift(giftItem, user, count);
+=======
+                if (giftItem.Gifts != null)
+                    GiveGift(giftItem.Gifts, user,count);
+                if (giftItem.ApplyGifts != null)
+                    ApplyGift(giftItem.ApplyGifts, user,count);
+                if (giftItem.SpawnSquad != null)
+                    ApplySpawnSquad(giftItem,count,giftItem.SpawnSquad,user);
+                if(giftItem.Functions != null)
+                {
+                    foreach (var func in giftItem.Functions)
+                    {
+                        ApplyFunction(func.Key,func.Value, user,giftItem,count);
+                    }
+                }
+                return true;
+>>>>>>> c47f9f8 (Fix bug)
             }
             return false;
         }
@@ -258,11 +275,11 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return true;
         }
 
-        private bool ApplyFunction(int funcId,AnyArray args, UserData user, GiftItem giftItem)
+        private bool ApplyFunction(int funcId,AnyArray args, UserData user, GiftItem giftItem, int count)
         {
             if(FuncDict.TryGetValue((EFuncId)funcId,out var func))
             {
-                return func(user,args,giftItem);
+                return func(user,args,giftItem,count);
             }
             return false;
         }
@@ -313,22 +330,22 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return giftItemMgr.Dict.ContainsKey(gift);
         }
 
-        public bool ApplyGift(Dictionary<string, int> gifts, UserData user)
+        public bool ApplyGift(Dictionary<string, int> gifts, UserData user, int count)
         {
             var res = false;
             foreach(var it in gifts)
             {
-                res = ApplyGift(it.Key,user,it.Value);
+                res = ApplyGift(it.Key,user,it.Value * count);
             }
             return res;
         }
 
-        public bool GiveGift(Dictionary<string, int> gifts, UserData user)
+        public bool GiveGift(Dictionary<string, int> gifts, UserData user, int count)
         {
             var res = false;
             foreach (var it in gifts)
             {
-                res = GiveGift(it.Key, user, it.Value);
+                res = GiveGift(it.Key, user, it.Value * count);
             }
             return res;
         }

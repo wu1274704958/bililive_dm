@@ -189,9 +189,9 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
         private void RecycleSettlementMsg(RankMsg rankMsg)
         {
             RecycleSettlementUser(rankMsg.CurrentKillRank);
-            RecycleSettlementUser(rankMsg.MonthlySingleKillRank);
+            //RecycleSettlementUser(rankMsg.MonthlySingleKillRank);
             //RecycleSettlementUser(rankMsg.MonthlyCumulativeKillRank);
-            //RecycleSettlementUser(rankMsg.CurrentScoreRank);
+            RecycleSettlementUser(rankMsg.CurrentScoreRank);
             //RecycleSettlementUser(rankMsg.MonthlySingleScoreRank);
             //RecycleSettlementUser(rankMsg.MonthlyCumulativeScoreRank);
         }

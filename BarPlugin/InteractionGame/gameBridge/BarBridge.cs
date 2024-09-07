@@ -34,6 +34,10 @@ namespace InteractionGame.gameBridge
     public class BarBridge : IGameBridge
     {
         private IContext _context;
+        private List<SpawnSquadData> spawnSquadDatas = new List<SpawnSquadData>();
+        private DateTime _lastSendSpawnTime = DateTime.Now;
+        private TimeSpan SpawnDuration = TimeSpan.FromMilliseconds(200);
+        private int NeedSpawnCount = 50;
 
         public void ChangeTower(UserData user, SquadData squad, object op = null)
         {
@@ -59,7 +63,10 @@ namespace InteractionGame.gameBridge
                 res += c;
                 data.SquadGroup.Add(new UnitData(it.Item1.GetBlueprint(user.Group), c));
             }
-            _context.SendMsgToGame<SpawnSquadData>(EGameMsg.SSpawn, data);
+            lock(spawnSquadDatas)
+            {
+                spawnSquadDatas.Add(data);
+            }
             return res;
         }
 
@@ -71,7 +78,10 @@ namespace InteractionGame.gameBridge
                 Target = target
             };
             data.SquadGroup.Add(new UnitData(squad.GetBlueprint(user.Group), count));
-            _context.SendMsgToGame<SpawnSquadData>(EGameMsg.SSpawn, data);
+            lock(spawnSquadDatas)
+            {
+                spawnSquadDatas.Add(data);
+            }
         }
 
         public void ForceFinish()
@@ -91,7 +101,13 @@ namespace InteractionGame.gameBridge
 
         public void OnTick(float delta)
         {
-
+            var now = DateTime.Now;
+            if ((now - _lastSendSpawnTime) >= SpawnDuration)
+            {
+                _context.SendMsgToGame(EGameMsg.SSpawn, spawnSquadDatas);
+                spawnSquadDatas.Clear();
+                _lastSendSpawnTime = now;
+            }
         }
 
         public void Stop()

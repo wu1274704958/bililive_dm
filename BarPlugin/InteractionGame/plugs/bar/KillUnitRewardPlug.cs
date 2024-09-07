@@ -35,7 +35,7 @@ namespace InteractionGame.plugs.bar
             Locator.Deposit(this);
             base.Start();
             _context = Locator.Get<IContext>();
-            _context.RegisterOnRecvGameMsg<KillUnitRewardData>(EGameMsg.BUnitReward, OnKillUnitReward);
+            _context.RegisterOnRecvGameMsg<List<KillUnitRewardData>>(EGameMsg.BUnitReward, OnKillUnitReward);
         }
         public override void Stop()
         {
@@ -45,16 +45,19 @@ namespace InteractionGame.plugs.bar
 
         private void OnKillUnitReward(string arg1, object arg2)
         {
-            if(arg2 is KillUnitRewardData data)
+            if(arg2 is List<KillUnitRewardData> list)
             {
-                var user = _context.GetMsgParser().GetUserData(data.id);
-                if(user != null)
+                foreach(var data in list)
                 {
-                    _context.GetResourceMgr().AddResource(user.Id, data.reward);
-                    if (KillUnitCountDict.TryGetValue(user.Id, out var count))
-                        KillUnitCountDict[user.Id] = count + data.killCount;
-                    else
-                        KillUnitCountDict[user.Id] = data.killCount;
+                    var user = _context.GetMsgParser().GetUserData(data.id);
+                    if (user != null)
+                    {
+                        _context.GetResourceMgr().AddResource(user.Id, data.reward);
+                        if (KillUnitCountDict.TryGetValue(user.Id, out var count))
+                            KillUnitCountDict[user.Id] = count + data.killCount;
+                        else
+                            KillUnitCountDict[user.Id] = data.killCount;
+                    }
                 }
             }
         }

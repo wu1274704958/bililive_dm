@@ -54,12 +54,12 @@ namespace Utils
                 if (j != null)
                 {
                     if(useAdd)
-                        j.AddValue((T)it.Clone());
+                        j.AddValue(it);
                     else
                         j.SetValue(it);
                 }
                 else
-                    datas.Add(it);
+                    datas.Add((T)it.Clone());
             }
         }
         public void Sort()

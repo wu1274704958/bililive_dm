@@ -1,6 +1,7 @@
 ﻿using InteractionGame.Context;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Utils;
 
 namespace InteractionGame.plugs.bar
@@ -72,7 +73,7 @@ namespace InteractionGame.plugs.bar
             base.Init();
             Locator.Deposit<IGameState>(this);
             Locator.Get<IContext>().RegisterOnRecvGameMsg<GamePreStartData>(EGameMsg.BPreStart, OnGamePreStart);
-            Locator.Get<IContext>().RegisterOnRecvGameMsg<UnitDestroyedData>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
+            Locator.Get<IContext>().RegisterOnRecvGameMsg<List<UnitDestroyedData>>(EGameMsg.BUnitDestroyed, OnUnitDestroyer);
         }
 
         public override void Start()
@@ -82,9 +83,12 @@ namespace InteractionGame.plugs.bar
 
         private void OnUnitDestroyer(string arg1, object arg2)
         {
-            if(arg2 is UnitDestroyedData data && data.count > 0)
+            if(arg2 is List<UnitDestroyedData> data && data.Count > 0)
             {
-                OnSpawnSquad(data.group, -data.count);
+                foreach (var it in data)
+                {
+                    OnSpawnSquad(it.group, -it.count);
+                }
             }
         }
 

@@ -270,8 +270,7 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
         public override void SpawnManySquadQueue(string uid, SquadGroup v, int c,int price = 0,string giftName = null,int giftCount = 0,int honor = 0,
             double restGold = 0, double upLevelgold = 0, int giveHonor = 0,bool notRecycle = false,int priority = 0)
         {
-            var id = 0;
-            var u = int.TryParse(uid, out id) && id < 0 ? new UserData(uid,"-","-",(int)(Math.Abs(id) - 1),0,0) : GetUserData(uid);
+            var u = GetUserData(uid);
             ISpawnSquadAction action = null;
             if (price > 0 && giftName != null)
             {

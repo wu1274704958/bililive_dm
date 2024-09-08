@@ -286,7 +286,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
 
         private void ApplySpawnSquad(GiftItem giftItem,int count,Dictionary<int, int> spawnSquad, UserData user)
         {
-            _context.GetMsgParser().SpawnManySquadQueue(user.Id,SquadGroup.FromData(spawnSquad,user),count,giftItem.Price,giftItem.Id,count);
+            _context.GetMsgParser().SpawnManySquadQueue(user.Id,SquadGroup.FromData(spawnSquad,user,useId:true),count,giftItem.Price,giftItem.Id,count);
         }
 
         public bool GiveGift(string gift,UserData user, int count = 1)

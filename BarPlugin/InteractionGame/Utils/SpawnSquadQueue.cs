@@ -207,18 +207,9 @@ namespace BililiveDebugPlugin.InteractionGameUtils
             if (log)
                 Locator.Get<IContext>().Log($"-Spawn g = {self} num = {c}");
         }
-
-        public static int GetAttackType(this SquadData self)
-        {
-            if(self.SquadType >= (int)ESquadType.SiegeAttacker && self.SquadType_e != ESquadType.MultiSquad)
-                return self.SquadType;
-            return 0;
-        }
+       
         public static int GetCountMulti(this SquadData self)
         {
-            return 1;
-            if(self.SquadType_e == ESquadType.MultiSquad)
-                return self.SquadCount;
             return 1;
         }
         public static int SendSpawnSquad(this ISpawnSquadAction a,UserData u, List<(SquadData, int)> group,double score,int squadNum,double multiple = 1.0,ushort attribute = 0,

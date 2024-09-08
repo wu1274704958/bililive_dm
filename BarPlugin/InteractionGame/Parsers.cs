@@ -738,7 +738,7 @@ namespace InteractionGame
                 f(it);
             return group;
         }
-        public static SquadGroup FromData(Dictionary<int, int> squad, UserData user, ushort addedAttr = 0)
+        public static SquadGroup FromData(Dictionary<int, int> squad, UserData user, ushort addedAttr = 0,bool useId = false)
         {
             SquadGroup group = new SquadGroup();
             group.AddedAttr = addedAttr;
@@ -746,7 +746,7 @@ namespace InteractionGame
             var squadMgr = Locator.Get<ISquadMgr>();
             Action<int,int> f = (id,count) =>
             {
-                var sd = squadMgr.GetSquadBySlot(id, user);
+                var sd = useId ? squadMgr.GetSquadById(id) : squadMgr.GetSquadBySlot(id, user);
                 if (sd == null) return;
                 group.spawnTime += sd.TrainTime * count;
                 group.score += sd.Score * count;

@@ -20,6 +20,7 @@ namespace InteractionGame.Parser.bar
         public int Group;
         public string Name;
         public int Type;
+        public int GuardLvl;
     }
     public class PlayerMsgParser : IDyPlayerParser
     {
@@ -89,10 +90,11 @@ namespace InteractionGame.Parser.bar
                         if (con.Length > 1 && int.TryParse(con.Substring(1), out op)) ;
                         if (op >= 10)
                             op = 0;
-                        op = _config.GetPureGuardLevel(msgOrigin.msg.UserGuardLevel) * 10 + op;
+                        var level = _config.GetPureGuardLevel(msgOrigin.msg.UserGuardLevel);
+                        op = level * 10 + op;
                         InitCtx.SendMsgToGame<JoinGameData>(EGameMsg.SJoin, new JoinGameData()
                         {
-                            Group = g, Name = msgOrigin.msg.UserName,Type = op,Id = uid
+                            Group = g, Name = msgOrigin.msg.UserName,Type = op,Id = uid,GuardLvl = level
                         });
                     }
                     return g;

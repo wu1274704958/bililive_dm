@@ -97,7 +97,7 @@ namespace InteractionGame.plugs.bar.config
 
         public int GetPureGuardLevel(int guardLvl)
         {
-            if (guardLvl < 0 || guardLvl > 3)
+            if (guardLvl < 0)
                 guardLvl = 0;
             if (guardLvl >= 10)
             {

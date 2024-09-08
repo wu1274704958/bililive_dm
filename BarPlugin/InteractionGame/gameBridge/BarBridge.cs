@@ -13,11 +13,13 @@ namespace InteractionGame.gameBridge
     {
         public string Squad;
         public int Count;
+        public int BornOp;
 
-        public UnitData(string v, int c)
+        public UnitData(string v, int c, int bornOp)
         {
             this.Squad = v;
             this.Count = c;
+            BornOp = bornOp;
         }
     }
     public class SpawnSquadData
@@ -61,13 +63,18 @@ namespace InteractionGame.gameBridge
             {
                 int c = (int)Math.Round(it.Item2 * multiple);
                 res += c;
-                data.SquadGroup.Add(new UnitData(it.Item1.GetBlueprint(user.Group), c));
+                data.SquadGroup.Add(new UnitData(it.Item1.GetBlueprint(user.Group), c, GetBornOp(it.Item1)));
             }
             lock(spawnSquadDatas)
             {
                 spawnSquadDatas.Add(data);
             }
             return res;
+        }
+
+        private int GetBornOp(SquadData squad)
+        {
+            return squad.SquadType;
         }
 
         public void ExecSpawnSquad(UserData user, SquadData squad, int count, int target = -1, object opt = null)
@@ -77,7 +84,7 @@ namespace InteractionGame.gameBridge
                 Id = user.Id,
                 Target = target
             };
-            data.SquadGroup.Add(new UnitData(squad.GetBlueprint(user.Group), count));
+            data.SquadGroup.Add(new UnitData(squad.GetBlueprint(user.Group), count,GetBornOp(squad)));
             lock(spawnSquadDatas)
             {
                 spawnSquadDatas.Add(data);
@@ -102,7 +109,7 @@ namespace InteractionGame.gameBridge
         public void OnTick(float delta)
         {
             var now = DateTime.Now;
-            if ((now - _lastSendSpawnTime) >= SpawnDuration)
+            if (spawnSquadDatas.Count > 0 && (now - _lastSendSpawnTime) >= SpawnDuration)
             {
                 _context.SendMsgToGame(EGameMsg.SSpawn, spawnSquadDatas);
                 spawnSquadDatas.Clear();

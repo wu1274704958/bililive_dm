@@ -174,6 +174,12 @@ namespace BililiveDebugPlugin
                     Locator.Get<BarContext>().DoSettlement(2,false);
                     return;
                 }
+                if (TestIn.Text == "ReloadSquad")
+                {
+                    conf.Squad.SettingMgr.Reload();
+                    m_Cxt.Log("Reload Squad");
+                    return;
+                }
                 if (TestIn.Text == "DoLike")
                 {
                     var dm = new BilibiliDM_PluginFramework.DanmakuModel();

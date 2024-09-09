@@ -56,6 +56,10 @@ namespace InteractionGame.plugs.bar
                 case EGameAction.GameStop:
                     SlotMap.Clear();
                     break;
+                case EGameAction.ConfigReload:
+                    SlotDict.Clear();
+                    LoadSquad();
+                    break;
             }
         }
 

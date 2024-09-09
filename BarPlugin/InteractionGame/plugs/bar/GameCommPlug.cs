@@ -56,7 +56,7 @@ namespace InteractionGame.plugs.bar
             base.Dispose();
         }
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             switch (m)
             {

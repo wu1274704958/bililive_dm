@@ -26,7 +26,12 @@ namespace Utils
             Interlocked.Exchange(ref State, 0);
         }
 
-        public abstract void Notify(M m);
+        public abstract void OnReceiveNotify(M m,object args = null);
+
+        public virtual void Notify(M m,object args = null)
+        {
+            Locator.Get<PlugMgr<M>>()?.OnReceiveNotify(m,args);
+        }
 
         public virtual void Start()
         {
@@ -55,6 +60,7 @@ namespace Utils
 
         public override void Init()
         {
+            Locator.Deposit<PlugMgr<M>>(this);
             base.Init();
             foreach (var plug in _plugs)
             {
@@ -123,20 +129,21 @@ namespace Utils
                     plug.Value.Dispose();
             }
             base.Dispose();
+            Locator.Remove<PlugMgr<M>>();
         }
 
-        public override void Notify(M m)
+        public override void OnReceiveNotify(M m,object args = null)
         {
             foreach (var plug in _plugs)
             {
                 foreach (var p in plug.Value.Plugs)
                 {
-                    p.Notify(m);
+                    p.OnReceiveNotify(m,args);
                 }
             }
             foreach (var plug in _NotTickPlugs)
             {
-                plug.Value.Notify(m);
+                plug.Value.OnReceiveNotify(m,args);
             }
         }
 

@@ -1,13 +1,30 @@
-﻿using System.IO;
+﻿using InteractionGame.Context;
+using System.IO;
 using Utils;
 
 namespace conf
 {
-    public sealed class ConfigMgr
+    public class ConfigMgr : IPlug<EGameAction>
     {
         public static readonly string ConfigPath = "E:\\code\\bililive_dm\\resource\\bar";
+        protected bool NeedReload = false;
+        public ConfigMgr() {
+            InitTable();
+        }
 
-        public static void Init()
+        public override void Init()
+        {
+            base.Init();
+            Locator.Deposit(this);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            Locator.Remove<ConfigMgr>();
+        }
+
+        public static void InitTable()
         {
             conf.Squad.SquadDataMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "SquadData.dat")));
             conf.Squad.SettingMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "Setting.dat")));
@@ -15,7 +32,6 @@ namespace conf
             conf.Gift.GiftItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "GiftItem.dat")));
             conf.CommonConfig.CommonConfigMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "CommonConfig.dat")));
             conf.Activity.ActivityItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "ActivityItem.dat")));
-            conf.Reinforcements.ReinforcementsDataMgr.GetInstance().OnLoaded();
         }
 
         public static void ReloadAll()
@@ -24,13 +40,28 @@ namespace conf
             conf.Squad.SettingMgr.Reload();
             conf.Reinforcements.ReinforcementsDataMgr.Reload();
             conf.Gift.GiftItemMgr.Reload();
-            conf.Reinforcements.ReinforcementsDataMgr.GetInstance().OnLoaded();
+            conf.CommonConfig.CommonConfigMgr.Reload();
+            conf.Activity.ActivityItemMgr.Reload();
         }
 
-        public static void ReloadReinforcements()
+        public void Reload()
         {
-            conf.Reinforcements.ReinforcementsDataMgr.Reload();
-            conf.Reinforcements.ReinforcementsDataMgr.GetInstance().OnLoaded();
+            NeedReload = true;
+        }
+
+        public override void OnReceiveNotify(EGameAction m,object args = null)
+        {
+            if(m == EGameAction.GamePreStart && NeedReload)
+            {
+                ReloadAll();
+                NeedReload = false;
+                Notify(EGameAction.ConfigReload);
+            }
+        }
+
+        public override void Tick()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

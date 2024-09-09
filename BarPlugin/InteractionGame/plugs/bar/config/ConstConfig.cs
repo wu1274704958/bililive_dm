@@ -114,7 +114,7 @@ namespace InteractionGame.plugs.bar.config
             throw new NotImplementedException();
         }
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             if(m == EGameAction.GameStop)
                 InitData();

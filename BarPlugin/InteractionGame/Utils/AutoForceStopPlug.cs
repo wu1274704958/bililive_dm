@@ -34,7 +34,7 @@ namespace InteractionGameUtils
             }
         }
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             switch (m)
             {

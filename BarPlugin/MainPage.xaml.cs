@@ -166,7 +166,7 @@ namespace BililiveDebugPlugin
 
                 if (TestIn.Text == "Reload")
                 {
-                    ConfigMgr.ReloadAll();
+                    Locator.Get<ConfigMgr>().Reload();
                     return;
                 }
 

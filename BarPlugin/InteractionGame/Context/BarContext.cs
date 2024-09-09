@@ -90,14 +90,14 @@ namespace InteractionGame.Context
         {
             base.OnInit();
 
-            ConfigMgr.Init();
             var _ = BililiveDebugPlugin.DB.DBMgr.Instance;
             Locator.Deposit<IGlobalConfig>(new GlobalConfig());
             
             dMPlugin.ReceivedDanmaku += OnReceivedDanmaku;
 
             messageDispatcher = new MessageDispatcherType();
-            
+
+            m_PlugMgr.Add(-1, new ConfigMgr());
             m_PlugMgr.Add(1000 * 30, new AutoForceStopPlug());
             m_PlugMgr.Add(1000, new SquadCapacityUIPlug());
             m_PlugMgr.Add(1000 * 60, new AutoDownLivePlug());

@@ -12,6 +12,7 @@ namespace InteractionGame.Context
         GameStart,
         PreSettlement,
         GameStop,
+        ConfigReload,
     }
     public abstract class BaseContext : IContext
     {

@@ -20,7 +20,7 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
             Locator.Get<IContext>().GetPlayerParser().AddPreJoinObserver(this);
             _cxt = Locator.Get<IContext>();
         }
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
 
         }

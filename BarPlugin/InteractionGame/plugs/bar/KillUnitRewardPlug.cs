@@ -20,7 +20,7 @@ namespace InteractionGame.plugs.bar
         private IContext _context;
         private ConcurrentDictionary<string,int> KillUnitCountDict = new ConcurrentDictionary<string, int>();
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             switch (m)
             {

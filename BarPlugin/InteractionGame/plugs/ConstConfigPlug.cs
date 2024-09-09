@@ -12,7 +12,7 @@ namespace BarPlugin.InteractionGame.plugs
     public class ConstConfigPlug<T> : IPlug<EGameAction>
         where T : IConstConfig,new()
     {
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
 
         }

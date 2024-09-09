@@ -117,7 +117,7 @@ namespace InteractionGame.plugs
             return false;
         }
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             switch (m)
             {

@@ -37,7 +37,7 @@ namespace InteractionGame.plugs.bar
             return 0;
         }
 
-        public override void Notify(EGameAction m)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             switch (m)
             {

@@ -16,5 +16,6 @@ namespace InteractionGame.plugs
         bool GiveGift(Dictionary<string, int> gifts, UserData user);
         bool GetItem(string gift,out conf.Gift.GiftItem item);
         void EnumerateGifts(Action<GiftItem> func);
+        bool ApplyNotConfigGift(UserData user,string giftName, int price, int count = 1);
     }
 }

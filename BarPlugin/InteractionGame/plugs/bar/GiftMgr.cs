@@ -6,6 +6,7 @@ using InteractionGame.Context;
 using InteractionGame.Parser;
 using InteractionGame.plugs;
 using Newtonsoft.Json.Linq;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.Windows.Documents;
@@ -235,22 +236,26 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             if (giftItemMgr.Dict.TryGetValue(gift, out var giftItem))
             {
-                if (giftItem.Gifts != null)
-                    GiveGift(giftItem.Gifts, user);
-                if (giftItem.ApplyGifts != null)
-                    ApplyGift(giftItem.ApplyGifts, user);
-                if (giftItem.SpawnSquad != null)
-                    ApplySpawnSquad(giftItem,count,giftItem.SpawnSquad,user);
-                if(giftItem.Functions != null)
-                {
-                    foreach (var func in giftItem.Functions)
-                    {
-                        ApplyFunction(func.Key,func.Value, user,giftItem);
-                    }
-                }
-                return true;
+                return ApplyGift(giftItem, user, count);
             }
             return false;
+        }
+        public bool ApplyGift(GiftItem giftItem, UserData user, int count = 1)
+        {
+            if (giftItem.Gifts != null)
+                GiveGift(giftItem.Gifts, user);
+            if (giftItem.ApplyGifts != null)
+                ApplyGift(giftItem.ApplyGifts, user);
+            if (giftItem.SpawnSquad != null)
+                ApplySpawnSquad(giftItem, count, giftItem.SpawnSquad, user);
+            if (giftItem.Functions != null)
+            {
+                foreach (var func in giftItem.Functions)
+                {
+                    ApplyFunction(func.Key, func.Value, user, giftItem);
+                }
+            }
+            return true;
         }
 
         private bool ApplyFunction(int funcId,AnyArray args, UserData user, GiftItem giftItem)
@@ -339,6 +344,39 @@ namespace BarPlugin.InteractionGame.plugs.bar
             {
                 func.Invoke(item.Value);
             }
+        }
+
+        public bool ApplyNotConfigGift(UserData user, string giftName, int price, int count = 1)
+        {
+            if (giftItemMgr.Dict.TryGetValue("NotConfigGift", out var giftItem))
+            {
+                var gift = new GiftItem();
+                gift.Clone(giftName, price);
+                return ApplyGift(gift,user,count);
+            }
+            return false;
+        }
+    }
+}
+
+namespace conf.Gift
+{
+    public partial class GiftItem
+    {
+        public GiftItem Clone(string newId,int price)
+        {
+            return new GiftItem()
+            {
+                Id = newId,
+                Price = price,
+                ApplyGifts = ApplyGifts,
+                Gifts = Gifts,
+                Functions = Functions,
+                Duration = Duration,
+                Ext = Ext,
+                ItemType = ItemType,
+                SpawnSquad = SpawnSquad
+            };
         }
     }
 }

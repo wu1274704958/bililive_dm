@@ -142,7 +142,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
             return default;
         }
 
-        private bool GetValueByAnyArray(UserData data,AnyArray array,out int res)
+        private bool GetValueByAnyArray(UserData data,AnyArray array,GiftItem gift,out int res)
         {
             res = 0;
             if (array == null || array.Count == 0)
@@ -156,11 +156,11 @@ namespace BarPlugin.InteractionGame.plugs.bar
             if (array.Count == 2 && array.TryGet<int>(0, out v) && array.TryGet<int>(1, out v2))
                 honor = _random.Next((int)v, (int)v2);
             if (array.Count == 1 && array.TryGet<string>(0, out expr))
-                honor = expr.EvaluateExpr<int>(data);
+                honor = expr.EvaluateExpr<int>(data,gift);
             if (array.Count == 2 && array.TryGet<int>(0, out v) && array.TryGet<string>(1, out expr))
-                honor = expr.EvaluateExpr<int>(data, v);
+                honor = expr.EvaluateExpr<int>(data,gift,v);
             if (array.Count == 3 && array.TryGet<int>(0, out v) && array.TryGet<int>(1, out v2) && array.TryGet<string>(2, out expr))
-                honor = expr.EvaluateExpr<int>(data, _random.Next(v, v2));
+                honor = expr.EvaluateExpr<int>(data, gift,_random.Next(v, v2));
 
             if (TryGetMultiplyingPower(data, array, array.Count - 1, out var multiplying))
                 honor = (int)(multiplying * honor);
@@ -170,7 +170,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
 
         private bool AddHonor(UserData data, AnyArray array, GiftItem giftItem, int count)
         {
-            if (GetValueByAnyArray(data,array,out int honor))
+            if (GetValueByAnyArray(data,array,giftItem,out int honor))
             {
                 _context.PrintGameMsg($"{data.NameColored}获得了{honor * count}功勋");
                 DBMgr.Instance.AddHonor(data.Id, honor * count);
@@ -211,7 +211,7 @@ namespace BarPlugin.InteractionGame.plugs.bar
         }
         private bool AddGoldFunc(UserData user, AnyArray args, GiftItem giftItem,int count)
         {
-            if (GetValueByAnyArray(user,args,out var gold))
+            if (GetValueByAnyArray(user,args, giftItem, out var gold))
             {
                 _context.GetResourceMgr().AddResource(user.Id, gold * count);
                 _context.PrintGameMsg($"{user.NameColored}获得{gold * count}g");
@@ -236,40 +236,23 @@ namespace BarPlugin.InteractionGame.plugs.bar
         {
             if (giftItemMgr.Dict.TryGetValue(gift, out var giftItem))
             {
-<<<<<<< HEAD
                 return ApplyGift(giftItem, user, count);
-=======
-                if (giftItem.Gifts != null)
-                    GiveGift(giftItem.Gifts, user,count);
-                if (giftItem.ApplyGifts != null)
-                    ApplyGift(giftItem.ApplyGifts, user,count);
-                if (giftItem.SpawnSquad != null)
-                    ApplySpawnSquad(giftItem,count,giftItem.SpawnSquad,user);
-                if(giftItem.Functions != null)
-                {
-                    foreach (var func in giftItem.Functions)
-                    {
-                        ApplyFunction(func.Key,func.Value, user,giftItem,count);
-                    }
-                }
-                return true;
->>>>>>> c47f9f8 (Fix bug)
             }
             return false;
         }
         public bool ApplyGift(GiftItem giftItem, UserData user, int count = 1)
         {
             if (giftItem.Gifts != null)
-                GiveGift(giftItem.Gifts, user);
+                GiveGift(giftItem.Gifts, user,count);
             if (giftItem.ApplyGifts != null)
-                ApplyGift(giftItem.ApplyGifts, user);
+                ApplyGift(giftItem.ApplyGifts, user, count);
             if (giftItem.SpawnSquad != null)
                 ApplySpawnSquad(giftItem, count, giftItem.SpawnSquad, user);
             if (giftItem.Functions != null)
             {
                 foreach (var func in giftItem.Functions)
                 {
-                    ApplyFunction(func.Key, func.Value, user, giftItem);
+                    ApplyFunction(func.Key, func.Value, user, giftItem, count);
                 }
             }
             return true;

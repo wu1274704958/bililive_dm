@@ -169,11 +169,21 @@ namespace BililiveDebugPlugin
                     Locator.Get<ConfigMgr>().Reload();
                     return;
                 }
-
                 if (TestIn.Text == "Settlement")
                 {
                     Locator.Get<BarContext>().DoSettlement(2,false);
                     return;
+                }
+                if (TestIn.Text == "DoLike")
+                {
+                    var dm = new BilibiliDM_PluginFramework.DanmakuModel();
+                    dm.OpenID = "4";
+                    dm.UserName = "test_4";
+                    dm.MsgType = MsgTypeEnum.Interact;
+                    dm.InteractType = InteractTypeEnum.Like;
+
+                    m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = dm });
+
                 }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
                 var ss = TestIn.Text.Split(' ');

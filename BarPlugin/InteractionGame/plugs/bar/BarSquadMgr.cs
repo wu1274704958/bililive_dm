@@ -23,7 +23,7 @@ namespace InteractionGame.plugs.bar
     {
         private ConcurrentDictionary<int,Pair<List<SquadData>,int>> SlotDict = new ConcurrentDictionary<int, Pair<List<SquadData>,int>>();
         private ConcurrentDictionary<int,SquadData> SlotMap = new ConcurrentDictionary<int, SquadData>();
-        private Random random = new Random((int)(new DateTime().Ticks / 1000));
+        private Random random = new Random();
         private IContext _context;
 
         public int SlotCount => SlotMap.Count;

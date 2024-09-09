@@ -128,19 +128,19 @@ namespace InteractionGame.Context
 
         private void OnGameEnd(string arg1, object arg2)
         { 
-            m_PlugMgr.Notify(EGameAction.GameStop);
+            m_PlugMgr.OnReceiveNotify(EGameAction.GameStop);
             Thread.Sleep((int)Locator.Get<IConstConfig>().EndDelay);
         }
 
         private void OnGamePreStart(string arg1, object arg2)
         {
-            m_PlugMgr.Notify(EGameAction.GamePreStart);
+            m_PlugMgr.OnReceiveNotify(EGameAction.GamePreStart);
         }
 
         private void OnGameStart(string arg1, object arg2)
         {
             gameState = EGameState.Started;
-            m_PlugMgr.Notify(EGameAction.GameStart);
+            m_PlugMgr.OnReceiveNotify(EGameAction.GameStart);
             messageDispatcher.OnStartGame();
         }
 
@@ -151,7 +151,7 @@ namespace InteractionGame.Context
             {
                 SendMsgToGame<NoArgs>("restart", null);
                 gameState = EGameState.Ended;
-                m_PlugMgr.Notify(EGameAction.PreSettlement);
+                m_PlugMgr.OnReceiveNotify(EGameAction.PreSettlement);
                 DoSettlement(data.winner,false);
             }
         }

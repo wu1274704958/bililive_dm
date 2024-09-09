@@ -337,7 +337,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
         {
             var sc = Math.Min(count, Locator.Get<IConstConfig>().OneTimesSpawnSquadCount);
             if (sc > max) sc = max;
-            this.SendSpawnSquad(_user, sc, _squad, _attribute, true,scoreScale:GetPercentageScale());
+            this.SendSpawnSquad(_user, sc, _squad, _attribute, false,scoreScale:GetPercentageScale());
             count -= sc;
             max -= sc;
             @out += sc;
@@ -476,7 +476,7 @@ namespace BililiveDebugPlugin.InteractionGameUtils
                 if(sc > max) sc = max;
                 var c = (double)sc / _Squad.normalCount;
                 if(c <= 0) break;
-                var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,true,
+                var rc = this.SendSpawnSquad(_user, _Squad.squad,_Squad.normalScore, _Squad.normalCount, c, _Squad.AddedAttr,false,
                     scoreScale:GetPercentageScale());
                 if (rc <= 0)
                     return _normalPercentage;

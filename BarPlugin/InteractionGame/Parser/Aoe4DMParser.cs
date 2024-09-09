@@ -14,6 +14,7 @@ using UserData = InteractionGame.UserData;
 using InteractionGame.plugs.config;
 using InteractionGame.plugs;
 using InteractionGame.Parser;
+using BarPlugin.InteractionGame.plugs.bar;
 
 namespace BililiveDebugPlugin.InteractionGame.Parser
 {
@@ -108,7 +109,9 @@ namespace BililiveDebugPlugin.InteractionGame.Parser
             if (msgOrigin.barType == MsgType.GiftSend)
             {
                 var ud = GetUserData(msgOrigin.msg.OpenID);
-                _giftMgr.ApplyGift(msgOrigin.msg.GiftName, ud, msgOrigin.msg.GiftCount);
+
+                if (!_giftMgr.ApplyGift(msgOrigin.msg.GiftName, ud, msgOrigin.msg.GiftCount))
+                    AddHonor(ud, msgOrigin.msg.GiftCount * msgOrigin.msg.GiftBatteryCount, false);
                 InitCtx.PrintGameMsg($"{user.NameColored}使用了{msgOrigin.msg.GiftName}*{msgOrigin.msg.GiftCount}");
             }
             if (msgOrigin.barType == MsgType.Interact && msgOrigin.msg.InteractType == InteractTypeEnum.Like && user != null)

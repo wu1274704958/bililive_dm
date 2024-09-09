@@ -13,12 +13,8 @@ namespace BililiveDebugPlugin.InteractionGame.plugs
     }
     public class SquadCapacityUIPlug : IPlug<EGameAction>,ISquadCountObserver
     {
-<<<<<<< HEAD
-        public override void OnReceiveNotify(EGameAction m,object args = null)
-=======
         private IGameState _gameState;
-        public override void Notify(EGameAction m)
->>>>>>> c47f9f8 (Fix bug)
+        public override void OnReceiveNotify(EGameAction m,object args = null)
         {
             
         }

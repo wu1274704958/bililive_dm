@@ -32,6 +32,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             Group = -1;
             Rank = 0;
             Score = 0;
+            Added = 0;
+            Id = null;
         }
         public void SetValue(SettlementUser oth)
         {

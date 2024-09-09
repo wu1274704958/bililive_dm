@@ -51,7 +51,7 @@ namespace conf
 
         public override void OnReceiveNotify(EGameAction m,object args = null)
         {
-            if(m == EGameAction.GamePreStart && NeedReload)
+            if(m == EGameAction.GameStop && NeedReload)
             {
                 ReloadAll();
                 NeedReload = false;

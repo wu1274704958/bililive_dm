@@ -80,6 +80,7 @@ namespace InteractionGame.Context
         private OverlayCommPlug overlayComm;
         private GameCommPlug gameComm;
         private ISettlement<BarContext> settlement;
+        private bool NeedExit = false;
 
         public BarContext(DMPlugin dMPlugin)
         {
@@ -126,10 +127,22 @@ namespace InteractionGame.Context
             settlement.Init();
         }
 
+        public void SetNeedExit()
+        {
+            NeedExit = true;
+        }
+
         private void OnGameEnd(string arg1, object arg2)
         { 
             m_PlugMgr.OnReceiveNotify(EGameAction.GameStop);
-            Thread.Sleep((int)Locator.Get<IConstConfig>().EndDelay);
+            if(NeedExit)
+            {
+                OnStop();
+                OnDestroy();
+                Environment.Exit(1);
+            }
+            else
+                Thread.Sleep((int)Locator.Get<IConstConfig>().EndDelay);
         }
 
         private void OnGamePreStart(string arg1, object arg2)

@@ -38,7 +38,7 @@ namespace InteractionGame.gameBridge
         private IContext _context;
         private List<SpawnSquadData> spawnSquadDatas = new List<SpawnSquadData>();
         private DateTime _lastSendSpawnTime = DateTime.Now;
-        private TimeSpan SpawnDuration = TimeSpan.FromMilliseconds(200);
+        private TimeSpan SpawnDuration = TimeSpan.FromMilliseconds(300);
         private int NeedSpawnCount = 50;
 
         public void ChangeTower(UserData user, SquadData squad, object op = null)

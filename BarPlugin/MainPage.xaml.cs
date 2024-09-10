@@ -167,6 +167,7 @@ namespace BililiveDebugPlugin
                 if (TestIn.Text == "Reload")
                 {
                     Locator.Get<ConfigMgr>().Reload();
+                    m_Cxt.Log("Reload");
                     return;
                 }
                 if (TestIn.Text == "Settlement")
@@ -176,8 +177,15 @@ namespace BililiveDebugPlugin
                 }
                 if (TestIn.Text == "ReloadSquad")
                 {
-                    conf.Squad.SettingMgr.Reload();
+                    conf.Squad.SquadDataMgr.Reload();
+                    Locator.Get<PlugMgr<EGameAction>>().OnReceiveNotify(EGameAction.ConfigReload);
                     m_Cxt.Log("Reload Squad");
+                    return;
+                }
+                if (TestIn.Text == "NeedExit")
+                {
+                    Locator.Get<BarContext>().SetNeedExit();
+                    m_Cxt.Log("NeedExit");
                     return;
                 }
                 if (TestIn.Text == "DoLike")

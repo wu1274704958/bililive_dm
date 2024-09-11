@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GenSquadCostLuaConfig": {
+      "commandName": "Project",
+      "commandLineArgs": "-l D:\\game\\beyond-all-reason\\data\\games\\BAR.sdd"
+    }
+  }
+}

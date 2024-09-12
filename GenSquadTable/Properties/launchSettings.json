@@ -3,6 +3,10 @@
     "GenSquadCostLuaConfig": {
       "commandName": "Project",
       "commandLineArgs": "-l D:\\game\\beyond-all-reason\\data\\games\\BAR.sdd"
+    },
+    "Profile 1": {
+      "commandName": "Project",
+      "commandLineArgs": "-l D:\\game\\beyond-all-reason\\data\\games\\BAR.sdd -i legbal,legcen,leggob,legkam,legfig"
     }
   }
 }

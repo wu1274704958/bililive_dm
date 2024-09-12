@@ -22,6 +22,8 @@ internal class ProgramGenLua
         public string LuaRootDir { get; set; }
         [Option('o', "only_normal", Required = false, HelpText = "only export normal", Default = false)]
         public bool OnlyNormal { get; set; }
+        [Option('i', "input_units", Separator = ',', Required = false, HelpText = "input custom units", Default = null)]
+        public IEnumerable<string> InputUnits { get; set; }
     }
     public static void Main(string[] args)
     {
@@ -49,7 +51,7 @@ internal class ProgramGenLua
         File.WriteAllBytes(path, cnt);
     }
 
-    private static readonly List<string> Title = new List<string>{ "名字","槽位","code","价格","血量","攻速","速度"
+    private static readonly List<string> Title = new List<string>{ "名字","槽位","code","价格","血量","速度","攻速"
         ,"攻击距离","伤害","伤害范围","是否单体","对空伤害","目标类别" };
 
     private class CustomRow : ReadonlyRow
@@ -57,7 +59,7 @@ internal class ProgramGenLua
         private SquadData data;
         private LuaTable conf;
         private List<object> confKeys = null;
-        private Dictionary<string,LuaTable> weaponDefs;
+        private Dictionary<string,(LuaTable,LuaTable)> weaponDefs;
         private LuaTable realConf;
 
         public CustomRow(SquadData data, LuaTable conf)
@@ -74,16 +76,32 @@ internal class ProgramGenLua
                     realConf = (LuaTable)conf[confKeys[0]];
                     if(realConf != null && realConf["weapondefs"] != null)
                     {
-                        weaponDefs = new Dictionary<string, LuaTable>();
-                        var weaponsTable = (LuaTable)realConf["weapondefs"];
-                        foreach (var k in weaponsTable.Keys)
+                        weaponDefs = new Dictionary<string, (LuaTable, LuaTable)>();
+                        var weaponsDef = (LuaTable)realConf["weapondefs"];
+                        foreach (var k in weaponsDef.Keys)
                         {
-                            weaponDefs.Add((string)k, (LuaTable)weaponsTable[k]);
+                            if (((string)k).IndexOf("dummy") >= 0 || ((string)k).IndexOf("bogus") >= 0)
+                                continue;
+                            var weapon = FindWeapon((string)k, (LuaTable)realConf["weapons"]);
+                            weaponDefs.Add((string)k, ((LuaTable)weaponsDef[k],weapon));
                         }
                     }
                 }
             }
             
+        }
+
+        private LuaTable FindWeapon(string name, LuaTable table)
+        {
+            if (table == null) return null;
+            foreach (var k in table.Keys)
+            {
+                var weapon = (LuaTable)table[k];
+                string def = null;
+                if (weapon != null && weapon["def"] != null && (def = (string)weapon["def"]) != null && def.ToLower() == name)
+                    return weapon;
+            }
+            return null;
         }
 
         public object this[int index]
@@ -97,34 +115,37 @@ internal class ProgramGenLua
                     case "code":return data == null ? confKeys[0] : data.PB; 
                     case "价格": return data?.Price ?? 0;
                     case "血量": return realConf?["health"] ?? 0;
-                    case "攻速": return GetFirstWeaponVal("reloadtime",0);
+                    case "攻速": return GetWeaponVal("reloadtime",0);
                     case "速度": return realConf?["speed"] ?? 0;
-                    case "攻击距离": return GetFirstWeaponVal("range", 0);
+                    case "攻击距离": return GetWeaponVal("range", 0);
                     case "伤害": return GetDamage("default", "-");
                     case "对空伤害": return GetDamage("vtol", "-");
-                    case "目标类别": return GetOnlyTarget(1,"onlytargetcategory","");
-                    case "伤害范围": return GetFirstWeaponVal("areaofeffect", 0);
-                    case "是否单体": return Convert.ToInt32(GetFirstWeaponVal("impactonly", 0)) == 1;
+                    case "目标类别": return GetWeaponVal2("onlytargetcategory","-",(a) => MapCategory((string)a));
+                    case "伤害范围": return GetWeaponVal("areaofeffect", 0);
+                    case "是否单体": return GetWeaponVal("impactonly", 0,(b)=> Convert.ToUInt32(b) == 1 ? "是":"否");
                 }
                 return "";
             }
         }
 
-        private object GetDamage(string ty, object def)
+        private object GetDamage(string ty, object def, char separator = '/')
         {
             if (weaponDefs == null || weaponDefs.Count == 0)
                 return def;
-            int min = -1;
+            var sb = new StringBuilder();
+            var i = 0;
             foreach (var weapon in weaponDefs)
             {
-                int v = Convert.ToInt32(((LuaTable)weapon.Value["damage"])?[ty] ?? -1);
-                if(v > min)
-                    min = v;
+                object v = ((LuaTable)weapon.Value.Item1["damage"])?[ty] ?? def;
+                sb.Append(v);
+                if (i < weaponDefs.Count - 1)
+                    sb.Append(separator);
+                ++i;
             }
-            return min == -1 ? def : min;
+            return sb.ToString();
         }
 
-        private object MapCategory(string category,object def)
+        private object MapCategory(string category)
         {
             switch (category)
             {
@@ -137,22 +158,42 @@ internal class ProgramGenLua
             return category;
         }
 
-        private object GetOnlyTarget(int idx, string key, object def)
-        {
-            LuaTable weapons = (LuaTable)realConf["weapons"];
-            LuaTable c = null;
-            if (weapons != null && (c = (LuaTable)weapons[idx]) != null && c[key] != null)
-                return MapCategory((string)c[key], def);
-            return def;
-        }
-
-        private object GetFirstWeaponVal(string key,object def)
+        private object GetWeaponVal2(string key, object def, Func<object, object> mapFunc = null, char separator = '/')
         {
             if (weaponDefs == null || weaponDefs.Count == 0)
-                return def;
+                return mapFunc != null ? mapFunc(def) : def;
+            var sb = new StringBuilder();
+            var i = 0;
             foreach (var weapon in weaponDefs)
-                return weapon.Value[key] ?? def;
-            return def;
+            {
+                object v = null;
+                if (weapon.Value.Item2 == null)
+                    v = def;
+                else
+                    v = weapon.Value.Item2[key];
+                sb.Append(mapFunc != null ? mapFunc(v) : v);
+                if (i < weaponDefs.Count - 1)
+                    sb.Append(separator);
+                ++i;
+            }
+            return sb.ToString();
+        }
+
+        private object GetWeaponVal(string key, object def, Func<object, object> mapFunc = null,char separator = '/')
+        {
+            if (weaponDefs == null || weaponDefs.Count == 0)
+                return mapFunc != null ? mapFunc(def) : def;
+            var sb = new StringBuilder();
+            var i = 0;
+            foreach (var weapon in weaponDefs)
+            {
+                var v = weapon.Value.Item1[key];
+                sb.Append(mapFunc != null ? mapFunc(v) : v);
+                if(i < weaponDefs.Count - 1)
+                    sb.Append(separator);
+                ++i;
+            }
+            return sb.ToString();
         }
 
         public int Count => Title.Count;
@@ -169,12 +210,27 @@ internal class ProgramGenLua
         List<ReadonlyRow> rows = new List<ReadonlyRow>();
         rows.Add(new TitleRow<string>(Title));
         var lua = new NLua.Lua();
+        var unitPath = Path.Combine(obj.LuaRootDir, "units");
 
-        foreach(var it in SquadDataMgr.GetInstance().Dict)
+
+        if (obj.InputUnits != null && obj.InputUnits.Count() > 0)
         {
-            if (obj.OnlyNormal && it.Value.Type_e != EType.Normal)
-                continue;
-            rows.Add(new CustomRow(it.Value,LoadConfig(FindLuaFile(it.Value.PB,Path.Combine(obj.LuaRootDir,"units")),lua,it.Value.PB)));
+            foreach(var it in obj.InputUnits)
+            {
+                var conf = LoadConfig(FindLuaFile(it, unitPath),lua,it);
+                if (conf == null)
+                    continue;
+                rows.Add(new CustomRow(null, conf));
+            }
+        }
+        else
+        {
+            foreach (var it in SquadDataMgr.GetInstance().Dict)
+            {
+                if (obj.OnlyNormal && it.Value.Type_e != EType.Normal)
+                    continue;
+                rows.Add(new CustomRow(it.Value, LoadConfig(FindLuaFile(it.Value.PB, unitPath), lua, it.Value.PB)));
+            }
         }
 
         var table = GenTable.GenTable.Generate(rows,"Unit");

@@ -6,7 +6,7 @@ namespace conf
 {
     public class ConfigMgr : IPlug<EGameAction>
     {
-        public static readonly string ConfigPath = "E:\\code\\bililive_dm\\resource\\bar";
+        public static readonly string ConfigPath = "D:\\code\\bililive_dm\\resource\\bar";
         protected bool NeedReload = false;
         public ConfigMgr() {
             InitTable();

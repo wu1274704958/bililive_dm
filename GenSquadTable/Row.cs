@@ -1,6 +1,8 @@
 ﻿using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +12,8 @@ namespace GenTable
     public interface ReadonlyRow
     {
         public int Count { get; }
+        public ExcelFillStyle fillStyle { get; }
+        public Color color { get; }
         public object this[int index]
         {
             get;
@@ -33,6 +37,9 @@ namespace GenTable
                     {
                         worksheet.Cells[x, y + i].Value = row[i];
                     }
+                    var rowObj = worksheet.Cells[x, 1, x, worksheet.Dimension.End.Column];
+                    rowObj.Style.Fill.PatternType = row.fillStyle;
+                    rowObj.Style.Fill.BackgroundColor.SetColor(row.color);
                     ++x;
                 }
                 return package;

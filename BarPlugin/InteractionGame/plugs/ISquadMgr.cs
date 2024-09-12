@@ -23,5 +23,6 @@ namespace InteractionGame.plugs
         bool ValidSlot(int slot,UserData user);
         bool CanSpawnSquad(string uid, SpawnSquadType type);
         int SlotCount { get; }
+        bool RandomSpecialSlot(int group, int slot);
     }
 }

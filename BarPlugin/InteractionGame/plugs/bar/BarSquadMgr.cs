@@ -19,12 +19,14 @@ namespace InteractionGame.plugs.bar
     {
         public List<SlotData> Slots = new List<SlotData>();
     }
-    class BarSquadMgr : IPlug<EGameAction>,ISquadMgr
+    class BarSquadMgr : IPlug<EGameAction>, ISquadMgr
     {
         private ConcurrentDictionary<int,Pair<List<SquadData>,int>> SlotDict = new ConcurrentDictionary<int, Pair<List<SquadData>,int>>();
         private ConcurrentDictionary<int,SquadData> SlotMap = new ConcurrentDictionary<int, SquadData>();
         private Random random = new Random();
         private IContext _context;
+        private static readonly int MaxNormalSlot = '9';
+        private ConcurrentDictionary<int, SquadData> SpecialSlotMap = new ConcurrentDictionary<int, SquadData>();
 
         public int SlotCount => SlotMap.Count;
 
@@ -41,6 +43,8 @@ namespace InteractionGame.plugs.bar
         public SquadData GetSquadBySlot(int slot, UserData user)
         {
             if(SlotMap.TryGetValue(slot,out var v))
+                return v;
+            if (SpecialSlotMap.TryGetValue(MapSpecialSlot(user.Group, slot), out v))
                 return v;
             return null;
         }
@@ -82,7 +86,8 @@ namespace InteractionGame.plugs.bar
         {
             foreach (var it in SlotDict)
             {
-                SlotMap[it.Key] = RandomSlot(it.Value.first, it.Value.second);
+                if(it.Key <= MaxNormalSlot)
+                    SlotMap[it.Key] = RandomSlot(it.Value.first, it.Value.second);
             }
         }
 
@@ -98,6 +103,12 @@ namespace InteractionGame.plugs.bar
                 ++index;
             }
             return list[index];
+        }
+        private SquadData RandomSlot(int slot)
+        {
+            if(SlotDict.TryGetValue(slot, out var data))
+                return RandomSlot(data.first, data.second);
+            return null;
         }
 
         public override void Init()
@@ -128,6 +139,7 @@ namespace InteractionGame.plugs.bar
                 switch (it.Value.Type_e)
                 {
                     case EType.Normal:
+                    case EType.Special:
                         var slot = it.Value.Slot;
                         if (!SlotDict.ContainsKey(slot))
                             SlotDict[slot] = new Pair<List<SquadData>, int>(new List<SquadData>(), 0);
@@ -146,6 +158,18 @@ namespace InteractionGame.plugs.bar
         public bool ValidSlot(int slot, UserData user)
         {
             return SlotMap.ContainsKey(slot);
+        }
+
+        private int MapSpecialSlot(int group,int slot) => (group * 1000) + slot;
+
+        public bool RandomSpecialSlot(int group, int slot)
+        {
+            var key = MapSpecialSlot(group, slot);
+            var sd = RandomSlot(slot);
+            if (sd == null)
+                return false;
+            SpecialSlotMap[key] = sd;
+            return true;
         }
     }
 }

@@ -42,6 +42,7 @@ namespace InteractionGame.Context
         SyncSquadConfig = 11,
         EventCue = 12,
         DefenseKeepHp = 13,
+        SyncSpecialSquadConfig = 14,
     }
     public static class EGameMsg
     {

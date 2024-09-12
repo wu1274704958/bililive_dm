@@ -55,10 +55,11 @@ namespace InteractionGame.plugs.bar
             {
                 case EGameAction.GamePreStart:
                     RandomSlot();
-                    SendSlotToOverlay();
+                    SendSlotToOverlay(SlotMap,EMsgTy.SyncSquadConfig);
                     break;
                 case EGameAction.GameStop:
                     SlotMap.Clear();
+                    SpecialSlotMap.Clear();
                     break;
                 case EGameAction.ConfigReload:
                     SlotDict.Clear();
@@ -67,10 +68,10 @@ namespace InteractionGame.plugs.bar
             }
         }
 
-        private void SendSlotToOverlay()
+        private void SendSlotToOverlay(ConcurrentDictionary<int, SquadData> map,EMsgTy msg)
         {
             var data = new SyncSquadConfigData();
-            foreach(var it in  SlotMap)
+            foreach(var it in map)
             {
                 data.Slots.Add(new SlotData
                 {
@@ -79,7 +80,7 @@ namespace InteractionGame.plugs.bar
                 });
             }
             data.Slots.Sort((a,b) => a.Slot - b.Slot);
-            _context.SendMsgToOverlay((short)EMsgTy.SyncSquadConfig, data);
+            _context.SendMsgToOverlay((short)msg, data);
         }
 
         private void RandomSlot()
@@ -129,7 +130,7 @@ namespace InteractionGame.plugs.bar
         {
             if(SlotMap.Count == 0)
                 RandomSlot();
-            SendSlotToOverlay();
+            SendSlotToOverlay(SlotMap, EMsgTy.SyncSquadConfig);
         }
 
         private void LoadSquad()
@@ -170,6 +171,13 @@ namespace InteractionGame.plugs.bar
                 return false;
             SpecialSlotMap[key] = sd;
             return true;
+        }
+
+        public void SendSpecialSlot()
+        {
+            if (SpecialSlotMap.Count == 0)
+                return;
+            SendSlotToOverlay(SpecialSlotMap, EMsgTy.SyncSpecialSquadConfig);
         }
     }
 }

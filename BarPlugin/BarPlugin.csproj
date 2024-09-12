@@ -65,6 +65,7 @@
     <Compile Include="InteractionGame\conf\plugins\AnyArray.cs.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgr.cs" />
     <Compile Include="InteractionGame\conf\Reinforcements\ReinforcementsDataMgrEx.cs" />
+    <Compile Include="InteractionGame\conf\SpecialSlot\SpecialSlotMgr.cs" />
     <Compile Include="InteractionGame\conf\Squad\SettingMgr.cs" />
     <Compile Include="InteractionGame\conf\Squad\SettingMgrEx.cs" />
     <Compile Include="InteractionGame\conf\Squad\SquadDataEx.cs" />

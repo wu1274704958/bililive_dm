@@ -103,6 +103,7 @@
     <Compile Include="InteractionGame\plugs\bar\GiftMgr.cs" />
     <Compile Include="InteractionGame\plugs\bar\KillUnitRewardPlug.cs" />
     <Compile Include="InteractionGame\plugs\bar\OverlayCommPlug.cs" />
+    <Compile Include="InteractionGame\plugs\bar\SpecialSlotOpenPlug.cs" />
     <Compile Include="InteractionGame\plugs\config\IConstConfig.cs" />
     <Compile Include="InteractionGame\plugs\ConstConfigPlug.cs" />
     <Compile Include="InteractionGame\plugs\DbTransfarPlug.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="InteractionGame\Utils\SysDBSortListDescending.cs" />
     <Compile Include="InteractionGame\WindowEnumerator.cs" />
     <Compile Include="Utils\Comm.cs" />
+    <Compile Include="Utils\EventDispatcher.cs" />
     <Compile Include="Utils\IDataCanSort.cs" />
     <Compile Include="Utils\IDataWithId.cs" />
     <Compile Include="Utils\IPlugMgr.cs" />

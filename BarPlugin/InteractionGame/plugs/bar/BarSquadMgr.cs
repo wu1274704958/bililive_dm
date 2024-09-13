@@ -163,14 +163,14 @@ namespace InteractionGame.plugs.bar
 
         private int MapSpecialSlot(int group,int slot) => (group * 1000) + slot;
 
-        public bool RandomSpecialSlot(int group, int slot)
+        public SquadData RandomSpecialSlot(int group, int slot)
         {
             var key = MapSpecialSlot(group, slot);
             var sd = RandomSlot(slot);
             if (sd == null)
-                return false;
+                return null;
             SpecialSlotMap[key] = sd;
-            return true;
+            return sd;
         }
 
         public void SendSpecialSlot()

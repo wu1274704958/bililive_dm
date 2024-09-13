@@ -15,10 +15,18 @@ namespace InteractionGame.plugs.bar
         public float reward = 0;
         public int killCount = 0;
     }
+    public struct GroupRewardData
+    {
+        public float Reward;
+        public int KillCount;
+    }
+
     public class KillUnitRewardPlug : IPlug<EGameAction>
     {
         private IContext _context;
         private ConcurrentDictionary<string,int> KillUnitCountDict = new ConcurrentDictionary<string, int>();
+        private ConcurrentDictionary<int, GroupRewardData> GroupRewardDict = new ConcurrentDictionary<int, GroupRewardData>();
+        public EventDispatcher<(int, GroupRewardData)> GroupRewardChangedDispatcher { get; private set; } = new EventDispatcher<(int, GroupRewardData)>();
 
         public override void OnReceiveNotify(EGameAction m,object args = null)
         {
@@ -26,6 +34,7 @@ namespace InteractionGame.plugs.bar
             {
                 case EGameAction.GameStop:
                     KillUnitCountDict.Clear();
+                    GroupRewardDict.Clear();
                     break;
             }
         }
@@ -52,6 +61,7 @@ namespace InteractionGame.plugs.bar
                     var user = _context.GetMsgParser().GetUserData(data.id);
                     if (user != null)
                     {
+                        UpdateGroupReward(data, user);
                         _context.GetResourceMgr().AddResource(user.Id, data.reward);
                         if (KillUnitCountDict.TryGetValue(user.Id, out var count))
                             KillUnitCountDict[user.Id] = count + data.killCount;
@@ -60,6 +70,18 @@ namespace InteractionGame.plugs.bar
                     }
                 }
             }
+        }
+
+        private void UpdateGroupReward(KillUnitRewardData data, UserData user)
+        {
+            if (!GroupRewardDict.ContainsKey(user.Group))
+                GroupRewardDict.TryAdd(user.Group, new GroupRewardData() { Reward = data.reward,KillCount = data.killCount });
+            else
+            {
+                var old = GroupRewardDict[user.Group];
+                GroupRewardDict[user.Group] = new GroupRewardData() { Reward = old.Reward + data.reward, KillCount = old.KillCount + data.killCount };
+            }
+            GroupRewardChangedDispatcher.Dispatch((user.Group, GroupRewardDict[user.Group]));
         }
 
         public List<(string,int)> GetCurrentKillListSorted()

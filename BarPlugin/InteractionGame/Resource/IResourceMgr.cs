@@ -33,5 +33,6 @@ namespace InteractionGame.Resource
         public abstract int PlayerCount();
         public abstract void ChangeAutoResourceAddFactor(string id,float addFactor);
         public abstract void AddAutoResourceAddFactor(string id,float addFactor);
+        public abstract void AddAutoResourceAddFactor(int group, float addFactor);
     }
 }

@@ -11,12 +11,18 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         where C : class, IContext
     {
         ConcurrentDictionary<string, TimeLinerInteger> AutoAddMap = new ConcurrentDictionary<string, TimeLinerInteger>();
+        private IDyMsgParser _msgParser;
         public override void AddAutoResourceById(string id, float addFactor = 1f)
         {
             var config = Locator.Get<IConstConfig>();
             TimeLinerInteger v = null;
             AutoAddMap.TryAdd(id, v = new TimeLinerInteger(config.OriginResource, config.AddResFactor, config.AutoGoldLimit));
             v.AddFactor = addFactor;
+        }
+        public override void Init(IContext it)
+        {
+            base.Init(it);
+            _msgParser = it.GetMsgParser();
         }
 
         public override void AddResource(string id, double c)
@@ -117,6 +123,18 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
         public override bool SpawnVillager(string id, int num)
         {
             return false;
+        }
+
+        public override void AddAutoResourceAddFactor(int group, float addFactor)
+        {
+            foreach(var kvp in AutoAddMap)
+            {
+                var user = _msgParser.GetUserData(kvp.Key);
+                if(user != null && user.Group == group)
+                {
+                    AddAutoResourceAddFactor(group, addFactor);
+                }
+            }
         }
     }
 }

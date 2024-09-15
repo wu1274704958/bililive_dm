@@ -95,18 +95,19 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             }
         }
         public static readonly int Max = 20;
+        public static readonly int MaxCumulative = 100;
         private Dictionary<string, (long, int)> _tmpLLDict = new Dictionary<string, (long, int)>();
 
         private SysDBSortListDescending<SettlementUser> _monthlyCumulativeScoreList = 
             new SysDBSortListDescending<SettlementUser>(
                 ESysDataTy.MonthlyCumulativeScoreRank,
                 ESysDataTy.MonthlyCumulativeScoreRankExpiredTime,
-                1,Max);
+                1, MaxCumulative);
         private SysDBSortListDescending<SettlementUser> _monthlyCumulativeKillList =
             new SysDBSortListDescending<SettlementUser>(
                 ESysDataTy.MonthlyCumulativeKillRank,
                 ESysDataTy.MonthlyCumulativeKillRankExpiredTime,
-                1,Max);
+                1, MaxCumulative);
         private SysDBSortListDescending<SettlementUser> _monthlySingleScoreRank =
             new SysDBSortListDescending<SettlementUser>(
                 ESysDataTy.MonthlySingleScoreRank,
@@ -136,11 +137,11 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             SendSettlement( data, winGroup);
         }
 
-        private void HandleDBSortList(SysDBSortListDescending<SettlementUser> list,List<SettlementUser> appendList,bool useAdd = true)
+        private void HandleDBSortList(SysDBSortListDescending<SettlementUser> list,List<SettlementUser> appendList,bool useAdd = true,bool preTest = true)
         {
             list.Load();
             if (appendList.Count > 0 &&
-                list.TestBeNecessaryAddAndReSort(appendList[0]))
+                (!preTest || list.TestBeNecessaryAddAndReSort(appendList[0])))
             {
                 list.Append(appendList,useAdd);
                 list.Sort();
@@ -155,8 +156,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
             var currentScoreRank = GetCurrentScoreRank(data);
             var currentKillRank = GetCurrentKillRank();
 
-            HandleDBSortList(_monthlyCumulativeScoreList, currentScoreRank);
-            HandleDBSortList(_monthlyCumulativeKillList, currentKillRank);
+            HandleDBSortList(_monthlyCumulativeScoreList, currentScoreRank,preTest:false);
+            HandleDBSortList(_monthlyCumulativeKillList, currentKillRank,preTest:false);
             HandleDBSortList(_monthlySingleScoreRank, currentScoreRank,false);
             HandleDBSortList(_monthlySingleKillRank, currentKillRank,false);
 
@@ -166,8 +167,8 @@ namespace BililiveDebugPlugin.InteractionGame.Settlement
                 WinGroup = win,
                 CurrentScoreRank = currentScoreRank,
                 CurrentKillRank = currentKillRank,
-                MonthlyCumulativeScoreRank = _monthlyCumulativeScoreList.Datas,
-                MonthlyCumulativeKillRank = _monthlyCumulativeKillList.Datas,
+                MonthlyCumulativeScoreRank = _monthlyCumulativeScoreList.Datas.Take(Max).ToList(),
+                MonthlyCumulativeKillRank = _monthlyCumulativeKillList.Datas.Take(Max).ToList(),
                 MonthlySingleScoreRank = _monthlySingleScoreRank.Datas,
                 MonthlySingleKillRank = _monthlySingleKillRank.Datas,
             };

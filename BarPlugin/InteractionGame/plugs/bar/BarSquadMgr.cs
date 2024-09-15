@@ -161,7 +161,7 @@ namespace InteractionGame.plugs.bar
             return SlotMap.ContainsKey(slot);
         }
 
-        private int MapSpecialSlot(int group,int slot) => (group * 1000) + slot;
+        private int MapSpecialSlot(int group,int slot) => ((group + 1) * 1000) + slot;
 
         public SquadData RandomSpecialSlot(int group, int slot)
         {

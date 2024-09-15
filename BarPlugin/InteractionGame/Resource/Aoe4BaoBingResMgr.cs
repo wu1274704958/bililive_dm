@@ -132,7 +132,7 @@ namespace BililiveDebugPlugin.InteractionGame.Resource
                 var user = _msgParser.GetUserData(kvp.Key);
                 if(user != null && user.Group == group)
                 {
-                    AddAutoResourceAddFactor(group, addFactor);
+                    AddAutoResourceAddFactor(user.Id, addFactor);
                 }
             }
         }

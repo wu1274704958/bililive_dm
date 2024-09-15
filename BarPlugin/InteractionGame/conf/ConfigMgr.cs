@@ -1,4 +1,5 @@
 ﻿using InteractionGame.Context;
+using System;
 using System.IO;
 using Utils;
 
@@ -6,7 +7,7 @@ namespace conf
 {
     public class ConfigMgr : IPlug<EGameAction>
     {
-        public static readonly string ConfigPath = "D:\\code\\bililive_dm\\resource\\bar";
+        public static readonly string ConfigPath = "E:\\code\\bililive_dm\\resource\\bar";
         protected bool NeedReload = false;
         public ConfigMgr() {
             InitTable();
@@ -32,6 +33,7 @@ namespace conf
             conf.Gift.GiftItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "GiftItem.dat")));
             conf.CommonConfig.CommonConfigMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "CommonConfig.dat")));
             conf.Activity.ActivityItemMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "ActivityItem.dat")));
+            conf.SpecialSlot.SpecialSlotMgr.InitInstance(new FileInfo(Path.Combine(ConfigPath, "SpecialSlot.dat")));
         }
 
         public static void ReloadAll()
@@ -42,6 +44,7 @@ namespace conf
             conf.Gift.GiftItemMgr.Reload();
             conf.CommonConfig.CommonConfigMgr.Reload();
             conf.Activity.ActivityItemMgr.Reload();
+            conf.SpecialSlot.SpecialSlotMgr.Reload();
         }
 
         public void Reload()

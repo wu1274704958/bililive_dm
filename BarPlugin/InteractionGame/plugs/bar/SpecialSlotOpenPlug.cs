@@ -16,7 +16,7 @@ namespace InteractionGame.plugs.bar
     public class SpecialSlotOpenPlug : IPlug<EGameAction>
     {
         private Action<(int, GroupRewardData)> listener;
-        private List<conf.SpecialSlot.SpecialSlot> SpecialSlots;
+        private List<conf.SpecialSlot.SpecialSlot> SpecialSlots = new List<SpecialSlot>();
         private ConcurrentDictionary<int,int> GroupSlotState = new ConcurrentDictionary<int,int>();
         private ISquadMgr squadMgr;
         private IContext context;
@@ -24,6 +24,7 @@ namespace InteractionGame.plugs.bar
         public override void Init()
         {
             base.Init();
+            Locator.Deposit(this);
             SpecialSlots.Clear();
             foreach(var it in conf.SpecialSlot.SpecialSlotMgr.GetInstance().Dict)
             {
@@ -60,19 +61,19 @@ namespace InteractionGame.plugs.bar
             }
         }
 
-        private void OnGroupRewardTestSuccess(int g,SpecialSlot it, GroupRewardData data)
+        public void OnGroupRewardTestSuccess(int g,SpecialSlot it, GroupRewardData data)
         {
             SquadData sd = null;
             if((sd = squadMgr.RandomSpecialSlot(g, it.Slot)) != null)
             {
                 var addedTips = "";
-                var added = it.AddExpr.EvaluateExpr<float>(data,it.Slot);
+                var added = it.AddExpr.EvaluateExpr<double>(data,it.Slot);
                 if (added > 0)
                 {
-                    context.GetResourceMgr().AddAutoResourceAddFactor(g, added);
+                    context.GetResourceMgr().AddAutoResourceAddFactor(g,Convert.ToSingle(added));
                     addedTips = $",获得金币加成{(int)(added*100)}%";
                 }
-                LargePopTipsDataBuilder.Create(Locator.Get<IConstConfig>().GetGroupName(g + 1), $"解锁卡槽{(char)it.Slot}")
+                LargePopTipsDataBuilder.Create(Locator.Get<IConstConfig>().GetGroupName(g + 1)+"方", $"解锁卡槽{(char)it.Slot}")
                     .SetLeftColor(LargeTips.GetGroupColor(g))
                     .SetRightColor(LargeTips.Yellow)
                     .SetBottom($"卡槽{(char)it.Slot}[<color=yellow>{sd.Name}</color>]可用{addedTips}")

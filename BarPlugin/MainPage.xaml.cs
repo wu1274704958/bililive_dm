@@ -126,6 +126,12 @@ namespace BililiveDebugPlugin
                     }
                     return;
                 }
+                if ((match = new Regex("SpecialSlot ([0-9]+) ([0-9]+)").Match(TestIn.Text)).Success)
+                {
+                    Locator.Get<SpecialSlotOpenPlug>().OnGroupRewardTestSuccess(int.Parse(match.Groups[1].Value),
+                        conf.SpecialSlot.SpecialSlotMgr.GetInstance().Get(int.Parse(match.Groups[2].Value)), new GroupRewardData() { KillCount = 1000, Reward = 1000 });
+                    return;
+                }
                 if ((match = new Regex("Squad ([0-9]+) ([0-9]*) ([0-9]*)").Match(TestIn.Text)).Success)
                 {
                     var sid = 0;

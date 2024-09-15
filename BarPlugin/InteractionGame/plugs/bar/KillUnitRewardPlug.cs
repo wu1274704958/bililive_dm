@@ -39,19 +39,23 @@ namespace InteractionGame.plugs.bar
             }
         }
 
+        public override void Init()
+        {
+            base.Init();
+            Locator.Deposit(this);
+        }
+
         public override void Start()
         {
-            Locator.Deposit(this);
             base.Start();
             _context = Locator.Get<IContext>();
             _context.RegisterOnRecvGameMsg<List<KillUnitRewardData>>(EGameMsg.BUnitReward, OnKillUnitReward);
         }
-        public override void Stop()
+        public override void Dispose()
         {
-            base.Stop();
+            base.Dispose();
             Locator.Remove<KillUnitRewardPlug>();
         }
-
         private void OnKillUnitReward(string arg1, object arg2)
         {
             if(arg2 is List<KillUnitRewardData> list)

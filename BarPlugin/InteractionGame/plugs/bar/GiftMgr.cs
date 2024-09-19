@@ -135,9 +135,9 @@ namespace BarPlugin.InteractionGame.plugs.bar
             var rand = _random.Next(allProb);
             foreach (var it in gifts)
             {
-                if (rand <= 0)
-                    return it;
                 rand -= GetProbability(it.Key, probability);
+                if (rand < 0)
+                    return it;
             }
             return default;
         }

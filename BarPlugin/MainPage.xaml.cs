@@ -203,7 +203,7 @@ namespace BililiveDebugPlugin
                     dm.InteractType = InteractTypeEnum.Like;
 
                     m_Cxt.SendTestDanMu(this, new BilibiliDM_PluginFramework.ReceivedDanmakuArgs() { Danmaku = dm });
-
+                    return;
                 }
                 var m = new BilibiliDM_PluginFramework.DanmakuModel();
                 var ss = TestIn.Text.Split(' ');

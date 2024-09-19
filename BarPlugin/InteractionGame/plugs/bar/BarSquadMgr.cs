@@ -163,14 +163,27 @@ namespace InteractionGame.plugs.bar
 
         private int MapSpecialSlot(int group,int slot) => ((group + 1) * 1000) + slot;
 
+        public SquadData GetSpecialSlot(int slot)
+        {
+            foreach(var it in SpecialSlotMap)
+            {
+                if(it.Value.Slot == slot)
+                    return it.Value;
+            }
+            return null;
+        }
+
         public SquadData RandomSpecialSlot(int group, int slot)
         {
+            SquadData result = null;
+            result = GetSpecialSlot(slot);
             var key = MapSpecialSlot(group, slot);
-            var sd = RandomSlot(slot);
-            if (sd == null)
+            if(result == null)
+                result = RandomSlot(slot);
+            if (result == null)
                 return null;
-            SpecialSlotMap[key] = sd;
-            return sd;
+            SpecialSlotMap[key] = result;
+            return result;
         }
 
         public void SendSpecialSlot()

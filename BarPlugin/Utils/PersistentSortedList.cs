@@ -53,10 +53,13 @@ namespace Utils
                 var j = datas.Find(a=> a.GetId().Equals(it.GetId()));
                 if (j != null)
                 {
-                    if(useAdd)
+                    if (useAdd)
                         j.AddValue(it);
                     else
-                        j.SetValue(it);
+                    {
+                        if(SortFunc(j,it) > 0)
+                            j.SetValue(it);
+                    }
                 }
                 else
                     datas.Add((T)it.Clone());
